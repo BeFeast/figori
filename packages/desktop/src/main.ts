@@ -218,6 +218,21 @@ class ResultMarker extends GutterMarker {
   }
 }
 const setResults = StateEffect.define<RangeSet<GutterMarker>>();
+const refreshGutter = StateEffect.define<null>();
+const gutterMeasureKey = {};
+function measureResultGutter() {
+  view.requestMeasure({
+    key: gutterMeasureKey,
+    read: (current) => current.state.doc,
+    write: (measuredDocument, current) => {
+      // Dispatch after the measurement cycle, never from inside its write phase.
+      queueMicrotask(() => {
+        if (current.state.doc === measuredDocument)
+          current.dispatch({ effects: refreshGutter.of(null) });
+      });
+    },
+  });
+}
 const resultField = StateField.define<RangeSet<GutterMarker>>({
   create: () => RangeSet.empty,
   update(value, tr) {
@@ -305,6 +320,9 @@ function evaluate() {
         setHidden.of(Decoration.set(hidden, true)),
       ],
     });
+    // Hidden captured output changes visual line geometry. Marker equality alone
+    // does not make CodeMirror resync gutters after its first measured layout.
+    measureResultGutter();
     // CodeMirror hides gutters by default because they normally contain line
     // numbers. Our result gutter contains interactive controls, so expose it.
     for (const gutter of view.dom.querySelectorAll(".cm-gutters-after")) {
@@ -333,6 +351,11 @@ function editorState(doc: string) {
       gutter({
         class: "result-gutter",
         side: "after",
+        lineMarkerChange: (update) =>
+          update.geometryChanged ||
+          update.transactions.some((transaction) =>
+            transaction.effects.some((effect) => effect.is(refreshGutter)),
+          ),
         markers: (view) => view.state.field(resultField),
       }),
       EditorView.theme(
@@ -370,7 +393,7 @@ function editorState(doc: string) {
 // Build the editor after that first layout, then remeasure any later font load.
 await document.fonts.ready;
 const view = new EditorView({ parent: el("editor"), state: editorState("") });
-document.fonts.addEventListener("loadingdone", () => view.requestMeasure());
+document.fonts.addEventListener("loadingdone", () => measureResultGutter());
 requestAnimationFrame(() => view.requestMeasure());
 const operations = new OperationGate((active) => {
   busy = active;
