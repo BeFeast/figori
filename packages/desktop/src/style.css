@@ -23,6 +23,12 @@
   --border: rgba(232, 230, 227, 0.14);
   --border-strong: rgba(232, 230, 227, 0.24);
   --text: #e8e6e3;
+  --heading-1: #a3a2a0;
+  --heading-2: #b1b0ad;
+  --heading-3: #bfbdba;
+  --heading-4: #cdcbc8;
+  --heading-5: #dad8d5;
+  --heading-6: var(--text);
   --muted: rgba(232, 230, 227, 0.68);
   --accent: #b8443c;
   --accent-text: #d9776d;
@@ -66,6 +72,12 @@ body.light {
   --border: rgba(11, 12, 13, 0.14);
   --border-strong: rgba(11, 12, 13, 0.24);
   --text: #0b0c0d;
+  --heading-1: #626363;
+  --heading-2: #515252;
+  --heading-3: #3f4041;
+  --heading-4: #2e2f30;
+  --heading-5: #1c1e1f;
+  --heading-6: var(--text);
   --muted: rgba(11, 12, 13, 0.68);
   --accent: #b8443c;
   --accent-text: #9b372f;
@@ -829,23 +841,25 @@ body.resizing-columns #column-splitter span {
 }
 .cm-line .md-h1 {
   font-size: 1.3em;
-  color: var(--result);
+  color: var(--heading-1);
 }
 .cm-line .md-h2 {
   font-size: 1.22em;
-  color: var(--result);
+  color: var(--heading-2);
 }
 .cm-line .md-h3 {
   font-size: 1.15em;
-  color: var(--accent-text);
+  color: var(--heading-3);
 }
 .cm-line .md-h4 {
   font-size: 1.09em;
+  color: var(--heading-4);
 }
 .cm-line .md-h5 {
   font-size: 1.04em;
+  color: var(--heading-5);
 }
 .cm-line .md-h6 {
   font-size: 1em;
-  color: var(--accent-text);
+  color: var(--heading-6);
 }
