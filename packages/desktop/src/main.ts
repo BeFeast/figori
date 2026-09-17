@@ -381,6 +381,7 @@ const operations = new OperationGate((active) => {
 function replaceEditor(doc: Worksheet) {
   worksheet = doc;
   view.setState(editorState(editorText(doc.source)));
+  el("line-status").textContent = `Line 1 of ${view.state.doc.lines}`;
   revision++;
   evaluate();
   view.focus();
