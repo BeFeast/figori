@@ -21,9 +21,11 @@ The source may be the desktop preview branch while its implementation PR remains
 2. Check that both `v0.3.0` and its release are absent. An existing object or unexpected API response is a stop condition, not permission to overwrite it.
 3. Create a draft prerelease using `tag_name`, `target_commitish` and a human-readable body.
 4. Upload the zip, `SOURCE_COMMIT` and `SHA256SUMS`. Download each asset again and compare its digest with the local file.
-5. Verify the created tag resolves to the approved commit, then change only `draft` to false, retaining `prerelease: true`.
-6. Read back the published release URL, tag and asset names. Keep a failed partial upload as a draft for inspection; do not delete or modify previous releases.
+5. Verify the draft targets the approved full commit, then change only `draft` to false, retaining `prerelease: true`. Forgejo may create the tag only when the draft is published: a prepublication tag lookup can legitimately return 404.
+6. After publication, resolve the tag and verify it equals the approved commit; read back the public release URL and asset names. A mismatch is a delivery failure to report, never permission to move or overwrite an existing tag. Keep a failed partial upload as a draft for inspection; do not delete or modify previous releases.
 
 Use the existing Forgejo repo/actions credential only through the invoking process environment. Never print token values, put them in command arguments, or store them in release notes. The publication host can load its existing scoped environment immediately before invoking the release helper.
 
 The release notes must disclose that the current macOS ARM64 bundle is a local Xcode build without public signing/notarization. State the actual feature set and that natural-language input remains limited to the implemented grammar. Do not imply App Store distribution, complete Soulver parity, or that publication installs the application.
+
+Observed during the 0.3.0 publication: this Forgejo instance materialized the release tag at draft publication, not draft creation. An alternative workflow may explicitly create and verify the tag before creating the draft, but must still refuse an existing conflicting tag. A later code fix receives a new version and immutable artifact set; never replace a published zip in place.

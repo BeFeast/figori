@@ -257,14 +257,35 @@ const gutterMeasureKey = {};
 function measureResultGutter() {
   view.requestMeasure({
     key: gutterMeasureKey,
-    read: (current) => current.state.doc,
+    read: (current) => {
+      const bounds = current.contentDOM.getBoundingClientRect();
+      return !document.hidden && bounds.width > 0 && bounds.height > 0
+        ? current.state.doc
+        : null;
+    },
     write: (measuredDocument, current) => {
       // Dispatch after the measurement cycle, never from inside its write phase.
       queueMicrotask(() => {
-        if (current.state.doc === measuredDocument)
+        if (measuredDocument && current.state.doc === measuredDocument)
           current.dispatch({ effects: refreshGutter.of(null) });
       });
     },
+  });
+}
+// A native window can be reparented/shown after recovery has already evaluated.
+// Measure again after browser layout and once after that gutter write settles.
+// This is bounded (two frames), does not replace editor state, and preserves Undo.
+let layoutGeneration = 0;
+function refreshVisibleLayout() {
+  const generation = ++layoutGeneration;
+  requestAnimationFrame(() => {
+    if (generation !== layoutGeneration || document.hidden) return;
+    measureResultGutter();
+    requestAnimationFrame(() => {
+      if (generation !== layoutGeneration || document.hidden) return;
+      measureResultGutter();
+      positionColumnSplitter();
+    });
   });
 }
 const resultField = StateField.define<RangeSet<GutterMarker>>({
@@ -457,6 +478,7 @@ function editorState(doc: string) {
         spellcheck: "false",
       }),
       EditorView.updateListener.of((update) => {
+        if (update.geometryChanged) refreshVisibleLayout();
         if (update.docChanged) {
           worksheet = fromEditor(worksheet, update.state.doc.toString());
           setDirty();
@@ -498,7 +520,14 @@ await Promise.all([
 ]);
 await document.fonts.ready;
 const view = new EditorView({ parent: el("editor"), state: editorState("") });
-document.fonts.addEventListener("loadingdone", () => measureResultGutter());
+document.fonts.addEventListener("loadingdone", refreshVisibleLayout);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refreshVisibleLayout();
+});
+window.addEventListener("focus", refreshVisibleLayout);
+void nativeWindow.onFocusChanged((event) => {
+  if (event.payload) refreshVisibleLayout();
+});
 const splitter = el("column-splitter");
 const splitterMeasureKey = {};
 let preferredResultRatio = savedColumnRatio(
@@ -968,6 +997,7 @@ void operations.run(async () => {
     await start();
   } finally {
     initializing = false;
+    refreshVisibleLayout();
   }
 }, undefined);
 
@@ -987,7 +1017,10 @@ async function exportMarkdown(withResults: boolean) {
         suggestedName: name + (withResults ? "-results" : "-export") + ".md",
         currentPath: path ?? originPath,
       });
-      if (saved) notice("Markdown exported. Keep the .figori document to retain calculation settings.");
+      if (saved)
+        notice(
+          "Markdown exported. Keep the .figori document to retain calculation settings.",
+        );
     } catch (error) {
       report(error);
     }
@@ -1002,7 +1035,10 @@ async function exportNumi() {
         suggestedName: "Worksheet-export.numi",
         currentPath: path ?? originPath,
       });
-      if (saved) notice("Numi exported. Keep the .figori document to retain calculation settings.");
+      if (saved)
+        notice(
+          "Numi exported. Keep the .figori document to retain calculation settings.",
+        );
     } catch (error) {
       report(error);
     }
@@ -1063,7 +1099,7 @@ try {
         precisionControl,
         el("settings-form").querySelector(".dialog-actions"),
       );
-    measureResultGutter();
+    refreshVisibleLayout();
   }
 } catch {
   /* Older builds keep the fully functional Linux/webview toolbar. */
