@@ -87,6 +87,7 @@ function parseLine(raw: string, ending: string, format: SourceFormat): DocumentL
   // Plain headings may contain years, parentheses and slashes. A compact function
   // call, date, known relative date, assignment or captured result is still math.
   const plainHeading = /^[\p{L}][\p{L}\p{N}\s/()'’"—–#\-]*$/u.test(text.replace(/\?$/, ""))
+    && !/^days\s+(?:since|until)\b/i.test(text)
     && !/\p{L}\(/u.test(text)
     && !/\b(?:today|now|previous|in)\b/i.test(text)
     && !(/\d/.test(text) && /\b(?:years?|months?|weeks?|days?|hours?|minutes?|seconds?|nis|ils|usd)\b/i.test(text));
