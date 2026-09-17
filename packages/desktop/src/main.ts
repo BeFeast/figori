@@ -121,6 +121,7 @@ function updateChrome() {
   el("save-status").hidden = !busy;
   el("save-status").textContent = busy ? "Working…" : "";
   el("context-button").textContent = contextText();
+  el("basis").textContent = contextText();
   void nativeWindow.setTitle(`${title} — Figori`).catch(report);
 }
 function setDirty() {
@@ -777,6 +778,9 @@ el<HTMLFormElement>("appearance-form").onsubmit = (event) => {
   });
   view.focus();
 };
+el("basis").onclick = () => {
+  if (!busy && !initializing) el("context-button").click();
+};
 el("context-button").onclick = () => {
   const s = worksheet.settings;
   el<HTMLSelectElement>("anchor-mode").value = s.anchor.mode;
@@ -944,6 +948,13 @@ void listen<string>("figori-menu", (event) => {
     el("context-button").click();
 });
 
+await listen<number>("figori-precision", (event) => {
+  if (![0, 1, 2, 3, 4, 6].includes(event.payload)) return;
+  precision = event.payload;
+  localStorage.setItem("precision", String(precision));
+  el<HTMLSelectElement>("precision").value = String(precision);
+  evaluate();
+});
 // Native chrome is opt-in only after the platform bridge has attached successfully.
 await listen<{ font: string; size: number; spacing: number; theme: string }>(
   "figori-appearance",
@@ -966,6 +977,7 @@ await listen<{ font: string; size: number; spacing: number; theme: string }>(
 try {
   const ready = await invoke<boolean>("configure_chrome", {
     appearance: {
+      precision,
       ...typography,
       theme: localStorage.getItem("theme") ?? "dark",
     },

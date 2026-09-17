@@ -683,3 +683,23 @@ dialog {
   font-display: block;
   unicode-range: U+20AA;
 }
+
+.native-basis {
+  display: none;
+}
+.native-chrome .native-basis {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  padding: 2px 0;
+  font-size: 11px;
+}
+.native-chrome #line-status {
+  margin-left: auto;
+}
+.native-chrome footer {
+  gap: 14px;
+}
