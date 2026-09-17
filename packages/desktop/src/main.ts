@@ -114,8 +114,6 @@ function updateChrome() {
   const filename = el("filename");
   if (filename.textContent !== title) filename.textContent = title;
   filename.classList.toggle("dirty", dirty);
-  filename.title =
-    (path ?? "New worksheet") + (dirty ? " — Unsaved changes" : "");
   filename.setAttribute(
     "aria-label",
     name + (dirty ? ", unsaved changes" : ""),
@@ -184,7 +182,8 @@ async function refreshRates() {
     rateChrome();
   }
 }
-function details(index: number) {
+let detailAnchor: HTMLElement | undefined;
+function details(index: number, anchor?: HTMLElement) {
   const line = lastEvaluated?.lines[index];
   if (!line) return;
   el("detail-expression").textContent = sourceTitle(line);
@@ -202,7 +201,13 @@ function details(index: number) {
   ]
     .filter(Boolean)
     .join("\n\n");
-  el<HTMLDialogElement>("details").showModal();
+  const panel = el<HTMLDialogElement>("details");
+  detailAnchor = anchor;
+  panel.show();
+  const bounds = anchor?.getBoundingClientRect();
+  panel.style.left = `${Math.max(12, Math.min(window.innerWidth - panel.offsetWidth - 12, (bounds?.right ?? window.innerWidth) - panel.offsetWidth))}px`;
+  panel.style.top = `${Math.max(12, Math.min(window.innerHeight - panel.offsetHeight - 12, bounds?.bottom ?? 60))}px`;
+  el("detail-copy").focus();
 }
 class ResultMarker extends GutterMarker {
   constructor(
@@ -230,7 +235,7 @@ class ResultMarker extends GutterMarker {
       "aria-label",
       `Line ${this.index + 1}: ${this.full}. Show details`,
     );
-    button.onclick = () => details(this.index);
+    button.onclick = () => details(this.index, button);
     return button;
   }
 }
@@ -777,7 +782,9 @@ el("context-button").onclick = () => {
   el<HTMLInputElement>("timezone").value = s.timezone;
   el<HTMLInputElement>("partial").checked = s.billing === "include-partial";
   el("date-label").hidden = s.anchor.mode !== "fixed";
-  el<HTMLDialogElement>("settings").showModal();
+  const panel = el<HTMLDialogElement>("settings");
+  panel.show();
+  el("anchor-mode").focus();
 };
 el("anchor-mode").onchange = () => {
   el("date-label").hidden =
@@ -807,7 +814,27 @@ el<HTMLFormElement>("settings-form").onsubmit = (event) => {
     report(error);
   }
 };
-el("detail-close").onclick = () => el<HTMLDialogElement>("details").close();
+el("detail-close").onclick = () => {
+  el<HTMLDialogElement>("details").close();
+  detailAnchor?.focus();
+};
+for (const id of ["details", "settings"]) {
+  const panel = el<HTMLDialogElement>(id);
+  panel.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      panel.close();
+      if (id === "details") detailAnchor?.focus();
+      else view.focus();
+    }
+  });
+}
+document.addEventListener("pointerdown", (event) => {
+  for (const id of ["details", "settings"]) {
+    const panel = el<HTMLDialogElement>(id);
+    if (panel.open && !panel.contains(event.target as Node)) panel.close();
+  }
+});
 el("detail-copy").onclick = () => {
   void navigator.clipboard.writeText(resultCopy).catch(report);
 };
@@ -910,4 +937,46 @@ void listen<string>("figori-menu", (event) => {
   else if (event.payload === "open") void open();
   else if (event.payload === "save") void save();
   else if (event.payload === "save-as") void save(true);
+  else if (event.payload === "context" && !busy && !initializing)
+    el("context-button").click();
 });
+
+// Native chrome is opt-in only after the platform bridge has attached successfully.
+await listen<{ font: string; size: number; spacing: number; theme: string }>(
+  "figori-appearance",
+  (event) => {
+    const value = event.payload;
+    typography = normalizeTypography(value);
+    const theme = ["dark", "light", "system"].includes(value.theme)
+      ? value.theme
+      : "dark";
+    localStorage.setItem("typography", JSON.stringify(typography));
+    localStorage.setItem("theme", theme);
+    applyTheme(theme);
+    applyTypography();
+    void document.fonts.ready.then(() => {
+      measureResultGutter();
+      positionColumnSplitter();
+    });
+  },
+);
+try {
+  const ready = await invoke<boolean>("configure_chrome", {
+    appearance: {
+      ...typography,
+      theme: localStorage.getItem("theme") ?? "dark",
+    },
+  });
+  if (ready) {
+    document.body.classList.add("native-chrome");
+    const precisionControl = document.querySelector(".precision");
+    if (precisionControl)
+      el("settings-form").insertBefore(
+        precisionControl,
+        el("settings-form").querySelector(".dialog-actions"),
+      );
+    measureResultGutter();
+  }
+} catch {
+  /* Older builds keep the fully functional Linux/webview toolbar. */
+}

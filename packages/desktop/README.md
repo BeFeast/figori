@@ -25,3 +25,9 @@ The editor suggests prior worksheet variables and supported date phrases, units,
 Currency names are case-insensitive (`usd`, `USD`, `EUR`); results use familiar symbols (`$`, `€`, `£`, `₪`) while the calculation retains ISO currency codes. Both `10 USD in EUR` and `10 USD to EUR` use the explicit cached rate snapshot. Refresh rates when the cache lacks a currency.
 
 Appearance (toolbar sliders icon) controls theme, bundled JetBrains Mono Nerd Font or system mono, text size and line spacing. Preferences stay local and never modify worksheet content or its dirty state. Source and results share typography and refresh their measured alignment after changes. Nerd Font files are bundled offline with their licenses; system fallback renders additional scripts and the shekel symbol.
+
+## Desktop interaction patterns
+
+The worksheet remains the single job of the window, following Soulver's focused editing model. On macOS, AppKit provides the real SF Symbols toolbar and native Settings window (Cmd+,); the frontend hides its Linux fallback only after the native bridge confirms attachment. Settings changes arrive through figori-appearance and persist as local preferences without modifying the worksheet.
+
+Result details borrow the compact, contextual disclosure pattern of CleanShot: a non-modal panel beside the selected result, with Copy and Escape, without a full-window scrim. Calculation context is also a compact non-modal panel. HedRoom's colors remain; MacPaw-inspired grouping does not add dashboards or sidebars. Reduced Motion disables frontend motion. Native controls supply platform accessibility; worksheet result buttons retain descriptive accessible labels.

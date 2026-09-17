@@ -630,3 +630,46 @@ dialog {
     flex-shrink: 0;
   }
 }
+
+/* Native AppKit chrome owns navigation and Settings on macOS. */
+.native-chrome header,
+.native-chrome > .context {
+  display: none;
+}
+.currency-glyph {
+  font-family: Heebo, Arial, sans-serif !important;
+  float: none !important;
+}
+#details {
+  position: fixed;
+  margin: 0;
+  width: min(390px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  padding: 18px;
+  overflow: auto;
+  z-index: 1000;
+}
+#details .dialog-actions {
+  margin-top: 12px;
+}
+#detail-result {
+  font-size: 17px;
+}
+#settings {
+  position: fixed;
+  margin: 0;
+  inset: 14px 14px auto auto;
+  width: min(370px, calc(100vw - 28px));
+  max-height: calc(100vh - 28px);
+  overflow: auto;
+  z-index: 1000;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -137,7 +137,7 @@
       <span id="line-status">Type freely. Results appear beside each line.</span
       ><button id="rates" title="Refresh exchange rates">Exchange rates</button>
     </footer>
-    <dialog id="settings">
+    <dialog id="settings" aria-label="Calculation context">
       <form id="settings-form">
         <h2>Calculation context</h2>
         <label
@@ -165,7 +165,7 @@
     <dialog id="appearance" aria-labelledby="appearance-title">
       <form id="appearance-form">
         <h2 id="appearance-title">Appearance</h2>
-        <p class="dialog-caption">Make room for your thoughts.</p>
+
         <label
           >Theme<select id="theme">
             <option value="dark">Dark</option>
@@ -201,7 +201,7 @@
           >
         </div>
         <p class="font-preview" id="font-preview">
-          rent × 12 <span>₪12,600</span>
+          rent × 12 <span><span class="currency-glyph">₪</span>12,600</span>
         </p>
         <div class="dialog-actions">
           <button type="button" id="appearance-cancel">Cancel</button
@@ -209,7 +209,7 @@
         </div>
       </form>
     </dialog>
-    <dialog id="details">
+    <dialog id="details" aria-labelledby="detail-expression">
       <h2 id="detail-expression"></h2>
       <pre id="detail-result"></pre>
       <p id="detail-basis"></p>
