@@ -1,0 +1,163 @@
+{
+  "context": "Fixed UTC date; synthetic EUR/USD/ILS rates for reproducible verification. App currency conversion uses its own explicitly refreshed rate snapshot.",
+  "checks": [
+    {
+      "name": "trip-budget",
+      "expressions": 12,
+      "results": [
+        {
+          "expression": "3",
+          "result": "3"
+        },
+        {
+          "expression": "6",
+          "result": "6"
+        },
+        {
+          "expression": "€185 * nights",
+          "result": "€1110.00"
+        },
+        {
+          "expression": "€329 * travelers",
+          "result": "€987.00"
+        },
+        {
+          "expression": "€42 * travelers * 7",
+          "result": "€882.00"
+        },
+        {
+          "expression": "hotel + flights + food",
+          "result": "€2979.00"
+        },
+        {
+          "expression": "12%",
+          "result": "0.12"
+        },
+        {
+          "expression": "subtotal + contingency",
+          "result": "€3336.48"
+        },
+        {
+          "expression": "trip / travelers",
+          "result": "€1112.16"
+        },
+        {
+          "expression": "trip to USD",
+          "result": "$3670.13"
+        },
+        {
+          "expression": "trip to NIS",
+          "result": "₪13345.92"
+        },
+        {
+          "expression": "trip + €250",
+          "result": "€3586.48"
+        }
+      ]
+    },
+    {
+      "name": "consulting-project",
+      "expressions": 13,
+      "results": [
+        {
+          "expression": "18",
+          "result": "18"
+        },
+        {
+          "expression": "64",
+          "result": "64"
+        },
+        {
+          "expression": "12",
+          "result": "12"
+        },
+        {
+          "expression": "$145",
+          "result": "$145.00"
+        },
+        {
+          "expression": "(research_hours + build_hours + review_hours) * hourly_rate",
+          "result": "$13630.00"
+        },
+        {
+          "expression": "$1,275.50",
+          "result": "$1275.50"
+        },
+        {
+          "expression": "work + expenses",
+          "result": "$14905.50"
+        },
+        {
+          "expression": "8%",
+          "result": "0.08"
+        },
+        {
+          "expression": "proposal - repeat_client",
+          "result": "$13713.06"
+        },
+        {
+          "expression": "15%",
+          "result": "0.15"
+        },
+        {
+          "expression": "discounted + reserve",
+          "result": "$15770.02"
+        },
+        {
+          "expression": "40% of quoted",
+          "result": "$6308.01"
+        },
+        {
+          "expression": "quoted - deposit",
+          "result": "$9462.01"
+        }
+      ]
+    },
+    {
+      "name": "calendar-plan",
+      "expressions": 10,
+      "results": [
+        {
+          "expression": "15 jan 2027",
+          "result": "2027-01-15"
+        },
+        {
+          "expression": "kickoff + 3 months",
+          "result": "2027-04-15"
+        },
+        {
+          "expression": "launch - 14 days",
+          "result": "2027-04-01"
+        },
+        {
+          "expression": "(launch - kickoff) in weeks",
+          "result": "12 weeks 6 days"
+        },
+        {
+          "expression": "(launch - kickoff) in days",
+          "result": "90 days"
+        },
+        {
+          "expression": "(review - kickoff) in days",
+          "result": "76 days"
+        },
+        {
+          "expression": "$1,800",
+          "result": "$1800.00"
+        },
+        {
+          "expression": "((launch - kickoff) in months) * monthly",
+          "result": "$5400.00"
+        },
+        {
+          "expression": "launch + 6 weeks",
+          "result": "2027-05-27"
+        },
+        {
+          "expression": "(phase_two - kickoff) in weeks",
+          "result": "18 weeks 6 days"
+        }
+      ]
+    }
+  ]
+}

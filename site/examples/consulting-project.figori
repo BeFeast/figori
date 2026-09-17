@@ -1,0 +1,34 @@
++++
+format = "figori"
+schema_version = 1
+id = "d6b88f6d-95cc-4d1b-919e-bcdc3de7acf9"
+source_format = "markdown"
+line_ids = [ "78b98fd4-da23-4d2d-9ee7-352030c8298c", "ca460ef6-5fcb-49dd-8e90-bc153095de8c", "9a667011-e0c3-4be2-b38c-d29a429d28a9", "e7477c9c-763b-406c-a97c-3080a90e3570", "39477e4c-1af7-473e-a7f2-37b2c7d0bfb3", "e84fbfab-4db4-4fee-9ade-9f18db2e4eb4", "8af1be63-0ae1-4cfa-b4fe-56c8122cef3f", "ae44ea79-f44a-41da-8b51-42b06b2f0ab6", "8eb16b7f-777c-4832-8f8f-15715d37870c", "d48c67e3-654e-4028-b379-6c5ea1ea6152", "8681e753-c2ff-44c1-869f-0227c4fb44cb", "5aa99766-5ba2-4eff-b6da-e44cc712c0e9", "7f470b2b-5cc1-4097-b728-39073e31339d", "4e9ca49e-99f0-4adc-a72d-e496072c1931", "6c3b765f-2c67-4c82-a85d-4f3e213e997e", "9923f306-93c1-4fa9-9e8d-5c97fa0a97e9", "76f9062f-75e1-414c-918b-dfe72ee614e8", "25ea057d-4e09-4443-ac31-4f443077740d", "1418563c-3751-49a0-a24f-fe290e17b2a4" ]
+
+[settings]
+timezone = "UTC"
+billing = "completed"
+
+[settings.anchor]
+mode = "fixed"
+date = "2027-01-15"
++++
+# From scope to proposal
+research_hours = 18
+build_hours = 64
+review_hours = 12
+hourly_rate = $145
+work = (research_hours + build_hours + review_hours) * hourly_rate
+expenses = $1,275.50
+proposal = work + expenses
+
+## A discount, then a contingency
+repeat_client = 8%
+discounted = proposal - repeat_client
+reserve = 15%
+quoted = discounted + reserve
+deposit = 40% of quoted
+balance = quoted - deposit
+
+### Split the delivery
+balance / 3

@@ -1,0 +1,32 @@
++++
+format = "figori"
+schema_version = 1
+id = "f22a3e7a-469e-49c8-932d-1eb843702f96"
+source_format = "markdown"
+line_ids = [ "dd3f68a5-dc17-41ee-9af4-2f7fb85b328c", "dd7041f8-e2b9-4368-a9ac-70376fee32a3", "4e62ae29-63c1-4325-9174-a6ade48c2fff", "4ffa2738-dfcb-4dc8-b0e5-6c3f185f946d", "f731c94f-9d10-4692-acb6-3f9cf0c62699", "398c04b8-fbaf-478d-9c3b-16c02c461de8", "6532726d-adb0-4dec-9498-26123e21e699", "7c341573-f3ac-4591-859d-d903267f5d4f", "b95c860d-f29d-406d-868a-cd5ab282313d", "0e9e4ac9-d7c5-417c-869f-1648c294f7de", "21f174a0-fd33-4509-8e60-e5214b0b7f0a", "cb276e68-04a4-435d-a77e-e90ef68f976f", "aecc8f5e-8f32-4cd8-9fcc-80ef7b9741eb", "1be1e0a2-5448-4e6d-a212-4e02f358f6a7", "7f9751c6-8170-40e2-a2d6-6259c93a9a95", "a6d8058a-5c16-4ec7-b203-6b977bfb0f61", "9ed0322f-927e-4169-a528-913742002123" ]
+
+[settings]
+timezone = "UTC"
+billing = "completed"
+
+[settings.anchor]
+mode = "fixed"
+date = "2027-01-15"
++++
+# A week away, without the guesswork
+travelers = 3
+nights = 6
+hotel = €185 * nights
+flights = €329 * travelers
+food = €42 * travelers * 7
+subtotal = hotel + flights + food
+contingency = 12%
+trip = subtotal + contingency
+per_person = trip / travelers
+
+## One budget, two currencies
+trip to USD
+trip to NIS
+
+### A little room for the unexpected
+trip + €250
