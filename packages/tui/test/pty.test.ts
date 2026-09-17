@@ -36,7 +36,7 @@ test.skipIf(process.platform !== "linux")("real PTY edits, saves, exits, and reo
   let active: ReturnType<typeof launch> | undefined;
   try {
     active = launch();
-    await active.waitFor("My Numi");
+    await active.waitFor("Figori");
     active.child.stdin.write("12+3");
     await active.waitFor("15");
     active.child.stdin.write("\x13");
@@ -44,7 +44,7 @@ test.skipIf(process.platform !== "linux")("real PTY edits, saves, exits, and reo
     await active.exit();
     expect((await readdir(directory)).filter(path => path.endsWith(".json")).length).toBe(2);
     active = launch();
-    await active.waitFor("My Numi");
+    await active.waitFor("Figori");
     active.child.stdin.write("\x0f");
     await active.waitFor("Open saved worksheet");
     active.child.stdin.write("1\r");

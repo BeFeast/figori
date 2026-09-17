@@ -1,6 +1,6 @@
 # CLI protocol v1
 
-Expression mode retains the text/`--json` flags documented at the repository root. UI adapters invoke `my-numi --request` with a single JSON object followed by newline on stdin. The process emits one JSON response and exits; closing stdin is not required. Source text, paths, and settings never become shell commands. Requests are capped at 2 MB.
+Expression mode retains the text/`--json` flags documented at the repository root. UI adapters invoke `figori --request` with a single JSON object followed by newline on stdin. The process emits one JSON response and exits; closing stdin is not required. Source text, paths, and settings never become shell commands. Requests are capped at 2 MB.
 
 ```json
 {
@@ -31,6 +31,6 @@ Responses are `{version:1,id,ok:true,data}` or `{version:1,id,ok:false,diagnosti
 | `rates.load`        | —                                                                                   | Local rate cache state; no network                           |
 | `rates.refresh`     | —                                                                                   | Explicit provider refresh/cache state; bounded timeout       |
 
-Optional `directory` overrides worksheet storage for a request. Otherwise `MY_NUMI_DATA_DIR` wins, then `$XDG_DATA_HOME/my-numi/worksheets`, then `~/.local/share/my-numi/worksheets`. Rates use a `rates` subdirectory of that store. Saved settings are validated; partial settings updates retain unmentioned saved settings. To reinterpret a saved document's source format, explicitly import as a new document.
+Optional `directory` overrides worksheet storage for a request. Otherwise `FIGORI_DATA_DIR` wins, then legacy `MY_NUMI_DATA_DIR`, then `$XDG_DATA_HOME/my-numi/worksheets`, then `~/.local/share/my-numi/worksheets`. Rates use a `rates` subdirectory of that store. Saved settings are validated; partial settings updates retain unmentioned saved settings. To reinterpret a saved document's source format, explicitly import as a new document.
 
 The response id and the UI's own source revision should both match before displaying an evaluation. A stale load must not overwrite new edits. Persist and restore dynamic versus fixed anchor mode, not merely a result's resolved current date.

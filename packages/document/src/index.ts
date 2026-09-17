@@ -182,7 +182,7 @@ export function evaluateDocument<V, C extends Record<string, unknown>>(
 
 export function serializeNumi(document: Worksheet): { text: string; warnings: string[] } {
   const warnings = [
-    "Numi text does not carry worksheet timezone, dynamic/fixed anchor, or monthly billing policy. Keep the My Numi sidecar or saved worksheet.",
+    "Numi text does not carry worksheet timezone, dynamic/fixed anchor, or monthly billing policy. Keep the Figori sidecar or saved worksheet.",
     "Text compatibility does not guarantee identical native Numi calendar or currency results.",
   ];
   if (document.format === "numi") return { text: document.source, warnings };

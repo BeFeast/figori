@@ -11,7 +11,10 @@ import { applyEdit, createEditor, cursorPosition, displayWidth, fit, newlineFor,
 export interface TuiOptions { directory?: string; source?: string; format?: SourceFormat; id?: string }
 interface Prompt { label: string; value: string; details?: string[]; submit: (value: string) => Promise<void> | void }
 export function defaultDirectory(): string {
-  return process.env.MY_NUMI_DATA_DIR ?? join(process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"), "my-numi", "worksheets");
+  return process.env.FIGORI_DATA_DIR ?? process.env.MY_NUMI_DATA_DIR ?? join(process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"), "my-numi", "worksheets");
+}
+export function brandHeader(text: string, env = process.env): string {
+  return env.NO_COLOR !== undefined ? text : `\x1b[1;92m${text}\x1b[0m`;
 }
 function pathFromInput(value: string): string {
   return resolve(value.startsWith("~/") ? join(homedir(), value.slice(2)) : value);
@@ -85,7 +88,7 @@ export async function runTui(options: TuiOptions = {}): Promise<void> {
     const resolved = results.lines.find((line) => line.evaluation?.basis)?.evaluation?.basis as { anchorDate?: string } | undefined;
     const settings = editor.document.settings;
     const lines: string[] = [
-      fit(`My Numi ${editor.dirty ? "*" : ""}  ${editor.document.id}${busy ? "  working..." : ""}`, columns),
+      brandHeader(fit(`Figori ${editor.dirty ? "*" : ""}  ${editor.document.id}${busy ? "  working..." : ""}`, columns)),
       fit(`Anchor ${settings.anchor.mode === "fixed" ? settings.anchor.date : "today → " + (resolved?.anchorDate ?? new Intl.DateTimeFormat("en-CA", {timeZone: settings.timezone, year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date()))} | ${settings.timezone} | billing ${settings.billing}`, columns),
       fit(`Rates ${rates.status}${rates.snapshot ? " | " + rates.snapshot.source + " | " + rates.snapshot.asOf : ""}${refreshing ? " | refreshing" : ""}`, columns),
     ];
@@ -208,7 +211,7 @@ export async function runTui(options: TuiOptions = {}): Promise<void> {
         prompt = { label: "Export .numi path (refuses existing files; includes settings sidecar)", value: "", submit: async (value) => {
           if (!value) throw new Error("An export path is required");
           const result = await exportNumi(editor.document, pathFromInput(value));
-          status = "Exported text + sidecar. Native Numi does not apply My Numi anchor/billing settings.";
+          status = "Exported text + sidecar. Native Numi does not apply Figori anchor/billing settings.";
           void result;
         } };
       } else if (key.name === "a") {

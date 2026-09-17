@@ -60,7 +60,7 @@ checksum mismatch fails visibly. Explicit `readSidecar: false` recovers the text
 without applying potentially stale settings. No automatic file synchronization
 is provided.
 
-Numi does not carry My Numi anchor/timezone/billing policy in its text format.
+Numi does not carry Figori anchor/timezone/billing policy in its text format.
 Text interchange does not imply numerical calendar compatibility. Reopening the
 export in actual Numi is a separate macOS acceptance step.
 

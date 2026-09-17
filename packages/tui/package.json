@@ -8,7 +8,7 @@
     "start": "bun src/main.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "build": "bun build src/main.ts --target=bun --compile --outfile ../../dist/my-numi-tui"
+    "build": "bun build src/main.ts --target=bun --compile --outfile ../../dist/figori-tui"
   },
   "dependencies": {
     "@my-numi/core": "workspace:*",
