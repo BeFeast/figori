@@ -7,7 +7,7 @@
 
 **Your numbers, in context.**
 
-A local-first calculator worksheet for **Raycast, the terminal, and Omarchy**. Write calculations beside your notes; see the date anchor, timezone and currency basis behind the answer.
+A local-first calculator worksheet with a **standalone desktop app**, plus Raycast, terminal and Omarchy integrations. Write calculations beside your notes and see results beside each line, with the date anchor, timezone and currency basis behind the answer.
 
 ## Inspired by Numi
 
@@ -20,11 +20,13 @@ Figori uses an independent calculation engine. It supports **UTF-8 plain-text `.
 - **Calendar-aware calculation:** distinguish calendar dates, zoned instants and elapsed durations. Calendar months and years keep their calendar meaning.
 - **Visible context:** unanchored date conversions use dynamic today; pin another date and choose an IANA timezone when needed.
 - **Whole monthly periods:** count completed rental-anchored months, optionally including the trailing incomplete period. No hidden default proration.
-- **One shared engine:** TypeScript + Temporal across Raycast, terminal and the native Omarchy panel.
+- **One shared engine:** TypeScript + Temporal across the desktop app, Raycast, terminal and the native Omarchy panel.
 - **Local worksheets:** preserve headings, Unicode, assignments, unsupported lines and diagnostics. Atomic saves and recovery copies retain your work.
 - **Explicit exchange rates:** refresh the public ECB ILS/USD pair through Frankfurter, then use its cached snapshot offline with visible source/date/status. No worksheet content is sent to the rate provider.
 
 ## Quickstart
+
+The standalone app provides a multiline worksheet editor, inline results and native file open/save. Build the current macOS app from source using the [desktop build guide](docs/desktop-build.md); desktop release and GUI acceptance status are recorded separately from CLI releases.
 
 Download the CLI for your platform from [Releases](https://git.oklabs.uk/BeFeast/figori/releases) and follow the [installation guidance](docs/releases.md).
 
@@ -38,7 +40,7 @@ Preview status and platform notes accompany each release.
 
 ## Numi files and intentional differences
 
-Native assignment syntax such as `price = 12` remains an assignment. Captured Markdown expressions with historical `= result` values are imported separately; old results are comparison snapshots, not current answers. Imports preserve source files, and exports refuse existing destinations by default.
+Native assignment syntax such as `price = 12` remains an assignment. Captured Markdown expressions with historical `= result` values are imported separately; old results are comparison snapshots, not current answers. Imports preserve source files. CLI exports refuse existing destinations by default; the desktop Save action updates the opened file with conflict detection, and Save As uses the native destination dialog.
 
 A `.numi` export remains plain UTF-8 text. Figori-only anchor, timezone and monthly-count settings live in a **separate sidecar/application storage**, never a JSON envelope inside the interoperable file. Native Numi does not apply this metadata. Unsupported syntax stays visible with a diagnostic rather than disappearing.
 
@@ -77,6 +79,7 @@ Unsupported syntax produces diagnostics: v0 does not promise arbitrary natural l
 
 **Figori** is the product name. **My Numi** was its working name. Existing compatibility identifiers, package names, data directories and the `my-numi` command are retained where needed so branding does not orphan saved worksheets or break existing integrations. Do not rename user storage manually.
 
+- [Standalone desktop app and build guide](docs/desktop-build.md)
 - [Brand assets and usage](docs/branding.md)
 - [Raycast package](packages/raycast/README.md)
 - [Terminal package](packages/tui/README.md)

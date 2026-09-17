@@ -1,0 +1,48 @@
+name: Desktop macOS (manual)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos:
+    runs-on: macos
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify existing host toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.local/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$PATH"
+          printf '%s\n' "$HOME/.local/bin" "$HOME/.bun/bin" "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          test "$(uname -s)" = Darwin
+          test "$(uname -m)" = arm64
+          xcodebuild -version
+          xcrun --find clang
+          bun --version
+          rustc --version
+          cargo --version
+      - name: Install locked project dependencies
+        run: bun install --frozen-lockfile
+      - name: Check desktop frontend
+        run: |
+          bun run --cwd packages/desktop typecheck
+          bun run --cwd packages/desktop test
+      - name: Build unsigned application
+        run: bun run --cwd packages/desktop tauri build --bundles app
+      - name: Archive application with source receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d packages/desktop/src-tauri/target/release/bundle/macos/Figori.app
+          mkdir -p dist/desktop
+          ditto -c -k --sequesterRsrc --keepParent packages/desktop/src-tauri/target/release/bundle/macos/Figori.app dist/desktop/figori-macos-arm64.zip
+          git rev-parse HEAD > dist/desktop/SOURCE_COMMIT
+          shasum -a 256 dist/desktop/figori-macos-arm64.zip > dist/desktop/SHA256SUMS
+      - name: Upload Forgejo build artifact
+        uses: https://code.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: figori-desktop-macos-arm64
+          path: dist/desktop/
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,1 @@
+{"identifier":"main-window","description":"Local Figori worksheet window controls and drag/drop events","windows":["main"],"permissions":["core:default","core:window:allow-close","core:window:allow-destroy","core:window:allow-set-title"]}

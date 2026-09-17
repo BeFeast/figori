@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Figori</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <span class="brand" aria-label="Figori">ƒ<span>Figori</span></span>
+      <div class="file-heading">
+        <strong id="filename">Untitled</strong
+        ><span id="save-status">New worksheet</span>
+      </div>
+      <nav aria-label="File actions">
+        <button id="new" title="New worksheet (⌘N)">New</button
+        ><button id="open" title="Open file (⌘O)">Open</button
+        ><button id="save" title="Save (⌘S)">Save</button
+        ><button id="save-as" title="Save as (⌘⇧S)">Save as</button>
+      </nav>
+    </header>
+    <div class="context">
+      <button id="context-button" title="Date and timezone settings">
+        Today</button
+      ><label class="precision"
+        >Decimals
+        <select id="precision" aria-label="Decimal places">
+          <option>0</option>
+          <option>1</option>
+          <option selected>2</option>
+          <option>3</option>
+          <option>4</option>
+          <option>6</option>
+        </select></label
+      >
+    </div>
+    <div id="notice" role="status" hidden></div>
+    <main id="editor" aria-label="Calculation worksheet"></main>
+    <footer>
+      <span id="line-status">Type freely. Results appear beside each line.</span
+      ><button id="rates" title="Refresh exchange rates">Exchange rates</button>
+    </footer>
+    <dialog id="settings">
+      <form id="settings-form">
+        <h2>Calculation context</h2>
+        <label
+          >Date anchor<select id="anchor-mode">
+            <option value="today">Today — follows the calendar</option>
+            <option value="fixed">Pinned date</option>
+          </select></label
+        ><label id="date-label"
+          >Pinned date<input id="anchor-date" type="date" /></label
+        ><label
+          >Timezone<input
+            id="timezone"
+            value="Asia/Jerusalem"
+            required /></label
+        ><label class="check"
+          ><input id="partial" type="checkbox" />Include a trailing partial
+          billing month</label
+        ><label
+          >Appearance<select id="theme">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="system">System</option>
+          </select></label
+        >
+        <div class="dialog-actions">
+          <button type="button" id="settings-cancel">Cancel</button
+          ><button type="submit" class="primary">Apply</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="details">
+      <h2 id="detail-expression"></h2>
+      <pre id="detail-result"></pre>
+      <p id="detail-basis"></p>
+      <div class="dialog-actions">
+        <button id="detail-copy">Copy result</button
+        ><button id="detail-close" class="primary">Done</button>
+      </div>
+    </dialog>
+    <script type="module" src="main.js"></script>
+  </body>
+</html>

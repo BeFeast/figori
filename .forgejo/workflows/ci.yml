@@ -19,3 +19,8 @@ jobs:
       - run: bun run build
       - name: Build and typecheck Raycast extension
         run: bun run --cwd packages/raycast build
+
+      - name: Check and build desktop frontend
+        run: |
+          bun run --cwd packages/desktop typecheck
+          bun run --cwd packages/desktop build
