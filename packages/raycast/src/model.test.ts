@@ -42,3 +42,25 @@ describe("visible evaluation context", () => {
     expect(contextFor(defaults, now).billing).toBe("completed");
   });
 });
+
+test("captured result rows display only the expression while source remains intact", async () => {
+  const { expressionTitle } = await import("./model");
+  const captured = {
+    source: "Duration: 2 months in days = 61 days",
+    expression: "2 months in days",
+    label: "Duration",
+    historicalResult: "61 days",
+  };
+  expect(expressionTitle(captured)).toBe("Duration: 2 months in days");
+  expect(captured.source).toBe("Duration: 2 months in days = 61 days");
+  expect(
+    expressionTitle({
+      source: "price = 12",
+      expression: "12",
+      assignment: "price",
+    }),
+  ).toBe("price = 12");
+  expect(expressionTitle({ source: "Saved heading", expression: "" })).toBe(
+    "Saved heading",
+  );
+});

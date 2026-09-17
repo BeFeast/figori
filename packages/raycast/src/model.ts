@@ -105,3 +105,20 @@ export function basisDescription(value: unknown): string {
     .filter(Boolean)
     .join("\n");
 }
+
+/** Hide captured output in result rows without changing the saved source. */
+export function expressionTitle(line: {
+  source: string;
+  expression: string;
+  historicalResult?: string;
+  assignment?: string;
+  label?: string;
+}): string {
+  if (line.historicalResult === undefined) return line.source;
+  const prefix = line.assignment
+    ? `${line.assignment} = `
+    : line.label
+      ? `${line.label}: `
+      : "";
+  return prefix + line.expression;
+}

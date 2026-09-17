@@ -7,7 +7,8 @@ JavaScript or shell code.
 ## API
 
 - `importDocument(source, {format, id?, settings?})` creates an independent worksheet.
-  Specify `markdown` for captured worksheets and `numi` for native plain text.
+  Specify `markdown` for Markdown export behavior and `numi` for native plain text.
+  Both formats recognize unambiguous captured `expression = result` lines.
 - `updateDocument(document, source)` keeps unchanged/moved line identities and
   reuses identities for edited lines. Duplicate lines retain occurrence order.
 - `evaluateDocument(document, evaluateExpression, context)` resolves assignments
@@ -20,7 +21,7 @@ JavaScript or shell code.
   and `billing: "completed" | "include-partial"`. Rates are evaluation context,
   not silently fetched by this package.
 
-For captured Markdown, `price = 25` is an assignment; `price * 4 = 100`
+In both formats, `price = 25` is an assignment; `price * 4 = 100`
 contains a historical result. `next = price * 5 = 125` combines both.
 Reserved `today` and `now` on the left identify captured expressions.
 A bare identifier with a single equals is inherently ambiguous and deliberately
@@ -65,3 +66,5 @@ Text interchange does not imply numerical calendar compatibility. Reopening the
 export in actual Numi is a separate macOS acceptance step.
 
 Run `bun test packages/document` from the repository root. Fixtures are synthetic.
+
+Saved worksheets are reparsed from their preserved source when loaded. Old imported rows with stale `= result` parsing therefore recover without re-import, source rewriting, or changes to line identities. Historical results remain metadata, never assertions that the current result must match.

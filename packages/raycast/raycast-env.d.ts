@@ -19,6 +19,8 @@ declare namespace Preferences {
   export type Worksheets = ExtensionPreferences & {}
   /** Preferences accessible in the `new-worksheet` command */
   export type NewWorksheet = ExtensionPreferences & {}
+  /** Preferences accessible in the `open-numi-file` command */
+  export type OpenNumiFile = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
@@ -28,5 +30,7 @@ declare namespace Arguments {
   export type Worksheets = {}
   /** Arguments passed to the `new-worksheet` command */
   export type NewWorksheet = {}
+  /** Arguments passed to the `open-numi-file` command */
+  export type OpenNumiFile = {}
 }
 
