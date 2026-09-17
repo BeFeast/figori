@@ -93,6 +93,7 @@ function parseLine(raw: string, ending: string, format: SourceFormat): DocumentL
   const plainHeading = /^[\p{L}][\p{L}\p{N}\s/()'’"—–#\-]*$/u.test(text.replace(/\?$/, ""))
     && !/^(?:years?|months?|weeks?|days?)\s+(?:since|until)\b/i.test(text)
     && !/\bto\s+(?:USD|EUR|ILS|NIS|GBP|[$€₪£])(?:\s|$)/i.test(text)
+    && !/^[A-Za-z][A-Za-z ]*?\s+was\s+(?:[$€₪£]|[+\-(\d])/i.test(text)
     && !/\p{L}\(/u.test(text)
     && !/\b(?:today|now|previous|in)\b/i.test(text)
     && !(/\d/.test(text) && /\b(?:years?|months?|weeks?|days?|hours?|minutes?|seconds?|nis|ils|usd|eur|gbp)\b/i.test(text));

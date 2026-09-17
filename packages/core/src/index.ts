@@ -481,6 +481,7 @@ const fullNames = [
 ];
 class Parser {
   pos = 0;
+  percentages = new WeakSet<object>();
   constructor(
     public text: string,
     public ctx: EvaluationContext,
@@ -498,6 +499,18 @@ class Parser {
     return m;
   }
   expression(): Value {
+    const annotationStart = this.pos;
+    const annotation = this.match(/^([A-Za-z][A-Za-z ]*?)\s+was\s+/i);
+    if (annotation) {
+      if (
+        annotation[1]
+          .trim()
+          .split(/\s+/)
+          .some((name) => Object.hasOwn(this.ctx.variables ?? {}, name))
+      )
+        this.pos = annotationStart;
+      else this.basis.notes.push(`Descriptive label: ${annotation[1].trim()}.`);
+    }
     const question = this.match(
       /^(years?|months?|weeks?|days?)\s+(since|until)\b/i,
     );
@@ -546,15 +559,30 @@ class Parser {
     for (;;) {
       const op = this.match(/^[+-]/);
       if (!op) return a;
-      a = binary(a, op[0], this.product(), this.ctx, this.basis);
+      let b = this.product();
+      if (this.percentages.has(b)) {
+        this.basis.notes.push(
+          "Added/subtracted percentage is relative to the preceding amount.",
+        );
+        b = binary(a, "*", b, this.ctx, this.basis);
+      }
+      a = binary(a, op[0], b, this.ctx, this.basis);
     }
   }
   product(): Value {
     let a = this.unary();
     for (;;) {
-      const op = this.match(/^[*/]/);
+      const op =
+        this.match(/^[*/]/) ??
+        (this.percentages.has(a) ? this.match(/^of\b/i) : null);
       if (!op) return a;
-      a = binary(a, op[0], this.unary(), this.ctx, this.basis);
+      a = binary(
+        a,
+        op[0].toLowerCase() === "of" ? "*" : op[0],
+        this.unary(),
+        this.ctx,
+        this.basis,
+      );
     }
   }
   unary(): Value {
@@ -566,13 +594,15 @@ class Parser {
           "incompatible_types",
           "Unary sign requires a numeric value.",
         );
-      return {
+      const signed: Value = {
         ...v,
         ...(v.kind === "quantity" && op[0] === "-"
           ? { interval: undefined }
           : {}),
         amount: op[0] === "-" ? new D(v.amount).neg().toString() : v.amount,
       };
+      if (this.percentages.has(v)) this.percentages.add(signed);
+      return signed;
     }
     return this.postfix();
   }
@@ -582,6 +612,7 @@ class Parser {
       if (v.kind !== "number")
         fail("incompatible_types", "Percent requires a number.");
       v = num(new D(v.amount).div(100));
+      this.percentages.add(v);
     }
     const saved = this.pos;
     const suffix = this.match(/^(?:[A-Za-z]+\b|[$€₪£])/);
@@ -592,6 +623,13 @@ class Parser {
       else if (v.kind === "number" && units.has(u))
         v = { kind: "quantity", amount: v.amount, unit: u };
       else this.pos = saved;
+    }
+    const annotationStart = this.pos;
+    const annotation = this.match(/^(?:earnings|people|persons?|tip)\b/i);
+    if (annotation) {
+      if (Object.hasOwn(this.ctx.variables ?? {}, annotation[0]))
+        this.pos = annotationStart;
+      else this.basis.notes.push(`Descriptive annotation: ${annotation[0]}.`);
     }
     return v;
   }
@@ -664,7 +702,22 @@ class Parser {
       );
     }
     const n = this.match(/^(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?/i);
-    if (n) return num(n[0]);
+    if (n) {
+      const multiplier = this.text
+        .slice(this.pos)
+        .match(/^(k|K|M|B)(?![A-Za-z0-9_])/);
+      if (multiplier) {
+        this.pos += multiplier[0].length;
+        const factor =
+          multiplier[0].toLowerCase() === "k"
+            ? 1000
+            : multiplier[0] === "M"
+              ? 1000000
+              : 1000000000;
+        return num(new D(n[0]).mul(factor));
+      }
+      return num(n[0]);
+    }
     const id = this.match(/^[A-Za-z_][\w]*/);
     if (id) {
       const v =
@@ -826,7 +879,10 @@ export function evaluateExpression(
           ).toString()
         : now.toPlainDate().toString();
     const parser = new Parser(
-      source.replace(/\u00a0/g, " "),
+      source
+        .replace(/\u00a0/g, " ")
+        .replace(/÷/g, "/")
+        .replace(/×/g, "*"),
       context,
       basis,
       now,
