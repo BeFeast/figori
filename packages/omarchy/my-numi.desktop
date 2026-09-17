@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=My Numi
+Comment=Local calendar-aware calculator worksheets
+Exec=my-numi --tui
+Terminal=true
+Categories=Utility;Office;
+Keywords=calculator;calendar;worksheet;numi;

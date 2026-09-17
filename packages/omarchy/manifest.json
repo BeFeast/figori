@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "befeast.my-numi",
+  "name": "My Numi",
+  "version": "0.1.0",
+  "author": "BeFeast",
+  "description": "Calendar-aware local calculator worksheets powered by the shared my-numi CLI.",
+  "kinds": [
+    "panel"
+  ],
+  "entryPoints": {
+    "panel": "Panel.qml"
+  },
+  "keepLoaded": true
+}
