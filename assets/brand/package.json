@@ -1,0 +1,1 @@
+{"name":"figori-brand-assets","private":true,"type":"module","scripts":{"generate":"bun generate.ts","render":"bash render.sh"},"dependencies":{"opentype.js":"1.3.4"}}

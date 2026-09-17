@@ -1,0 +1,12 @@
+{
+  "name": "Figori",
+  "colors": {
+    "cobalt": "#284BFF",
+    "lime": "#DDFC45",
+    "ink": "#111827",
+    "paper": "#F7F8FC"
+  },
+  "displayFont": "Space Grotesk",
+  "numericFont": "IBM Plex Mono",
+  "nativeUiFonts": "system defaults"
+}
