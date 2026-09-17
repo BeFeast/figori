@@ -1,0 +1,8 @@
+{
+  "name": "@my-numi/document",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts", "./storage": "./src/storage.ts" },
+  "scripts": { "test": "bun test" },
+  "private": true
+}
