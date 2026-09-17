@@ -38,11 +38,15 @@ fn record(data: &Path, path: &Path) -> Result<(), String> {
     entries.truncate(LIMIT);
     write(data, &entries)
 }
+fn file_item(app: &tauri::AppHandle, id: &str) -> Option<tauri::menu::MenuItemKind<tauri::Wry>> {
+    match app.menu()?.get("file")? {
+        tauri::menu::MenuItemKind::Submenu(file) => file.get(id),
+        _ => None,
+    }
+}
 pub fn refresh(app: &tauri::AppHandle) -> Result<(), String> {
     let entries = load(&crate::data_dir(app)?)?;
-    let Some(tauri::menu::MenuItemKind::Submenu(menu)) =
-        app.menu().and_then(|m| m.get("open-recent"))
-    else {
+    let Some(tauri::menu::MenuItemKind::Submenu(menu)) = file_item(app, "open-recent") else {
         return Ok(());
     };
     for item in menu.items().map_err(|e| e.to_string())? {
@@ -123,9 +127,7 @@ pub fn configure_document(
         .0
         .lock()
         .map_err(|e| e.to_string())? = path.clone();
-    if let Some(tauri::menu::MenuItemKind::MenuItem(item)) =
-        app.menu().and_then(|m| m.get("show-in-finder"))
-    {
+    if let Some(tauri::menu::MenuItemKind::MenuItem(item)) = file_item(&app, "show-in-finder") {
         item.set_enabled(path.is_some())
             .map_err(|e| e.to_string())?;
     }

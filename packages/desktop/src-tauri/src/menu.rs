@@ -43,8 +43,9 @@ pub fn install(app: &tauri::App) -> tauri::Result<()> {
         None::<&str>,
     )?;
     let separator = PredefinedMenuItem::separator(app)?;
-    let file = Submenu::with_items(
+    let file = Submenu::with_id_and_items(
         app,
+        "file",
         "File",
         true,
         &[
