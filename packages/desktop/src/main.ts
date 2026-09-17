@@ -817,14 +817,20 @@ applyTheme(localStorage.getItem("theme") ?? "dark");
 matchMedia("(prefers-color-scheme: light)").addEventListener("change", () =>
   applyTheme(localStorage.getItem("theme") ?? "dark"),
 );
+let appearanceReturnFocus: HTMLElement | null = null;
 el("appearance-button").onclick = () => {
+  if (busy || initializing) return;
+  appearanceReturnFocus = document.activeElement as HTMLElement | null;
   el<HTMLSelectElement>("theme").value =
     localStorage.getItem("theme") ?? "dark";
   el<HTMLSelectElement>("editor-font").value = typography.font;
   el<HTMLSelectElement>("editor-size").value = String(typography.size);
   el<HTMLSelectElement>("editor-spacing").value = String(typography.spacing);
   previewTypography();
-  el<HTMLDialogElement>("appearance").showModal();
+  const panel = el<HTMLDialogElement>("appearance");
+  if (document.body.classList.contains("fallback-chrome")) panel.show();
+  else panel.showModal();
+  el("theme").focus();
 };
 function selectedTypography() {
   return normalizeTypography({
@@ -841,10 +847,25 @@ function previewTypography() {
     lineHeight: String(value.spacing),
   });
 }
-for (const id of ["editor-font", "editor-size", "editor-spacing"])
-  el(id).onchange = previewTypography;
-el("appearance-cancel").onclick = () =>
+function applyFallbackAppearance() {
+  if (!document.body.classList.contains("fallback-chrome")) return;
+  typography = selectedTypography();
+  localStorage.setItem("typography", JSON.stringify(typography));
+  const theme = el<HTMLSelectElement>("theme").value;
+  localStorage.setItem("theme", theme);
+  applyTheme(theme);
+  applyTypography();
+  void document.fonts.ready.then(refreshVisibleLayout);
+}
+for (const id of ["theme", "editor-font", "editor-size", "editor-spacing"])
+  el(id).onchange = () => {
+    previewTypography();
+    applyFallbackAppearance();
+  };
+el("appearance-cancel").onclick = () => {
   el<HTMLDialogElement>("appearance").close();
+  appearanceReturnFocus?.focus();
+};
 el<HTMLFormElement>("appearance-form").onsubmit = (event) => {
   event.preventDefault();
   typography = selectedTypography();
@@ -908,13 +929,14 @@ el("detail-close").onclick = () => {
   el<HTMLDialogElement>("details").close();
   detailAnchor?.focus();
 };
-for (const id of ["details", "settings"]) {
+for (const id of ["details", "settings", "appearance"]) {
   const panel = el<HTMLDialogElement>(id);
   panel.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       event.preventDefault();
       panel.close();
       if (id === "details") detailAnchor?.focus();
+      else if (id === "appearance") appearanceReturnFocus?.focus();
       else view.focus();
     }
   });
@@ -1080,6 +1102,8 @@ void listen<string>("figori-menu", (event) => {
   else if (event.payload === "open") void open();
   else if (event.payload === "save") void save();
   else if (event.payload === "save-as") void save(true);
+  else if (event.payload === "appearance" && !busy && !initializing)
+    el("appearance-button").click();
   else if (event.payload === "context" && !busy && !initializing)
     el("context-button").click();
 });
@@ -1110,6 +1134,34 @@ await listen<{ font: string; size: number; spacing: number; theme: string }>(
     });
   },
 );
+function configureFallbackChrome() {
+  document.body.classList.add("fallback-chrome");
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "appearance-close";
+  close.textContent = "×";
+  close.setAttribute("aria-label", "Close Settings");
+  close.title = "Close Settings (Escape)";
+  close.onclick = () => {
+    el<HTMLDialogElement>("appearance").close();
+    appearanceReturnFocus?.focus();
+  };
+  el("appearance-form").prepend(close);
+  el("appearance-title").textContent = "Settings";
+  const precisionControl = document.querySelector(".precision");
+  if (precisionControl)
+    el("appearance-form").insertBefore(
+      precisionControl,
+      el("appearance-form").querySelector(".dialog-actions"),
+    );
+  const modifier = /Mac/.test(navigator.platform) ? "⌘" : "Ctrl+";
+  for (const button of document.querySelectorAll<HTMLElement>("header [title]"))
+    button.title = button.title
+      .replaceAll("⌘⇧", modifier === "⌘" ? "⌘⇧" : "Ctrl+Shift+")
+      .replaceAll("⌘", modifier);
+  el("appearance-button").title = `Settings (${modifier},)`;
+  refreshVisibleLayout();
+}
 try {
   const ready = await invoke<boolean>("configure_chrome", {
     appearance: {
@@ -1129,7 +1181,8 @@ try {
         el("settings-form").querySelector(".dialog-actions"),
       );
     refreshVisibleLayout();
-  }
+  } else configureFallbackChrome();
 } catch {
+  configureFallbackChrome();
   /* Older builds keep the fully functional Linux/webview toolbar. */
 }

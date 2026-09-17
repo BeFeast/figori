@@ -863,3 +863,94 @@ body.resizing-columns #column-splitter span {
   font-size: 1em;
   color: var(--heading-6);
 }
+
+/* Linux keeps native window decorations/menu, with one compact worksheet toolbar. */
+.fallback-chrome header {
+  height: 48px;
+  min-height: 48px;
+  padding: 7px 14px;
+  gap: 16px;
+  box-shadow: none;
+}
+.fallback-chrome .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+}
+.fallback-chrome .brand svg {
+  flex: none;
+}
+.fallback-chrome > .context {
+  display: none;
+}
+.fallback-chrome .native-basis {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  padding: 2px 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+.fallback-chrome footer {
+  gap: 14px;
+}
+.fallback-chrome #line-status {
+  margin-left: auto;
+}
+.fallback-chrome #appearance {
+  position: fixed;
+  inset: 62px 14px auto auto;
+  margin: 0;
+  width: min(370px, calc(100vw - 28px));
+  max-height: calc(100vh - 76px);
+  overflow: auto;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px #0004;
+  z-index: 1000;
+}
+.fallback-chrome #appearance .precision {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+.fallback-chrome #appearance select {
+  min-height: 34px;
+}
+.fallback-chrome #appearance-button {
+  border-left: 0;
+}
+.fallback-chrome #appearance .appearance-grid label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+}
+.fallback-chrome #appearance .dialog-actions {
+  display: none;
+}
+.fallback-chrome #appearance .appearance-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  font-size: 23px;
+  line-height: 1;
+  color: var(--muted);
+}
+.fallback-chrome #appearance .appearance-close:hover {
+  color: var(--text);
+  background: var(--button-hover);
+}
+.fallback-chrome #appearance h2 {
+  padding-right: 32px;
+}
