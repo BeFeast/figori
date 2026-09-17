@@ -121,6 +121,9 @@ await run([
   commit,
 ]);
 await run(["gzip", "-n", sourceTar]);
+for (const name of ["install-cli-user.sh", "rollback-cli-user.sh"]) {
+  await cp(join(root, "scripts", name), join(out, name));
+}
 const files = (await readdir(out)).filter((name) => name !== "stage").sort();
 const artifacts = await Promise.all(
   files.map(async (name) => ({

@@ -19,3 +19,14 @@ Output is isolated by source commit. A directory with a finished manifest is nev
 The Linux binary receives an actual deterministic calendar smoke check. Cross-compiling a Mach-O binary does not demonstrate macOS execution; run that binary on the target separately and record the result. The build does not install Raycast/Omarchy, change services, publish a store extension, or create a release remotely.
 
 For delivery, inspect the artifact manifest and scripts first, then copy the exact reviewed files to a staging directory on the target. Omarchy's user-scope install script accepts that absolute staging path and a new absolute backup directory. Desktop shortcuts and key bindings are optional separate changes; the default install script does not add them. Preserve worksheet storage across updates and rollback.
+
+## Exact CLI install and rollback (macOS / Linux)
+
+Release assets include [install-cli-user.sh](../scripts/install-cli-user.sh) and [rollback-cli-user.sh](../scripts/rollback-cli-user.sh). These scripts verify the approved binary checksum, record the previous `~/.local/bin/my-numi` executable or its absence in a new backup directory, then atomically replace only that executable. They do not modify PATH, shell profiles, desktop registration, services, or worksheet data.
+
+```sh
+bash /absolute/staging/install-cli-user.sh --apply /absolute/staging/my-numi-macos-arm64 APPROVED_SHA256 /absolute/new/backup
+bash /absolute/staging/rollback-cli-user.sh --apply /absolute/new/backup
+```
+
+Use the Linux binary path instead when delivering only the Linux CLI. Omarchy's combined plugin+CLI installer remains a separate option; do not run both installers over the same executable in one delivery. The exact target staging path, checksum, and backup path are supplied with the concrete release approval.
