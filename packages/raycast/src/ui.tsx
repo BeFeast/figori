@@ -1,11 +1,25 @@
-import { Form, LocalStorage, showToast, Toast } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  Form,
+  LocalStorage,
+  showToast,
+  Toast,
+  useNavigation,
+} from "@raycast/api";
 import { useEffect, useState } from "react";
-import { defaults, describeContext, Settings, validateSettings } from "./model";
+import {
+  basisDescription,
+  defaults,
+  describeContext,
+  Settings,
+  validateSettings,
+} from "./model";
 export function useClock() {
   const [now, setNow] = useState(() => new Date().toISOString());
   const refresh = () => setNow(new Date().toISOString());
   useEffect(() => {
-    const timer = setInterval(refresh, 1000);
+    const timer = setInterval(refresh, 60000);
     return () => clearInterval(timer);
   }, []);
   return { now, refresh };
@@ -110,5 +124,94 @@ export function ContextFields({
         text={describeContext(settings, now)}
       />
     </>
+  );
+}
+
+export function ContextEditor({
+  settings: initial,
+  onSave,
+  now,
+}: {
+  settings: Settings;
+  onSave: (settings: Settings) => void | Promise<void>;
+  now: string;
+}) {
+  const [settings, setSettings] = useState(initial);
+  const { pop } = useNavigation();
+  async function save() {
+    const error = validateSettings(settings);
+    if (error) {
+      await showToast(Toast.Style.Failure, "Check Context", error);
+      return;
+    }
+    try {
+      await onSave(settings);
+      pop();
+    } catch (e) {
+      await showToast(Toast.Style.Failure, "Could Not Save Context", String(e));
+    }
+  }
+  return (
+    <Form
+      navigationTitle="Date and Timezone"
+      actions={
+        <ActionPanel>
+          <Action.SubmitForm title="Apply Context" onSubmit={save} />
+        </ActionPanel>
+      }
+    >
+      <ContextFields settings={settings} onChange={setSettings} now={now} />
+    </Form>
+  );
+}
+export function CalculationInfo({
+  source,
+  result,
+  context,
+  rates,
+}: {
+  source: string;
+  result?: {
+    ok: boolean;
+    formatted?: string;
+    diagnostics: { message: string }[];
+    basis?: unknown;
+  };
+  context: string;
+  rates?: string;
+}) {
+  return (
+    <Form
+      navigationTitle="Calculation Details"
+      actions={
+        <ActionPanel>
+          {result?.ok && (
+            <Action.CopyToClipboard
+              title="Copy Result"
+              content={result.formatted ?? ""}
+            />
+          )}
+        </ActionPanel>
+      }
+    >
+      <Form.Description title="Expression" text={source || "No expression"} />
+      <Form.Description
+        title={result?.ok ? "Result" : "Diagnostic"}
+        text={
+          result?.ok
+            ? (result.formatted ?? "")
+            : result?.diagnostics.map((d) => d.message).join("\n") ||
+              "Enter a calculation."
+        }
+      />
+      <Form.Description title="Context" text={context} />
+      {Boolean(basisDescription(result?.basis)) && (
+        <Form.Description
+          title="Explanation"
+          text={basisDescription(result?.basis)}
+        />
+      )}
+      {rates && <Form.Description title="Exchange Rates" text={rates} />}
+    </Form>
   );
 }

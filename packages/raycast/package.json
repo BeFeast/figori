@@ -36,7 +36,7 @@
   "scripts": {
     "build": "ray build -e dist -o dist",
     "typecheck": "tsc --noEmit",
-    "test": "bun test src/model.test.ts",
+    "test": "bun test src/*.test.ts",
     "dev": "ray develop"
   },
   "dependencies": {

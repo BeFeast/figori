@@ -2,9 +2,9 @@
 
 Three commands share the calendar evaluator and document package:
 
-- **Quick Calculate**: enter an expression, inspect result/basis, copy the result, and edit the date anchor, timezone and monthly-period policy.
+- **Quick Calculate**: type in the search bar, read the right-aligned result, and press Enter to copy. Context and full calculation details are available through actions.
 - **Saved Worksheets**: open local sheets; edit, refresh, copy results/source, import Numi or captured Markdown, and export `.numi` text.
-- **New Worksheet**: create a multiline sheet with a live result preview and persistent context settings.
+- **New Worksheet**: type a line in the search bar for an immediate contextual preview; Enter appends and saves it. Cmd+E edits a selected line in the same input; Enter saves the replacement and recalculates dependent lines. Cmd+Backspace cancels a draft. Cmd+Shift+E opens the optional full-source editor for multiline paste. Blank rows and original newline styles remain preserved in storage/export.
 
 ## Development
 
@@ -23,7 +23,7 @@ The API dependency is pinned to Raycast 2.4.1. Raycast owns the React/Node runti
 
 Worksheets use the document packages atomic/recovery storage under Raycasts persistent `environment.supportPath/worksheets`. Import creates a new local document and never overwrites the input. Select the import interpretation explicitly: Numi preserves variable assignments, while captured Markdown recognizes historical right-hand results. Export refuses existing destinations and explains metadata that native Numi cannot understand. Optional sidecars retain Figori settings.
 
-Dynamic anchors resolve against one current instant and the selected IANA timezone, updating while the command is open. Pinned dates stay fixed. Monthly billing counts completed periods by default; the checkbox includes a trailing incomplete period. Results expose semantic basis and line diagnostics. Invalid dates and timezones prevent saving/evaluation, rather than silently normalizing them.
+Dynamic anchors resolve against one current instant and the selected IANA timezone, refreshing once per minute while the command is open, or immediately with Cmd+R. Typing reevaluates with that current context. Pinned dates stay fixed. Monthly billing counts completed periods by default; the checkbox includes a trailing incomplete period. Native result rows show human diagnostics; Calculation Details exposes the full result, semantic basis and exchange-rate status without a metadata sidebar or raw JSON. Invalid dates and timezones prevent saving/evaluation, rather than silently normalizing them.
 
 ## Acceptance still required
 
@@ -39,7 +39,7 @@ bun run --cwd packages/raycast dev
 
 This invokes Raycast's supported development workflow and imports the extension into the desktop application. It is an operator installation step, not part of CI or worker verification. Distribution output is written explicitly to `packages/raycast/dist`; all three bundled commands and icon assets are included.
 
-Exchange rates are loaded from the shared rates package's local cache. **Refresh Exchange Rates** performs the explicit provider request; no rate request sends worksheet content. Fresh/stale/unavailable state, source, as-of date and refresh failures remain visible. Refresh failures retain usable cached rates and do not masquerade as a successful refresh.
+Exchange rates are loaded from the shared rates package's local cache. **Refresh Exchange Rates** performs the explicit provider request; no rate request sends worksheet content. Fresh/stale/unavailable state, source, as-of date and refresh failures are available in Calculation Details. Refresh failures retain usable cached rates and do not masquerade as a successful refresh.
 
 Export supports both Numi plain text and the original Markdown source. Neither overwrites an existing destination. Markdown source export does not carry application metadata; Numi export can include a separate Figori sidecar.
 

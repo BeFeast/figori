@@ -16,7 +16,7 @@ import {
   saveDocument,
   storageOptions,
 } from "./storage";
-import { WorksheetDetail, WorksheetEditor } from "./worksheet-ui";
+import { WorksheetDetail } from "./worksheet-ui";
 function ImportForm({ onImported }: { onImported: () => void }) {
   const [files, setFiles] = useState<string[]>([]);
   const [format, setFormat] = useState("numi");
@@ -134,7 +134,7 @@ export default function Worksheets() {
         icon={Icon.Plus}
         onAction={() =>
           push(
-            <WorksheetEditor
+            <WorksheetDetail
               onSaved={() => {
                 void refresh();
               }}
@@ -165,7 +165,11 @@ export default function Worksheets() {
     </>
   );
   return (
-    <List navigationTitle="Figori · Saved Worksheets" isLoading={loading} searchBarPlaceholder="Find a saved worksheet">
+    <List
+      navigationTitle="Figori · Saved Worksheets"
+      isLoading={loading}
+      searchBarPlaceholder="Find a saved worksheet"
+    >
       <List.EmptyView
         title={error ? "Could Not Load Worksheets" : "No Saved Worksheets"}
         description={error || "Create a worksheet or import a .numi file."}

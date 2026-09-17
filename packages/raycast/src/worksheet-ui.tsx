@@ -2,30 +2,24 @@ import { writeFile } from "node:fs/promises";
 import {
   Action,
   ActionPanel,
-  Detail,
+  Color,
   Form,
   Icon,
+  List,
   showToast,
   Toast,
   useNavigation,
 } from "@raycast/api";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { evaluateExpression } from "@my-numi/core";
 import { evaluateDocument, serializeNumi } from "@my-numi/document";
-import {
-  contextFor,
-  defaults,
-  describeContext,
-  escapeMarkdown,
-  textOf,
-  validateSettings,
-} from "./model";
+import { compactContext, contextFor, validateSettings } from "./model";
 import { rateDescription, useRates } from "./rates";
-import { ContextFields, useClock } from "./ui";
+import { CalculationInfo, ContextEditor, useClock } from "./ui";
+import { appendLine, replaceLine } from "./line-editor";
 import {
   exportNumi,
   importDocument,
-  loadDocument,
   saveDocument,
   settingsFrom,
   settingsTo,
@@ -48,59 +42,33 @@ export function rendered(
   now: string,
   rates?: NonNullable<Parameters<typeof evaluateExpression>[1]>["rates"],
 ) {
-  const result = evaluated(doc, now, rates);
-  return result.lines
-    .map((line) =>
+  return evaluated(doc, now, rates)
+    .lines.map((line) =>
       line.evaluation
-        ? `${line.source}\n→ ${line.evaluation.ok ? line.evaluation.formatted : line.evaluation.diagnostics.map((d) => d.message).join("; ")}\n${textOf(line.evaluation.basis)}`
+        ? `${line.source} → ${line.evaluation.ok ? line.evaluation.formatted : line.evaluation.diagnostics.map((d) => d.message).join("; ")}`
         : line.source,
     )
     .join("\n");
 }
+/** Optional bulk source editor; normal worksheet entry stays in the List search bar. */
 export function WorksheetEditor({
   document,
-  onSaved,
+  onSave,
 }: {
-  document?: Worksheet;
-  onSaved?: () => void;
+  document: Worksheet;
+  onSave: (doc: Worksheet) => Promise<void>;
 }) {
-  const [source, setSource] = useState(document?.source ?? "");
-  const [settings, setSettings] = useState(
-    document ? settingsFrom(document) : defaults,
-  );
+  const [source, setSource] = useState(document.source);
   const [saving, setSaving] = useState(false);
-  const { now, refresh } = useClock();
-  const { state: rates, loading: loadingRates, refreshRates } = useRates();
   const { pop } = useNavigation();
-  const error = validateSettings(settings);
-  const draft = useMemo(() => {
-    const doc = document
-      ? updateDocument(document, source)
-      : importDocument(source, { format: "numi" });
-    return { ...doc, settings: settingsTo(settings) };
-  }, [source, settings, document]);
-  let preview = error ?? "";
-  if (!error && source.length <= 262_144) {
-    try {
-      preview = rendered(draft, now, rates.snapshot);
-    } catch (e) {
-      preview = String(e);
-    }
-  }
   async function save() {
-    if (error || source.length > 262_144) {
-      await showToast(
-        Toast.Style.Failure,
-        "Cannot Save",
-        error ?? "Worksheet exceeds 256 KiB.",
-      );
+    if (source.length > 262_144) {
+      await showToast(Toast.Style.Failure, "Worksheet exceeds 256 KiB.");
       return;
     }
     setSaving(true);
     try {
-      await saveDocument(draft, storageOptions);
-      await showToast(Toast.Style.Success, "Worksheet Saved");
-      onSaved?.();
+      await onSave(updateDocument(document, source));
       pop();
     } catch (e) {
       await showToast(Toast.Style.Failure, "Save Failed", String(e));
@@ -110,47 +78,346 @@ export function WorksheetEditor({
   }
   return (
     <Form
-      isLoading={saving || loadingRates}
+      navigationTitle="Edit Full Source"
+      isLoading={saving}
       actions={
         <ActionPanel>
-          <Action.SubmitForm
-            title="Save Worksheet"
-            icon={Icon.Checkmark}
-            onSubmit={save}
-          />
-          <Action
-            title="Refresh Exchange Rates"
-            icon={Icon.Coins}
-            onAction={refreshRates}
-          />
-          <Action
-            title="Refresh Preview"
-            icon={Icon.ArrowClockwise}
-            onAction={refresh}
-            shortcut={{ modifiers: ["cmd"], key: "r" }}
-          />
+          <Action.SubmitForm title="Save Source" onSubmit={save} />
         </ActionPanel>
       }
     >
       <Form.TextArea
         id="source"
-        title="Worksheet"
+        title="Source"
         value={source}
         onChange={setSource}
-        placeholder={"Example\n13 may 2022 + 9 months\n1 month in days"}
-        error={
-          source.length > 262_144 ? "Worksheet exceeds 256 KiB." : undefined
-        }
+        placeholder={"price = 12\nprice * 3"}
       />
       <Form.Description
-        title="Live Preview"
-        text={preview || "Enter expressions or labels."}
+        title="Worksheet"
+        text="Paste or edit multiple lines here. Save to return to calculation results."
       />
-      <Form.Description title="Exchange Rates" text={rateDescription(rates)} />
-      <ContextFields settings={settings} onChange={setSettings} now={now} />
     </Form>
   );
 }
+export function WorksheetDetail({
+  document: initialDocument,
+  onSaved,
+}: {
+  document?: Worksheet;
+  onSaved?: () => void;
+}) {
+  const [document, setDocument] = useState(
+    () => initialDocument ?? importDocument("", { format: "numi" }),
+  );
+  const [input, setInput] = useState("");
+  const inputRef = useRef("");
+  function changeInput(value: string) {
+    inputRef.current = value;
+    setInput(value);
+  }
+  const [editing, setEditing] = useState<string | undefined>();
+  const [selected, setSelected] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const { now, refresh } = useClock();
+  const { state: rates, loading: loadingRates, refreshRates } = useRates();
+  const { push } = useNavigation();
+  const context = compactContext(settingsFrom(document), now);
+  const evaluation = useMemo(() => {
+    try {
+      return {
+        value: evaluated(document, now, rates.snapshot),
+        error: undefined,
+      };
+    } catch (e) {
+      return { value: undefined, error: String(e) };
+    }
+  }, [document, now, rates.snapshot]);
+  const draft = useMemo(() => {
+    if (!input.trim()) return undefined;
+    try {
+      const next = editing
+        ? replaceLine(document, editing, input)
+        : appendLine(document, input);
+      const results = evaluated(next, now, rates.snapshot);
+      const index = editing
+        ? document.lines.findIndex((line) => line.id === editing)
+        : next.lines.length - 1;
+      return { next, line: results.lines[index], error: undefined };
+    } catch (e) {
+      return { next: undefined, line: undefined, error: String(e) };
+    }
+  }, [document, input, editing, now, rates.snapshot]);
+  async function persist(next: Worksheet) {
+    if (savingRef.current) throw new Error("A save is already in progress.");
+    if (next.source.length > 262_144)
+      throw new Error("Worksheet exceeds 256 KiB.");
+    const error = validateSettings(settingsFrom(next));
+    if (error) throw new Error(error);
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await saveDocument(next, storageOptions);
+      setDocument(next);
+      onSaved?.();
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }
+  async function commit() {
+    if (!draft?.next || savingRef.current) return;
+    try {
+      await persist(draft.next);
+      if (inputRef.current === input) {
+        changeInput("");
+        setSelected(editing ?? draft.next.lines.at(-1)?.id ?? null);
+        setEditing(undefined);
+      }
+      await showToast(Toast.Style.Success, "Worksheet Saved");
+    } catch (e) {
+      await showToast(Toast.Style.Failure, "Save Failed", String(e));
+    }
+  }
+  function cancel() {
+    changeInput("");
+    setEditing(undefined);
+    setSelected(
+      document.lines.find((line) => line.kind !== "blank")?.id ?? null,
+    );
+  }
+  function edit(id: string) {
+    const line = document.lines.find((l) => l.id === id);
+    if (line) {
+      setEditing(id);
+      changeInput(line.source);
+    }
+  }
+  const common = (
+    <>
+      {(input || editing) && (
+        <Action
+          title="Cancel Draft"
+          icon={Icon.XMarkCircle}
+          onAction={cancel}
+          shortcut={{ modifiers: ["cmd"], key: "backspace" }}
+        />
+      )}
+      <Action
+        title="Edit Full Source"
+        icon={Icon.Document}
+        onAction={() =>
+          push(<WorksheetEditor document={document} onSave={persist} />)
+        }
+        shortcut={{ modifiers: ["cmd", "shift"], key: "e" }}
+      />
+      <Action.Push
+        title="Change Date and Timezone"
+        icon={Icon.Calendar}
+        target={
+          <ContextEditor
+            settings={settingsFrom(document)}
+            now={now}
+            onSave={(settings) =>
+              persist({ ...document, settings: settingsTo(settings) })
+            }
+          />
+        }
+      />
+      <Action.CopyToClipboard
+        title="Copy All Results"
+        content={
+          evaluation.value?.lines
+            .map((line) =>
+              line.evaluation
+                ? `${line.source} → ${line.evaluation.ok ? line.evaluation.formatted : line.evaluation.diagnostics.map((d) => d.message).join("; ")}`
+                : line.source,
+            )
+            .join("\n") ?? ""
+        }
+      />
+      <Action.CopyToClipboard title="Copy Source" content={document.source} />
+      <Action.Push
+        title="Export Worksheet"
+        icon={Icon.Download}
+        target={<ExportForm document={document} />}
+      />
+      <Action
+        title="Refresh Exchange Rates"
+        icon={Icon.Coins}
+        onAction={refreshRates}
+      />
+      <Action
+        title="Recalculate"
+        icon={Icon.ArrowClockwise}
+        onAction={refresh}
+        shortcut={{ modifiers: ["cmd"], key: "r" }}
+      />
+    </>
+  );
+  const draftResult = draft?.line?.evaluation;
+  return (
+    <List
+      navigationTitle={editing ? "Figori · Edit Line" : "Figori · Worksheet"}
+      searchBarPlaceholder={
+        editing
+          ? "Edit this line · Enter to save"
+          : "Add a calculation or heading · Enter to save"
+      }
+      searchText={input}
+      onSearchTextChange={changeInput}
+      filtering={false}
+      isLoading={saving || loadingRates}
+      onSelectionChange={setSelected}
+      selectedItemId={input.trim() ? "draft" : (selected ?? undefined)}
+    >
+      <List.Section
+        title={context}
+        subtitle={editing ? "Editing line" : "Enter to add · ⌘E to edit"}
+      >
+        {input.trim() && (
+          <List.Item
+            id="draft"
+            title={input}
+            icon={Icon.Pencil}
+            subtitle={
+              draft?.error ||
+              (!draftResult?.ok
+                ? draftResult?.diagnostics.map((d) => d.message).join("; ")
+                : undefined)
+            }
+            accessories={
+              draftResult?.ok
+                ? [
+                    {
+                      text: {
+                        value: draftResult.formatted ?? "",
+                        color: Color.Green,
+                      },
+                      tooltip: draftResult.formatted,
+                    },
+                  ]
+                : [
+                    {
+                      text:
+                        draft?.line?.kind === "heading" ? "Heading" : "Draft",
+                    },
+                  ]
+            }
+            actions={
+              <ActionPanel>
+                <Action
+                  title={editing ? "Save Edited Line" : "Add Line and Save"}
+                  icon={Icon.Checkmark}
+                  onAction={commit}
+                />
+                {draftResult?.ok && (
+                  <Action.CopyToClipboard
+                    title="Copy Result"
+                    content={draftResult.formatted ?? ""}
+                  />
+                )}
+                <Action.Push
+                  title="Calculation Details"
+                  target={
+                    <CalculationInfo
+                      source={input}
+                      result={draftResult}
+                      context={context}
+                      rates={rateDescription(rates)}
+                    />
+                  }
+                />
+                {common}
+              </ActionPanel>
+            }
+          />
+        )}
+        {evaluation.value?.lines.map((line) =>
+          line.kind === "blank" ? null : (
+            <List.Item
+              key={line.id}
+              id={line.id}
+              title={line.source}
+              icon={
+                line.evaluation
+                  ? line.evaluation.ok
+                    ? Icon.Calculator
+                    : Icon.Warning
+                  : Icon.Text
+              }
+              subtitle={
+                line.evaluation && !line.evaluation.ok
+                  ? line.evaluation.diagnostics.map((d) => d.message).join("; ")
+                  : undefined
+              }
+              accessories={
+                line.evaluation?.ok
+                  ? [
+                      {
+                        text: {
+                          value: line.evaluation.formatted ?? "",
+                          color: Color.Green,
+                        },
+                        tooltip: line.evaluation.formatted,
+                      },
+                    ]
+                  : []
+              }
+              actions={
+                <ActionPanel>
+                  {line.evaluation?.ok && (
+                    <Action.CopyToClipboard
+                      title="Copy Result"
+                      content={line.evaluation.formatted ?? ""}
+                    />
+                  )}
+                  <Action
+                    title="Edit Line"
+                    icon={Icon.Pencil}
+                    onAction={() => edit(line.id)}
+                    shortcut={{ modifiers: ["cmd"], key: "e" }}
+                  />
+                  <Action.Push
+                    title="Calculation Details"
+                    icon={Icon.Info}
+                    target={
+                      <CalculationInfo
+                        source={line.source}
+                        result={line.evaluation}
+                        context={context}
+                        rates={rateDescription(rates)}
+                      />
+                    }
+                  />
+                  {common}
+                </ActionPanel>
+              }
+            />
+          ),
+        )}
+        {!input.trim() && !document.source.trim() && (
+          <List.Item
+            title="Start your worksheet above"
+            subtitle="Type a calculation, press Enter, then add another line"
+            icon={Icon.Plus}
+            actions={<ActionPanel>{common}</ActionPanel>}
+          />
+        )}
+        {evaluation.error && (
+          <List.Item
+            title="Could Not Calculate Worksheet"
+            subtitle={evaluation.error}
+            icon={Icon.Warning}
+            actions={<ActionPanel>{common}</ActionPanel>}
+          />
+        )}
+      </List.Section>
+    </List>
+  );
+}
+
 export function ExportForm({ document }: { document: Worksheet }) {
   const [path, setPath] = useState("");
   const [format, setFormat] = useState("numi");
@@ -230,94 +497,8 @@ export function ExportForm({ document }: { document: Worksheet }) {
       />
       <Form.Description
         title="Export Notes"
-        text={
-          warnings.map(textOf).join("\n") ||
-          "Existing files will not be overwritten."
-        }
+        text={warnings.join("\n") || "Existing files will not be overwritten."}
       />
     </Form>
-  );
-}
-export function WorksheetDetail({
-  document: initialDocument,
-  onSaved,
-}: {
-  document: Worksheet;
-  onSaved: () => void;
-}) {
-  const [document, setDocument] = useState(initialDocument);
-  async function reload() {
-    try {
-      const result = await loadDocument(document.id, storageOptions);
-      setDocument(result.document);
-      onSaved();
-    } catch (error) {
-      await showToast(Toast.Style.Failure, "Reload Failed", String(error));
-    }
-  }
-  const { now, refresh } = useClock();
-  const { push } = useNavigation();
-  const { state: rates, loading: loadingRates, refreshRates } = useRates();
-  let output: string;
-  try {
-    output = rendered(document, now, rates.snapshot);
-  } catch (e) {
-    output = `Evaluation error: ${String(e)}`;
-  }
-  const markdown = output.split("\n").map(escapeMarkdown).join("  \n");
-  return (
-    <Detail
-      isLoading={loadingRates}
-      markdown={markdown}
-      metadata={
-        <Detail.Metadata>
-          <Detail.Metadata.Label
-            title="Context"
-            text={describeContext(settingsFrom(document), now)}
-          />
-          <Detail.Metadata.Label title="Rates" text={rateDescription(rates)} />
-          <Detail.Metadata.Label title="Format" text={document.format} />
-        </Detail.Metadata>
-      }
-      actions={
-        <ActionPanel>
-          <Action
-            title="Edit Worksheet"
-            icon={Icon.Pencil}
-            onAction={() =>
-              push(
-                <WorksheetEditor
-                  document={document}
-                  onSaved={() => {
-                    void reload();
-                  }}
-                />,
-              )
-            }
-          />
-          <Action.CopyToClipboard title="Copy Results" content={output} />
-          <Action.CopyToClipboard
-            title="Copy Source"
-            content={document.source}
-          />
-          <Action
-            title="Refresh Exchange Rates"
-            icon={Icon.Coins}
-            onAction={refreshRates}
-          />
-          <Action
-            title="Refresh"
-            icon={Icon.ArrowClockwise}
-            onAction={refresh}
-            shortcut={{ modifiers: ["cmd"], key: "r" }}
-          />
-          <Action
-            title="Export Numi File"
-            icon={Icon.Download}
-            onAction={() => push(<ExportForm document={document} />)}
-          />
-        </ActionPanel>
-      }
-    />
   );
 }

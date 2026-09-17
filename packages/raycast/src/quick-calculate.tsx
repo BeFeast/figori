@@ -1,9 +1,14 @@
-import { Action, ActionPanel, Form, Icon } from "@raycast/api";
+import { Action, ActionPanel, Color, Icon, List } from "@raycast/api";
 import { useMemo, useState } from "react";
 import { evaluateExpression } from "@my-numi/core";
 import { rateDescription, useRates } from "./rates";
-import { contextFor, textOf, validateSettings } from "./model";
-import { ContextFields, useClock, useQuickSettings } from "./ui";
+import { compactContext, contextFor, validateSettings } from "./model";
+import {
+  ContextEditor,
+  CalculationInfo,
+  useClock,
+  useQuickSettings,
+} from "./ui";
 export default function QuickCalculate() {
   const [source, setSource] = useState("");
   const { settings, setSettings, loaded } = useQuickSettings();
@@ -12,71 +17,100 @@ export default function QuickCalculate() {
   const error = validateSettings(settings);
   const result = useMemo(() => {
     if (error || !source.trim()) return undefined;
-    if (source.length > 16_384)
-      return {
-        ok: false,
-        formatted: undefined,
-        diagnostics: [
-          { code: "input_limit", message: "Expression exceeds 16 KiB." },
-        ],
-        basis: {},
-      };
     try {
+      if (source.length > 16_384) throw new Error("Expression exceeds 16 KiB.");
       return evaluateExpression(source, {
         ...contextFor(settings, now),
         rates: rates.snapshot,
       });
-    } catch (error) {
+    } catch (e) {
       return {
         ok: false,
         formatted: undefined,
-        diagnostics: [{ code: "evaluation_error", message: String(error) }],
-        basis: {},
+        diagnostics: [{ code: "evaluation_error", message: String(e) }],
+        basis: undefined,
       };
     }
   }, [source, settings, now, error, rates.snapshot]);
-  const output = result?.ok
-    ? (result.formatted ?? "")
-    : (result?.diagnostics.map((d) => d.message).join("\n") ??
-      "Enter an expression.");
+  const output = result?.formatted ?? "";
+  const actions = (
+    <ActionPanel>
+      {result?.ok && (
+        <Action.CopyToClipboard title="Copy Result" content={output} />
+      )}
+      <Action.Push
+        title="Calculation Details"
+        icon={Icon.Info}
+        target={
+          <CalculationInfo
+            source={source}
+            result={result}
+            context={compactContext(settings, now)}
+            rates={rateDescription(rates)}
+          />
+        }
+      />
+      <Action.Push
+        title="Change Date and Timezone"
+        icon={Icon.Calendar}
+        target={
+          <ContextEditor settings={settings} onSave={setSettings} now={now} />
+        }
+      />
+      <Action
+        title="Refresh Exchange Rates"
+        icon={Icon.Coins}
+        onAction={refreshRates}
+      />
+      <Action
+        title="Recalculate"
+        icon={Icon.ArrowClockwise}
+        onAction={refresh}
+        shortcut={{ modifiers: ["cmd"], key: "r" }}
+      />
+    </ActionPanel>
+  );
   return (
-    <Form
+    <List
       navigationTitle="Figori · Quick Calculate"
+      searchBarPlaceholder="Type a calculation…"
+      searchText={source}
+      onSearchTextChange={setSource}
+      filtering={false}
       isLoading={!loaded || loadingRates}
-      actions={
-        <ActionPanel>
-          {result?.ok && (
-            <Action.CopyToClipboard title="Copy Result" content={output} />
-          )}
-          <Action
-            title="Refresh Exchange Rates"
-            icon={Icon.Coins}
-            onAction={refreshRates}
-          />
-          <Action
-            title="Refresh"
-            icon={Icon.ArrowClockwise}
-            onAction={refresh}
-            shortcut={{ modifiers: ["cmd"], key: "r" }}
-          />
-        </ActionPanel>
-      }
     >
-      <Form.TextField
-        id="expression"
-        title="Expression"
-        value={source}
-        onChange={setSource}
-        placeholder="13 may 2022 + 9 months"
-        error={error}
-      />
-      <Form.Description
-        title={result?.ok ? "Result" : "Calculation"}
-        text={output}
-      />
-      {result && <Form.Description title="Basis" text={textOf(result.basis)} />}
-      <Form.Description title="Exchange Rates" text={rateDescription(rates)} />
-      <ContextFields settings={settings} onChange={setSettings} now={now} />
-    </Form>
+      <List.Section title={compactContext(settings, now)}>
+        {!source.trim() ? (
+          <List.Item
+            title="Type a calculation above"
+            subtitle="For example: 13 may + 9 months"
+            icon={Icon.Calculator}
+            actions={actions}
+          />
+        ) : (
+          <List.Item
+            title={source}
+            subtitle={
+              error ||
+              (!result?.ok
+                ? result?.diagnostics.map((d) => d.message).join("; ")
+                : undefined)
+            }
+            accessories={
+              result?.ok
+                ? [
+                    {
+                      text: { value: output, color: Color.Green },
+                      tooltip: output,
+                    },
+                  ]
+                : []
+            }
+            icon={result?.ok ? Icon.Calculator : Icon.Warning}
+            actions={actions}
+          />
+        )}
+      </List.Section>
+    </List>
   );
 }
