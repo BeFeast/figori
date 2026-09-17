@@ -5,6 +5,11 @@ import {
   type EvaluationContext,
 } from "../../core/src/index.ts";
 const args = process.argv.slice(2);
+if (args.includes("--tui")) {
+  try { const { runTui } = await import("../../tui/src/index.ts"); await runTui(); }
+  catch (error) { console.error(error instanceof Error ? error.message : String(error)); process.exit(1); }
+  process.exit(0);
+}
 if (args.includes("--request")) {
   const { handleRequest, readRequest } = await import("./protocol.ts");
   let response: Record<string, unknown>;
@@ -31,7 +36,7 @@ let json = false;
 const expressions: string[] = [];
 function usage() {
   console.log(
-    "my-numi [--json] [--now ISO_INSTANT] [--timezone IANA] [--anchor YYYY-MM-DD] [--rates snapshot.json] EXPRESSION\nmy-numi --billing START END [--include-partial] [--json]\nmy-numi --request  (one JSON request line on stdin; document/storage/rates protocol)\nNo expression: read one expression per stdin line. JSON protocol version: 1.",
+    "my-numi [--json] [--now ISO_INSTANT] [--timezone IANA] [--anchor YYYY-MM-DD] [--rates snapshot.json] EXPRESSION\nmy-numi --billing START END [--include-partial] [--json]\nmy-numi --tui  (interactive worksheet editor)\nmy-numi --request  (one JSON request line on stdin; document/storage/rates protocol)\nNo expression: read one expression per stdin line. JSON protocol version: 1.",
   );
 }
 try {
