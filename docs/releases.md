@@ -49,3 +49,5 @@ bun run --cwd packages/raycast build
 The source archive intentionally has no `.git` metadata, so `scripts/build-release.ts` (which verifies exact git provenance) runs from a checkout of the recorded commit instead. The ordinary build commands above work from the archive. For Raycast's development import, select the extracted `packages/raycast` directory after the workspace install; follow its README for the actual macOS registration step. Building the extension does not register it in Raycast.
 
 The public command is `figori`; the workspace CLI package also exposes the legacy `my-numi` alias. The standalone installer changes only `~/.local/bin/figori` and leaves any existing `my-numi` executable untouched. Existing worksheet storage paths and sidecar formats are retained. `FIGORI_DATA_DIR` takes precedence over legacy `MY_NUMI_DATA_DIR`, followed by the existing `my-numi/worksheets` default.
+
+The standalone `figori-brand-COMMIT.tar.gz` archive contains the approved logos, icons, wordmark, social artwork, and font attribution from `assets/brand/`. It is included in the release manifest and checksums alongside the application artifacts.

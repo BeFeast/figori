@@ -81,6 +81,10 @@ async function archive(directory: string, name: string): Promise<string> {
   await run(["gzip", "-n", tar]);
   return tar + ".gz";
 }
+const brandStage = join(stage, "brand");
+await cp(join(root, "assets/brand"), brandStage, { recursive: true });
+await archive(brandStage, `figori-brand-${label}`);
+
 const raycastStage = join(stage, "raycast");
 await mkdir(raycastStage, { recursive: true });
 await cp(join(root, "packages/raycast/dist"), join(raycastStage, "dist"), {
