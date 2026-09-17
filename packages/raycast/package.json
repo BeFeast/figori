@@ -31,6 +31,19 @@
       "title": "New Worksheet",
       "description": "Create a local multiline worksheet",
       "mode": "view"
+    },
+    {
+      "name": "open-numi-file",
+      "title": "Open Numi File",
+      "description": "Open a Numi or text calculation file as a local worksheet",
+      "mode": "view",
+      "keywords": [
+        "numi",
+        "import",
+        "open",
+        "file",
+        "worksheet"
+      ]
     }
   ],
   "scripts": {

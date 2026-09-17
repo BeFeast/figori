@@ -60,13 +60,17 @@ function parseLine(raw: string, ending: string, format: SourceFormat): DocumentL
   if (!text) return { ...line, kind: "blank" };
   if (/^#{1,6}\s|^[-=]{3,}$/.test(text)) return { ...line, kind: "heading" };
   if (/^(?:\/\/|;)/.test(text)) return { ...line, kind: "comment" };
-  if (format === "markdown") {
+  {
+    // Captured result text can occur in either .numi or Markdown files. Keep
+    // original bytes, but only evaluate an unambiguous expression on the left.
     const equals = text.lastIndexOf("=");
     if (equals >= 0) {
       const left = text.slice(0, equals).trim();
       const right = text.slice(equals + 1).trim();
       // A bare identifier on the left is a native assignment, never a captured result.
-      if (left && right && (!identifier.test(left) || /^(today|now)$/i.test(left)) && !/[<>=!]$/.test(left)) {
+      const expressionSource = left.replace(/^[\p{L}][\p{L}\p{N} _/-]*:\s+/u, "");
+      const expressionLeft = /^(?:[+-]?\s*(?:\d|\.\d|\()|(?:today|now|previous)\b|days\s+(?:since|until)\b|[\p{L}_][\p{L}\p{N}_]*\s*(?:[+*/(=]|-\s*|\bin\b))/iu.test(expressionSource);
+      if (left && right && expressionLeft && (!identifier.test(left) || /^(today|now)$/i.test(left)) && !/[<>=!]$/.test(left)) {
         line.historicalResult = right;
         text = left;
       }

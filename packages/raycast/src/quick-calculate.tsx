@@ -2,7 +2,12 @@ import { Action, ActionPanel, Color, Icon, List } from "@raycast/api";
 import { useMemo, useState } from "react";
 import { evaluateExpression } from "@my-numi/core";
 import { rateDescription, useRates } from "./rates";
-import { compactContext, contextFor, validateSettings } from "./model";
+import {
+  compactContext,
+  compactResult,
+  contextFor,
+  validateSettings,
+} from "./model";
 import {
   ContextEditor,
   CalculationInfo,
@@ -100,7 +105,10 @@ export default function QuickCalculate() {
               result?.ok
                 ? [
                     {
-                      text: { value: output, color: Color.Green },
+                      text: {
+                        value: compactResult(output),
+                        color: Color.Green,
+                      },
                       tooltip: output,
                     },
                   ]

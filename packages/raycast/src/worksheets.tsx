@@ -1,7 +1,6 @@
 import {
   Action,
   ActionPanel,
-  Form,
   Icon,
   List,
   showToast,
@@ -9,74 +8,9 @@ import {
   useNavigation,
 } from "@raycast/api";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  importFile,
-  listDocuments,
-  loadDocument,
-  saveDocument,
-  storageOptions,
-} from "./storage";
+import { listDocuments, loadDocument, storageOptions } from "./storage";
 import { WorksheetDetail } from "./worksheet-ui";
-function ImportForm({ onImported }: { onImported: () => void }) {
-  const [files, setFiles] = useState<string[]>([]);
-  const [format, setFormat] = useState("numi");
-  const { pop } = useNavigation();
-  async function submit() {
-    if (files.length !== 1) {
-      await showToast(Toast.Style.Failure, "Choose One File");
-      return;
-    }
-    try {
-      const document = await importFile(files[0], {
-        format: format as "numi" | "markdown",
-      });
-      await saveDocument(document, storageOptions);
-      await showToast(Toast.Style.Success, "Imported as a New Worksheet");
-      onImported();
-      pop();
-    } catch (e) {
-      await showToast(Toast.Style.Failure, "Import Failed", String(e));
-    }
-  }
-  return (
-    <Form
-      navigationTitle="Figori · Import Worksheet"
-      actions={
-        <ActionPanel>
-          <Action.SubmitForm title="Import Worksheet" onSubmit={submit} />
-        </ActionPanel>
-      }
-    >
-      <Form.FilePicker
-        id="file"
-        title="Source File"
-        value={files}
-        onChange={setFiles}
-        allowMultipleSelection={false}
-        canChooseDirectories={false}
-      />
-      <Form.Dropdown
-        id="format"
-        title="Interpretation"
-        value={format}
-        onChange={setFormat}
-      >
-        <Form.Dropdown.Item
-          value="numi"
-          title="Numi Plain Text (Preserve Assignments)"
-        />
-        <Form.Dropdown.Item
-          value="markdown"
-          title="Captured Markdown (Historical Results)"
-        />
-      </Form.Dropdown>
-      <Form.Description
-        title="Source Preserved"
-        text="Imports create a separate local worksheet. Unsupported lines remain visible. The original file is never overwritten."
-      />
-    </Form>
-  );
-}
+import { ImportForm } from "./import-form";
 export default function Worksheets() {
   const [items, setItems] = useState<Awaited<ReturnType<typeof listDocuments>>>(
     [],

@@ -13,7 +13,13 @@ import {
 import { useMemo, useRef, useState } from "react";
 import { evaluateExpression } from "@my-numi/core";
 import { evaluateDocument, serializeNumi } from "@my-numi/document";
-import { compactContext, contextFor, validateSettings } from "./model";
+import {
+  compactContext,
+  compactResult,
+  contextFor,
+  expressionTitle,
+  validateSettings,
+} from "./model";
 import { rateDescription, useRates } from "./rates";
 import { CalculationInfo, ContextEditor, useClock } from "./ui";
 import { appendLine, replaceLine } from "./line-editor";
@@ -45,7 +51,7 @@ export function rendered(
   return evaluated(doc, now, rates)
     .lines.map((line) =>
       line.evaluation
-        ? `${line.source} → ${line.evaluation.ok ? line.evaluation.formatted : line.evaluation.diagnostics.map((d) => d.message).join("; ")}`
+        ? `${expressionTitle(line)} → ${line.evaluation.ok ? line.evaluation.formatted : line.evaluation.diagnostics.map((d) => d.message).join("; ")}`
         : line.source,
     )
     .join("\n");
@@ -231,7 +237,7 @@ export function WorksheetDetail({
           evaluation.value?.lines
             .map((line) =>
               line.evaluation
-                ? `${line.source} → ${line.evaluation.ok ? line.evaluation.formatted : line.evaluation.diagnostics.map((d) => d.message).join("; ")}`
+                ? `${expressionTitle(line)} → ${line.evaluation.ok ? line.evaluation.formatted : line.evaluation.diagnostics.map((d) => d.message).join("; ")}`
                 : line.source,
             )
             .join("\n") ?? ""
@@ -302,7 +308,7 @@ export function WorksheetDetail({
                 ? [
                     {
                       text: {
-                        value: draftResult.formatted ?? "",
+                        value: compactResult(draftResult.formatted ?? ""),
                         color: Color.Green,
                       },
                       tooltip: draftResult.formatted,
@@ -350,7 +356,7 @@ export function WorksheetDetail({
             <List.Item
               key={line.id}
               id={line.id}
-              title={line.source}
+              title={expressionTitle(line)}
               icon={
                 line.evaluation
                   ? line.evaluation.ok
@@ -368,7 +374,7 @@ export function WorksheetDetail({
                   ? [
                       {
                         text: {
-                          value: line.evaluation.formatted ?? "",
+                          value: compactResult(line.evaluation.formatted ?? ""),
                           color: Color.Green,
                         },
                         tooltip: line.evaluation.formatted,

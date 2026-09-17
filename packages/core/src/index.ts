@@ -689,7 +689,40 @@ class Parser {
 export function formatValue(v: Value): string {
   if (v.kind === "number") return v.amount;
   if (v.kind === "money") return `${new D(v.amount).toFixed(2)} ${v.currency}`;
-  if (v.kind === "quantity") return `${v.amount} ${v.unit}`;
+  if (v.kind === "quantity") {
+    if (v.interval) {
+      const { start, end } = v.interval;
+      if (
+        start.kind === "date" &&
+        end.kind === "date" &&
+        ["years", "months", "weeks"].includes(v.unit)
+      ) {
+        const duration = Temporal.PlainDate.from(start.iso).until(
+          Temporal.PlainDate.from(end.iso),
+          {
+            largestUnit: v.unit as "years" | "months" | "weeks",
+          },
+        );
+        const parts = (["years", "months", "weeks", "days"] as const)
+          .filter((unit) => duration[unit] !== 0)
+          .map((unit) => {
+            const amount = Math.abs(duration[unit]);
+            return `${amount} ${amount === 1 ? unit.slice(0, -1) : unit}`;
+          });
+        const text = parts.join(" ") || `0 ${v.unit}`;
+        return duration.sign < 0
+          ? parts.length > 1
+            ? `−(${text})`
+            : `-${text}`
+          : text;
+      }
+      // Timestamp-backed quantities retain elapsed-unit semantics. Round only
+      // presentation, explicitly marked approximate; arithmetic uses v.amount.
+      const displayed = new D(v.amount).toSignificantDigits(12);
+      return `${displayed.eq(v.amount) ? "" : "≈"}${displayed.toString()} ${v.unit}`;
+    }
+    return `${v.amount} ${v.unit}`;
+  }
   if (v.kind === "interval") {
     let duration: Temporal.Duration;
     if (v.start.kind === "date" && v.end.kind === "date")
