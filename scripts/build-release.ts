@@ -1,4 +1,4 @@
-import { mkdir, cp, readdir } from "node:fs/promises";
+import { mkdir, cp, readdir, rm } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { createHash } from "node:crypto";
 
@@ -82,7 +82,11 @@ async function archive(directory: string, name: string): Promise<string> {
   return tar + ".gz";
 }
 const brandStage = join(stage, "brand");
-await cp(join(root, "assets/brand"), brandStage, { recursive: true });
+await mkdir(brandStage, { recursive: true });
+const trackedBrandTar = join(stage, "brand-tracked.tar");
+await run(["git", "archive", "--format=tar", "--output", trackedBrandTar, commit, "assets/brand"]);
+await run(["tar", "-xf", trackedBrandTar, "--strip-components=2", "-C", brandStage]);
+await rm(trackedBrandTar);
 await archive(brandStage, `figori-brand-${label}`);
 
 const raycastStage = join(stage, "raycast");
