@@ -1154,14 +1154,19 @@ function configureFallbackChrome() {
       button.className = "icon-button";
       button.setAttribute("aria-label", label);
       button.title = label;
-      button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="' + path + '"/></svg>';
+      button.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="' + path + '"/></svg>';
       button.onclick = () => void windowAction(action);
       actions.append(button);
     }
     const header = document.querySelector("header")!;
     header.append(actions);
     header.addEventListener("mousedown", (event) => {
-      if (event.button !== 0 || (event.target as Element).closest("button, select, input")) return;
+      if (
+        event.button !== 0 ||
+        (event.target as Element).closest("button, select, input")
+      )
+        return;
       event.preventDefault();
       void windowAction(event.detail === 2 ? "maximize" : "drag");
     });
