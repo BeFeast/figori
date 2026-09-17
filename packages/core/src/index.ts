@@ -231,6 +231,17 @@ function convert(
   basis: Basis,
 ): Value {
   const u = canonical(target);
+  if (v.kind === "date" && u === "days") {
+    basis.notes.push(
+      `Calendar days from reference anchor ${basis.anchorDate} to ${v.iso}.`,
+    );
+    return convert(
+      { kind: "interval", start: date(basis.anchorDate), end: v },
+      u,
+      ctx,
+      basis,
+    );
+  }
   if (v.kind === "money") {
     const to = currency(target);
     if (to === v.currency) return v;
@@ -453,7 +464,39 @@ class Parser {
     return m;
   }
   expression(): Value {
+    const question = this.match(/^days\s+(since|until)\b/i);
     let a = this.sum();
+    if (question) {
+      if (a.kind !== "date")
+        fail(
+          "incompatible_types",
+          "Days since/until requires a date-only value; subtract timestamps explicitly for elapsed time.",
+        );
+      const today = date(this.now.toPlainDate().toString());
+      const since = question[1].toLowerCase() === "since";
+      this.basis.notes.push(
+        `Calendar days ${since ? "since" : "until"} ${a.iso}, using actual local today ${today.iso}.`,
+      );
+      a = convert(
+        { kind: "interval", start: since ? a : today, end: since ? today : a },
+        "days",
+        this.ctx,
+        this.basis,
+      );
+    }
+    if (this.match(/^to\b/i)) {
+      const end = this.sum();
+      if (
+        (a.kind !== "date" && a.kind !== "datetime") ||
+        (end.kind !== "date" && end.kind !== "datetime")
+      )
+        fail(
+          "incompatible_types",
+          "Date range requires two dates or timestamps; use in for unit conversion.",
+        );
+      this.basis.notes.push(`Date range from ${a.iso} to ${end.iso}.`);
+      a = { kind: "interval", start: a, end };
+    }
     while (this.match(/^in\b/i)) {
       const t = this.match(/^[A-Za-z]+/);
       if (!t) fail("syntax", "Expected conversion unit.");

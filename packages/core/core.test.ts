@@ -201,3 +201,60 @@ describe("textual dates with an omitted year", () => {
     expect(value("9 months", september)).toBe("9 months");
   });
 });
+
+describe("calendar-day questions", () => {
+  const today = { now: "2026-09-17T12:00:00Z", timezone: "Asia/Jerusalem" };
+  test("date-only results convert to signed days from the visible anchor", () => {
+    expect(value("(10 dec 2010 + 16 years) in days", today)).toBe("84 days");
+    expect(value("16 sep 2026 in days", today)).toBe("-1 days");
+    expect(value("17 sep 2026 in days", today)).toBe("0 days");
+    const pinned = {
+      ...today,
+      anchor: { mode: "fixed" as const, date: "2024-02-28" },
+    };
+    expect(value("1 mar 2024 in days", pinned)).toBe("2 days");
+    expect(
+      evaluate("1 mar 2024 in days", pinned).basis.notes.join(" "),
+    ).toContain("reference anchor 2024-02-28");
+    expect(evaluate("10 dec 2026 12:00 in days", today).ok).toBe(false);
+  });
+  test("since/until use actual local today in both directions regardless of pinned anchor", () => {
+    expect(value("days since 27 dec 1969", today)).toBe("20718 days");
+    expect(value("days until 27 dec 1969", today)).toBe("-20718 days");
+    expect(value("days until 27 dec", today)).toBe("101 days");
+    expect(value("days since 27 dec", today)).toBe("-101 days");
+    const pinned = {
+      ...today,
+      anchor: { mode: "fixed" as const, date: "2024-02-28" },
+    };
+    expect(value("days until 18 sep 2026", pinned)).toBe("1 days");
+    expect(
+      evaluate("days until 18 sep 2026", pinned).basis.notes.join(" "),
+    ).toContain("actual local today 2026-09-17");
+  });
+  test("date ranges preserve intervals and calendar days across DST", () => {
+    expect(value("(today to 27 dec) in days", today)).toBe("101 days");
+    expect(value("(27 dec to today) in days", today)).toBe("-101 days");
+    expect(value("today to 27 dec", today)).toBe("3 months 10 days");
+    const dst = { now: "2024-03-10T05:30:00Z", timezone: "America/New_York" };
+    expect(value("11 mar in days", dst)).toBe("1 days");
+    expect(value("days until 11 mar", dst)).toBe("1 days");
+    expect(value("days since 9 mar", dst)).toBe("1 days");
+    expect(
+      value("(10 mar 2024 00:00 to 11 mar 2024 00:00) in hours", dst),
+    ).toBe("23 hours");
+    expect(value("2 km in m", today)).toBe("2000 m");
+  });
+  test("invalid day questions remain diagnostic without timestamp coercion", () => {
+    for (const source of [
+      "days until 29 feb 2026",
+      "days since 10",
+      "today to 12 USD",
+      "days until 18 sep 2026 12:00",
+      "today to",
+      "days since",
+    ]) {
+      expect(evaluate(source, today).ok).toBe(false);
+    }
+  });
+});
