@@ -15,6 +15,7 @@ import { evaluateExpression } from "@my-numi/core";
 import { evaluateDocument, serializeNumi } from "@my-numi/document";
 import {
   compactContext,
+  compactResult,
   contextFor,
   expressionTitle,
   validateSettings,
@@ -307,7 +308,7 @@ export function WorksheetDetail({
                 ? [
                     {
                       text: {
-                        value: draftResult.formatted ?? "",
+                        value: compactResult(draftResult.formatted ?? ""),
                         color: Color.Green,
                       },
                       tooltip: draftResult.formatted,
@@ -373,7 +374,7 @@ export function WorksheetDetail({
                   ? [
                       {
                         text: {
-                          value: line.evaluation.formatted ?? "",
+                          value: compactResult(line.evaluation.formatted ?? ""),
                           color: Color.Green,
                         },
                         tooltip: line.evaluation.formatted,

@@ -299,3 +299,63 @@ describe("bare English month dates", () => {
     }
   });
 });
+
+describe("human-readable converted durations", () => {
+  const today = { now: "2026-09-17T12:00:00Z", timezone: "Asia/Jerusalem" };
+  test("calendar years/months/weeks display components instead of repeating fractions", () => {
+    expect(value("(today - 1 apr 2025) in years", today)).toBe(
+      "1 year 5 months 16 days",
+    );
+    expect(value("(1 apr 2025 - today) in years", today)).toBe(
+      "−(1 year 5 months 16 days)",
+    );
+    expect(value("(today - 1 apr 2025) in months", today)).toBe(
+      "17 months 16 days",
+    );
+    expect(value("(1 apr 2025 - today) in weeks", today)).toBe(
+      "−(76 weeks 2 days)",
+    );
+    expect(value("(today - 1 apr 2025) in days", today)).toBe("534 days");
+    expect(value("(1 apr 2025 - today) in days", today)).toBe("-534 days");
+  });
+  test("calendar components respect month ends, leap days and zero values", () => {
+    expect(value("(1 mar 2024 - 31 jan 2024) in months")).toBe("1 month 1 day");
+    expect(value("(31 jan 2024 - 1 mar 2024) in months")).toBe(
+      "−(1 month 1 day)",
+    );
+    expect(value("(1 mar 2024 - 28 feb 2024) in weeks")).toBe("2 days");
+    expect(value("(1 mar 2024 - 1 mar 2024) in weeks")).toBe("0 weeks");
+  });
+  test("formatting leaves exact fractional quantity amounts available to arithmetic", () => {
+    const converted = evaluate("(1 mar 2024 - 31 jan 2024) in months");
+    expect(converted.value?.kind).toBe("quantity");
+    if (converted.value?.kind !== "quantity")
+      throw new Error("Expected quantity");
+    expect(converted.value.unit).toBe("months");
+    expect(converted.value.amount).toBe(
+      "1.032258064516129032258064516129032258065",
+    );
+    const multiplied = evaluate("duration * 2", {
+      ...ctx,
+      variables: { duration: converted.value },
+    });
+    expect(
+      multiplied.value?.kind === "quantity" && multiplied.value.amount,
+    ).toBe("2.06451612903225806451612903225806451613");
+    expect(value("0.1 + 0.2")).toBe("0.3");
+    expect(value("12 USD")).toBe("12.00 USD");
+  });
+  test("timestamp formatting bounds precision without pretending DST days are 24 hours", () => {
+    const c = { ...ctx, timezone: "America/New_York" };
+    expect(value("(11 mar 2024 00:00 - 10 mar 2024 00:00) in hours", c)).toBe(
+      "23 hours",
+    );
+    expect(value("(11 mar 2024 00:00 - 10 mar 2024 00:00) in days", c)).toBe(
+      "≈0.958333333333 days",
+    );
+    expect(value("(10 mar 2024 00:00 - 11 mar 2024 00:00) in days", c)).toBe(
+      "≈-0.958333333333 days",
+    );
+    expect(value("(11 mar 2024 - 10 mar 2024) in weeks", c)).toBe("1 day");
+  });
+});

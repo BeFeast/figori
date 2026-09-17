@@ -122,3 +122,25 @@ export function expressionTitle(line: {
       : "";
   return prefix + line.expression;
 }
+
+/** Compact decimal amounts for accessories only; exact copy/detail text is retained. */
+export function compactResult(value: string): string {
+  // Match standalone decimal amounts, not ISO timestamps, identifiers, grouped
+  // numbers or scientific notation. Work on decimal digits to avoid Number loss.
+  return value.replace(
+    /(^|[\s($€£₪])([+-]?)(\d+)\.(\d+)(?=$|[\s),])/g,
+    (_match, prefix: string, sign: string, whole: string, fraction: string) => {
+      const cents =
+        BigInt(whole + fraction.padEnd(2, "0").slice(0, 2)) +
+        (fraction.length > 2 && fraction[2]! >= "5" ? 1n : 0n);
+      const digits = cents.toString().padStart(3, "0");
+      const remainder = digits.slice(-2).replace(/0+$/, "");
+      return (
+        prefix +
+        (cents === 0n ? "" : sign) +
+        digits.slice(0, -2) +
+        (remainder ? "." + remainder : "")
+      );
+    },
+  );
+}
