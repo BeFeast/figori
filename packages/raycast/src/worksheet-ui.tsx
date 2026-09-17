@@ -69,6 +69,7 @@ export function WorksheetDetail({ document: initialDocument, onSaved }: { docume
     catch (error) { await showToast(Toast.Style.Failure, "Reload Failed", String(error)); }
   }
   const { now, refresh } = useClock(); const { push } = useNavigation();
+  const { state: rates, loading: loadingRates, refreshRates } = useRates();
   let output: string;
   try { output = rendered(document, now, rates.snapshot); } catch (e) { output = `Evaluation error: ${String(e)}`; }
   const markdown = output.split("\n").map(escapeMarkdown).join("  \n");
