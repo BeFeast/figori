@@ -28,3 +28,11 @@ The private acceptance corpus comprises two independent worksheets with 26 and 4
 - Imported historical `= result` text is evidence, not an assertion that a current recomputation must match.
 
 The independently run private acceptance evaluates all 70 expression lines successfully with the selected context and injected test rates. That checks supported shapes, not historical numeric equality or installed desktop UI behavior. Automated tests use synthetic data only. Numi reopening and actual Raycast/Omarchy interaction remain separate target acceptance stages.
+
+## Calendar-day questions
+
+`days since DATE` and `days until DATE` count signed calendar days relative to actual local today in the selected timezone. `today to DATE` (or `DATE to DATE`) retains an interval, displayed as calendar years/months/days; append `in days` for a day count. A past target gives a negative `days until` result. Invalid dates remain errors.
+
+A date-only expression followed by `in days` counts from the visible selected anchor to that date. For example, with anchor `2026-09-17`, `(10 dec 2010 + 16 years) in days` is `84 days`. Pinning the anchor changes this reference; it does not redefine `today`, `days since`, or `days until`. An omitted year comes from the selected anchor year without future-year rollover. Basis notes disclose these reference choices.
+
+These counts use calendar dates across DST, not an assumed 24-hour elapsed day. A lone timestamp cannot implicitly convert to days; use an explicit timestamp range or subtraction to request elapsed-time conversion. Existing `in` syntax for quantities and currencies is unchanged. Core regression tests cover signs, leap dates, pinned anchors, DST, and invalid inputs.
