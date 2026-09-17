@@ -70,6 +70,10 @@ pub struct Opened {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Recovery {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub origin_path: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
     pub source: String,
     pub settings: Value,
     pub path: Option<String>,
@@ -80,6 +84,11 @@ pub fn settings_path(data: &Path, path: &Path) -> PathBuf {
     data.join("settings")
         .join(format!("{}.json", hash(&path.to_string_lossy())))
 }
+pub fn is_native(path: &Path) -> bool {
+    path.extension()
+        .and_then(|s| s.to_str())
+        .is_some_and(|s| s.eq_ignore_ascii_case("figori"))
+}
 pub fn opened(path: &Path, data: &Path) -> Result<Opened, String> {
     let path = fs::canonicalize(path).map_err(|e| e.to_string())?;
     let source = read_source(&path)?;
@@ -89,6 +98,9 @@ pub fn opened(path: &Path, data: &Path) -> Result<Opened, String> {
     let local = settings_path(data, &path);
     let sidecar = PathBuf::from(format!("{}.my-numi.json", path.display()));
     for metadata in [local, sidecar] {
+        if is_native(&path) {
+            break;
+        }
         if !metadata.exists() {
             continue;
         }
@@ -209,5 +221,50 @@ mod save_as_tests {
         )
         .unwrap();
         assert_eq!(opened(&path, &data).unwrap().settings, Some(settings));
+    }
+}
+
+#[cfg(test)]
+mod native_container_tests {
+    use super::*;
+    #[test]
+    fn native_payload_hashes_entire_file_and_ignores_legacy_sidecars() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("sample.figori");
+        let raw = "version = 1\nsource = \"2 + 3\"\n";
+        fs::write(&path, raw).unwrap();
+        fs::write(
+            format!("{}.my-numi.json", path.display()),
+            serde_json::json!({"sourceHash":hash(raw),"settings":{"timezone":"wrong"}}).to_string(),
+        )
+        .unwrap();
+        let opened = opened(&path, dir.path()).unwrap();
+        assert_eq!(opened.source, raw);
+        assert_eq!(opened.source_hash, hash(raw));
+        assert!(opened.settings.is_none());
+        fs::write(&path, format!("{raw}# outside edit\n")).unwrap();
+        assert!(atomic_write(&path, raw.as_bytes(), Some(&opened.source_hash), true).is_err());
+        // Corrupt TOML is transported verbatim to the authoritative frontend codec.
+        fs::write(&path, "not valid [ TOML").unwrap();
+        assert_eq!(
+            super::opened(&path, dir.path()).unwrap().source,
+            "not valid [ TOML"
+        );
+    }
+    #[test]
+    fn recovery_preserves_native_container_and_accepts_legacy_envelopes() {
+        let legacy = serde_json::json!({"source":"2+3","settings":{},"path":null,"sourceHash":null,"dirty":true});
+        let value: Recovery = serde_json::from_value(legacy.clone()).unwrap();
+        assert!(value.format.is_none());
+        assert!(value.origin_path.is_none());
+        let mut native = legacy;
+        native["format"] = serde_json::json!("figori");
+        native["originPath"] = serde_json::json!("/tmp/import.numi");
+        native["source"] = serde_json::json!("version = 1\n");
+        let value: Recovery = serde_json::from_value(native).unwrap();
+        let roundtrip = serde_json::to_value(value).unwrap();
+        assert_eq!(roundtrip["originPath"], "/tmp/import.numi");
+        assert_eq!(roundtrip["format"], "figori");
+        assert_eq!(roundtrip["source"], "version = 1\n");
     }
 }

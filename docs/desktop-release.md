@@ -4,7 +4,7 @@ Desktop releases are separate from the earlier CLI/Raycast/Omarchy release set. 
 
 ## Immutable release input
 
-For `v0.2.2`, prepare a fresh directory containing:
+For `v0.3.0`, prepare a fresh directory containing:
 
 - `Figori-macos-arm64.zip`: the reviewed native application bundle, without personal worksheets, recovery files or host credentials.
 - `SOURCE_COMMIT`: only the exact 40-character source commit followed by a newline.
@@ -18,7 +18,7 @@ The source may be the desktop preview branch while its implementation PR remains
 ## Publication sequence
 
 1. Wait for the exact final source SHA and completed native build. Verify `SOURCE_COMMIT`, then every `SHA256SUMS` entry after transfer to the publication host.
-2. Check that both `v0.2.2` and its release are absent. An existing object or unexpected API response is a stop condition, not permission to overwrite it.
+2. Check that both `v0.3.0` and its release are absent. An existing object or unexpected API response is a stop condition, not permission to overwrite it.
 3. Create a draft prerelease using `tag_name`, `target_commitish` and a human-readable body.
 4. Upload the zip, `SOURCE_COMMIT` and `SHA256SUMS`. Download each asset again and compare its digest with the local file.
 5. Verify the created tag resolves to the approved commit, then change only `draft` to false, retaining `prerelease: true`.

@@ -9,6 +9,13 @@ pub fn install(app: &tauri::App) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, "open", "Open…", true, Some("CmdOrCtrl+O"))?;
     let save = MenuItem::with_id(app, "save", "Save", true, Some("CmdOrCtrl+S"))?;
     let save_as = MenuItem::with_id(app, "save-as", "Save As…", true, Some("CmdOrCtrl+Shift+S"))?;
+    let export_numi = MenuItem::with_id(
+        app,
+        "export-numi",
+        "Export Numi Source…",
+        true,
+        None::<&str>,
+    )?;
     let export_source = MenuItem::with_id(
         app,
         "export-markdown",
@@ -34,6 +41,7 @@ pub fn install(app: &tauri::App) -> tauri::Result<()> {
             &save,
             &save_as,
             &separator,
+            &export_numi,
             &export_source,
             &export_results,
         ],

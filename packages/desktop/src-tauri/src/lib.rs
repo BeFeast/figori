@@ -26,7 +26,8 @@ async fn open_document(
     let file = rfd::AsyncFileDialog::new()
         .set_parent(&window)
         .set_title("Open worksheet")
-        .add_filter("Worksheets", &["numi", "txt", "md"])
+        .add_filter("Figori documents", &["figori"])
+        .add_filter("Import worksheets", &["numi", "txt", "md"])
         .add_filter("All files", &["*"])
         .pick_file()
         .await;
@@ -46,17 +47,24 @@ async fn save_document(
     settings: Value,
     save_as: bool,
     expected_hash: Option<String>,
+    suggested_name: Option<String>,
 ) -> Result<Option<Opened>, String> {
     if source.len() > files::MAX_SOURCE_BYTES {
         return Err("Worksheet is larger than 5 MB.".into());
     }
     let dialog = save_as || path.is_none();
+    let proposed = suggested_name
+        .as_deref()
+        .and_then(|name| Path::new(name).file_stem())
+        .and_then(|name| name.to_str())
+        .filter(|name| !name.is_empty())
+        .unwrap_or("Worksheet");
     let selected = if dialog {
         let file = rfd::AsyncFileDialog::new()
             .set_parent(&window)
             .set_title("Save worksheet")
-            .set_file_name("Worksheet.numi")
-            .add_filter("Numi worksheet", &["numi"])
+            .set_file_name(format!("{proposed}.figori"))
+            .add_filter("Figori document", &["figori"])
             .save_file()
             .await;
         match file {
@@ -72,20 +80,18 @@ async fn save_document(
     } else {
         selected
     };
+    if !files::is_native(&selected) {
+        return Err(
+            "Save native documents with the .figori extension; use Export for Numi or Markdown."
+                .into(),
+        );
+    }
     let expected = files::save_expectation(&selected, dialog, expected_hash)?;
     files::atomic_write(&selected, source.as_bytes(), expected.as_deref(), true)?;
     let selected = std::fs::canonicalize(&selected).map_err(|e| e.to_string())?;
-    let data = data_dir(&app)?;
+    let _ = app;
     let source_hash = files::hash(&source);
-    let metadata = serde_json::json!({"sourceHash":source_hash,"settings":settings});
-    let warning = files::atomic_write(
-        &files::settings_path(&data, &selected),
-        metadata.to_string().as_bytes(),
-        None,
-        false,
-    )
-    .err()
-    .map(|error| format!("Worksheet saved, but local settings could not be saved: {error}"));
+    let warning = None;
     Ok(Some(Opened {
         path: selected.to_string_lossy().into(),
         source,
@@ -102,8 +108,15 @@ fn save_recovery(
     path: Option<String>,
     source_hash: Option<String>,
     dirty: bool,
+    format: Option<String>,
+    origin_path: Option<String>,
 ) -> Result<(), String> {
+    if format.as_deref().is_some_and(|value| value != "figori") {
+        return Err("Unsupported recovery format".into());
+    }
     let recovery = Recovery {
+        origin_path,
+        format,
         source,
         settings,
         path,
@@ -190,6 +203,7 @@ pub fn run() {
                 "open",
                 "save",
                 "save-as",
+                "export-numi",
                 "export-markdown",
                 "export-markdown-results",
             ]
@@ -201,6 +215,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             chrome::configure_chrome,
             export::export_document,
+            export::export_numi,
             open_document,
             read_document,
             save_document,

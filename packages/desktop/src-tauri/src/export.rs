@@ -34,12 +34,13 @@ fn export_target(path: &Path, current: Option<&Path>) -> Result<PathBuf, String>
     }
     Ok(target)
 }
-#[tauri::command]
-pub async fn export_document(
+async fn export_text(
     window: tauri::WebviewWindow,
     source: String,
     suggested_name: String,
     current_path: Option<String>,
+    extension: &str,
+    label: &str,
 ) -> Result<Option<serde_json::Value>, String> {
     if source.len() > files::MAX_SOURCE_BYTES {
         return Err("Export is larger than 5 MB.".into());
@@ -52,9 +53,9 @@ pub async fn export_document(
         .unwrap_or("Worksheet");
     let selected = rfd::AsyncFileDialog::new()
         .set_parent(&window)
-        .set_title("Export Markdown")
-        .set_file_name(format!("{name}.md"))
-        .add_filter("Markdown", &["md"])
+        .set_title(format!("Export {label}"))
+        .set_file_name(format!("{name}.{extension}"))
+        .add_filter(label, &[extension])
         .save_file()
         .await;
     let Some(selected) = selected else {
@@ -96,4 +97,31 @@ mod tests {
             "# Export\n€12\n"
         );
     }
+}
+
+#[tauri::command]
+pub async fn export_document(
+    window: tauri::WebviewWindow,
+    source: String,
+    suggested_name: String,
+    current_path: Option<String>,
+) -> Result<Option<serde_json::Value>, String> {
+    export_text(
+        window,
+        source,
+        suggested_name,
+        current_path,
+        "md",
+        "Markdown",
+    )
+    .await
+}
+#[tauri::command]
+pub async fn export_numi(
+    window: tauri::WebviewWindow,
+    source: String,
+    suggested_name: String,
+    current_path: Option<String>,
+) -> Result<Option<serde_json::Value>, String> {
+    export_text(window, source, suggested_name, current_path, "numi", "Numi").await
 }
