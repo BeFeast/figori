@@ -2,7 +2,7 @@
 
 Static Cloudflare Pages directory; publish `site/` with no build command. No analytics, remote fonts, cookies, or client-side dependencies.
 
-Before publication, supply actual native app captures at `assets/project-quote.png`, `assets/trip-budget.png`, and `assets/calendar-plan.png`. The supplied 1200×850 image dimensions should match capture aspect ratio. Never substitute mock app UI or private worksheets. Confirm the v0.3.5 GitHub DMG URL exists and matches the signed/notarized release.
+Actual native v0.3.5 captures are included at `assets/project-quote.jpg`, `assets/trip-budget.jpg`, and `assets/calendar-plan.jpg`. Project and trip captures are 1405×768; calendar is 1404×768. Consulting uses Dark; trip and calendar use Light. Images remain unedited. Never substitute mock app UI or private worksheets. Confirm the v0.3.5 GitHub DMG URL exists and matches the signed/notarized release.
 
 Public synthetic `.figori` examples live in `examples/`. `verification.json` records shared-engine results with fixed UTC context and explicitly synthetic EUR-base rates (USD 1.10, ILS 4). The installed app uses its own dated rate snapshot, so currency conversion values in native screenshots can differ; do not present the fixture rates as live rates.
 

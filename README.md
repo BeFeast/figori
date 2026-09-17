@@ -9,6 +9,25 @@
 
 A local-first calculator worksheet with a **standalone desktop app**, plus Raycast, terminal and Omarchy integrations. Write calculations beside your notes and see results beside each line, with the date anchor, timezone and currency basis behind the answer.
 
+## A worksheet, in practice
+
+![Figori native macOS app calculating a consulting proposal with a discount, contingency and staged payments](site/assets/project-quote.jpg)
+
+Build a proposal from named values, explore a trip budget in multiple currencies, or connect launch dates to recurring costs. These are real native app captures of public synthetic examples, not mockups.
+
+<details>
+<summary>Travel budget and calendar planning</summary>
+
+![Figori trip budget with dated currency conversion results](site/assets/trip-budget.jpg)
+
+![Figori calendar worksheet with kickoff, launch and review dates](site/assets/calendar-plan.jpg)
+
+</details>
+
+Try the [consulting](site/examples/consulting-project.figori), [travel](site/examples/trip-budget.figori), and [calendar](site/examples/calendar-plan.figori) worksheets. Example values are illustrative; currency conversions use the dated snapshot shown in the app.
+
+[Download for macOS Apple silicon](https://github.com/BeFeast/figori/releases/download/v0.3.5/Figori-0.3.5-macos-arm64.dmg) · [Product website](https://figori.befeast.com) · [Public source](https://github.com/BeFeast/figori)
+
 ## Inspired by Numi
 
 Figori is inspired by [Numi](https://numi.app), the thoughtful natural-language calculator created by the [Numi developer](https://github.com/nikolaeu/numi). Numi helped establish the writing-and-calculating experience this project builds on. **Please visit [the official Numi website](https://numi.app) to try Numi and support its original developer.**
