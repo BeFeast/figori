@@ -31,3 +31,7 @@ Appearance (toolbar sliders icon) controls theme, bundled JetBrains Mono Nerd Fo
 The worksheet remains the single job of the window, following Soulver's focused editing model. On macOS, AppKit provides the real SF Symbols toolbar and native Settings window (Cmd+,); the frontend hides its Linux fallback only after the native bridge confirms attachment. Settings changes arrive through figori-appearance and persist as local preferences without modifying the worksheet.
 
 Result details borrow the compact, contextual disclosure pattern of CleanShot: a non-modal panel beside the selected result, with Copy and Escape, without a full-window scrim. Calculation context is also a compact non-modal panel. HedRoom's colors remain; MacPaw-inspired grouping does not add dashboards or sidebars. Reduced Motion disables frontend motion. Native controls supply platform accessibility; worksheet result buttons retain descriptive accessible labels.
+
+### macOS UI acceptance bar
+
+Use native AppKit controls first for window chrome, Settings and menus, with consistent SF Symbols, accessible labels and Reduced Motion support. Keep the main window focused on one worksheet. Do not add browser-style path tooltips, full-workspace modal scrims or generic web forms to replace native controls. Editor-specific result disclosures must stay compact and contextual. Review actual light and dark screenshots, keyboard navigation and typography alignment before delivering UI changes; a passing build alone is not visual acceptance.
