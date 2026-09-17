@@ -435,3 +435,44 @@ body.resizing-columns {
 .file-heading strong.dirty {
   color: var(--accent-text);
 }
+
+.cm-tooltip-autocomplete {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border-strong) !important;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px #0004;
+  font-family: Heebo, system-ui, sans-serif;
+}
+.cm-tooltip-autocomplete ul {
+  max-width: min(520px, 75vw) !important;
+}
+.cm-tooltip-autocomplete ul li {
+  padding: 4px 10px !important;
+}
+.cm-tooltip-autocomplete ul li[aria-selected="true"] {
+  background: var(--button-hover) !important;
+  color: var(--text) !important;
+}
+.cm-completionLabel {
+  font-family: ui-monospace, monospace;
+  color: var(--result);
+}
+.cm-completionDetail {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal !important;
+  max-width: 220px;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+.cm-completionInfo {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border-strong) !important;
+  font-family: Heebo, system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}

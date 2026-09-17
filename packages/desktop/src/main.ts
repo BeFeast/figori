@@ -1,3 +1,13 @@
+import {
+  autocompletion,
+  startCompletion,
+  closeCompletion,
+  acceptCompletion,
+  moveCompletionSelection,
+  completionStatus,
+  selectedCompletion,
+} from "@codemirror/autocomplete";
+import { worksheetCompletions } from "./completion";
 import { columnLimits, resultWidth, savedColumnRatio } from "./splitter";
 import { OperationGate } from "./operation";
 import { Compartment } from "@codemirror/state";
@@ -348,6 +358,22 @@ function editorState(doc: string) {
       drawSelection(),
       highlightActiveLine(),
       bracketMatching(),
+      autocompletion({
+        override: [
+          (context) =>
+            worksheetCompletions(context, {
+              now: new Date().toISOString(),
+              timezone: worksheet.settings.timezone,
+              anchor: worksheet.settings.anchor,
+              billing: worksheet.settings.billing,
+              rates: rates.snapshot,
+            }),
+        ],
+        activateOnTyping: true,
+        defaultKeymap: false,
+        selectOnOpen: false,
+        maxRenderedOptions: 12,
+      }),
       EditorView.lineWrapping,
       resultField,
       syntaxField,
@@ -370,7 +396,29 @@ function editorState(doc: string) {
         },
         { dark: true },
       ),
-      keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
+      keymap.of([
+        { key: "Ctrl-Space", run: startCompletion },
+        { key: "ArrowDown", run: moveCompletionSelection(true) },
+        { key: "ArrowUp", run: moveCompletionSelection(false) },
+        { key: "Escape", run: closeCompletion },
+        {
+          key: "Tab",
+          run: (view) => {
+            if (completionStatus(view.state) !== "active") return false;
+            if (!selectedCompletion(view.state))
+              moveCompletionSelection(true)(view);
+            return acceptCompletion(view);
+          },
+        },
+        {
+          key: "Enter",
+          run: (view) =>
+            selectedCompletion(view.state) ? acceptCompletion(view) : false,
+        },
+        indentWithTab,
+        ...defaultKeymap,
+        ...historyKeymap,
+      ]),
       EditorView.contentAttributes.of({
         id: "source-editor",
         "aria-label": "Worksheet source",

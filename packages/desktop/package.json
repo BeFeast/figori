@@ -1,6 +1,6 @@
 {
   "name": "@figori/desktop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,13 +10,14 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@codemirror/state": "6.7.5",
-    "@codemirror/view": "6.43.12",
+    "@codemirror/autocomplete": "6.20.3",
     "@codemirror/commands": "6.11.1",
     "@codemirror/language": "6.12.4",
-    "@tauri-apps/api": "2.11.1",
+    "@codemirror/state": "6.7.5",
+    "@codemirror/view": "6.43.12",
     "@my-numi/core": "workspace:*",
     "@my-numi/document": "workspace:*",
+    "@tauri-apps/api": "2.11.1",
     "decimal.js": "10.6.0"
   },
   "devDependencies": {
