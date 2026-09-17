@@ -57,7 +57,7 @@
     },
     {
       "name": "consulting-project",
-      "expressions": 13,
+      "expressions": 15,
       "results": [
         {
           "expression": "18",
@@ -76,7 +76,11 @@
           "result": "$145.00"
         },
         {
-          "expression": "(research_hours + build_hours + review_hours) * hourly_rate",
+          "expression": "research_hours + build_hours + review_hours",
+          "result": "94"
+        },
+        {
+          "expression": "total_hours * hourly_rate",
           "result": "$13630.00"
         },
         {
@@ -110,6 +114,10 @@
         {
           "expression": "quoted - deposit",
           "result": "$9462.01"
+        },
+        {
+          "expression": "balance / 3",
+          "result": "$3154.00"
         }
       ]
     },
