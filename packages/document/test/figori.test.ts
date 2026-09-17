@@ -1,6 +1,6 @@
 
 import {expect,test} from "bun:test";
-import {importDocument,parseFigori,serializeFigori} from "../src/index";
+import {importDocument,parseFigori,serializeFigori,serializeNumi} from "../src/index";
 test("frontmatter keeps exact body bytes, identities and settings across round trips",()=>{
  for(const source of ["","\n","\n\nfirst\r\nsecond\nthird\r","quote \"\"\" and slash \\\nend\\\n","שלום 😀\t\u0000\u0001\n+++\nbody after delimiter\n"]){
   const doc=importDocument(source,{format:"markdown",settings:{timezone:"Europe/Paris",anchor:{mode:"fixed",date:"2024-02-29"},billing:"include-partial"}});
@@ -37,4 +37,14 @@ test("CRLF framing accepted without body trimming and metadata comments normaliz
  const commented=valid.replace("+++\n","+++\n# external note\n");
  expect(parseFigori(commented).source).toBe(doc.source);
  expect(serializeFigori(parseFigori(commented))).not.toContain("# external note");
+});
+
+test("Numi-origin native roundtrip retains source provenance and inert Markdown structure",()=>{
+ const source="x = 2\r\n```\r\nx = 99\r\n```\r\n_ _ _\r\nx * 3\r\n";
+ const doc=importDocument(source,{format:"numi"});
+ const restored=parseFigori(serializeFigori(doc));
+ expect(restored).toEqual(doc);
+ expect(restored.format).toBe("numi");
+ expect(restored.lines.slice(1,5).every(l=>l.kind==="comment")).toBe(true);
+ expect(serializeNumi(restored).text).toBe(source);
 });

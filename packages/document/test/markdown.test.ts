@@ -44,3 +44,20 @@ test("results export is inert and source export remains exact",()=>{
  expect(result).not.toContain('"diagnostics"');
  expect(importDocument(result,{format:"markdown"}).lines.filter(l=>l.kind==="expression")).toHaveLength(1);
 });
+
+test("both source formats recognize fences and thematic breaks without swallowing math",()=>{
+ for(const format of ["numi","markdown"] as const){
+  const source=["x = 2","```ts","x = 999","```","~~~","hidden = 7","~~~","---","***","___","- - -","* * *","_ _ _","x * 3","10 - 3","-3","2 + * 3"].join("\r\n");
+  const doc=importDocument(source,{format});
+  const result=evaluateDocument(doc,evaluateExpression,ctx);
+  for(let i=1;i<=12;i++)expect(result.lines[i]?.evaluation).toBeUndefined();
+  expect(result.variables.x).toEqual({kind:"number",amount:"2"});
+  expect(result.variables.hidden).toBeUndefined();
+  expect(result.lines[13]?.evaluation?.formatted).toBe("6");
+  expect(result.lines[14]?.evaluation?.formatted).toBe("7");
+  expect(result.lines[15]?.evaluation?.formatted).toBe("-3");
+  expect(result.lines[16]?.evaluation?.ok).toBe(false);
+  expect(doc.source).toBe(source);
+  expect(doc.format).toBe(format);
+ }
+});

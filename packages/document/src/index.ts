@@ -108,7 +108,6 @@ function parseLine(raw: string, ending: string, format: SourceFormat): DocumentL
 function parseLines(source: string, format: SourceFormat): DocumentLine[] {
   let fence: { char: string; length: number } | undefined;
   return splitLines(source).map(({source: raw, ending}) => {
-    if (format !== "markdown") return parseLine(raw, ending, format);
     const text = raw.replace(/^\uFEFF/, "");
     const marker = text.match(/^ {0,3}(\x60{3,}|~{3,})(.*)$/);
     let inert = false;
@@ -118,7 +117,9 @@ function parseLines(source: string, format: SourceFormat): DocumentLine[] {
     } else if (marker && !(marker[1]![0] === String.fromCharCode(96) && marker[2]!.includes(String.fromCharCode(96)))) {
       fence = {char: marker[1]![0]!, length: marker[1]!.length};
       inert = true;
-    } else {
+    } else if (/^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,})$/.test(text)) {
+      inert = true;
+    } else if (format === "markdown") {
       inert = /^(?: {4}|\t|\s{0,3}>|\s{0,3}(?:[-+*]|\d+[.)])\s+|\s*<!--)/.test(text)
         || /\x60|\*\*|__|\[[^\]]*\]\([^)]*\)/.test(text)
         || /^\s*(?:\*[^*]+\*|_[^_]+_)\s*$/.test(text);

@@ -84,3 +84,14 @@ test("Markdown code fences do not offer calculator completions", () => {
     ),
   ).toBeNull();
 });
+
+test("Numi-origin native documents keep fenced declarations and completions inert", () => {
+ for(const format of ["numi", "markdown"] as const){
+  const doc="visible = 12\n~~~\nhidden = 99\npri\n~~~\nvi";
+  const inside=doc.indexOf("pri")+3;
+  expect(worksheetCompletions(new CompletionContext(EditorState.create({doc}),inside,true),{},format)).toBeNull();
+  const result=worksheetCompletions(new CompletionContext(EditorState.create({doc}),doc.length,true),{},format)!;
+  expect(result.options.some(o=>o.label==="hidden")).toBe(false);
+  expect(result.options.find(o=>o.label==="visible")?.detail).toBe("12");
+ }
+});

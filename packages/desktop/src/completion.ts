@@ -81,7 +81,6 @@ export function worksheetCompletions(
   format: "numi" | "markdown" = "numi",
 ): CompletionResult | null {
   if (
-    format === "markdown" &&
     markdownMarks(context.state.doc.toString()).some(
       (mark) =>
         mark.className === "md-code" &&
