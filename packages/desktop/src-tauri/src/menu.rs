@@ -1,6 +1,18 @@
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 pub fn install(app: &tauri::App) -> tauri::Result<()> {
-    let about = PredefinedMenuItem::about(app, Some("About Figori"), None)?;
+    // Linux packaging uses a stable machine name; the About dialog keeps the product brand.
+    #[cfg(target_os = "linux")]
+    let about_metadata = Some(tauri::menu::AboutMetadata {
+        name: Some("Figori".into()),
+        version: Some(app.package_info().version.to_string()),
+        authors: Some(vec!["BeFeast".into()]),
+        website: Some("https://figori.befeast.com".into()),
+        icon: app.default_window_icon().cloned(),
+        ..Default::default()
+    });
+    #[cfg(not(target_os = "linux"))]
+    let about_metadata = None;
+    let about = PredefinedMenuItem::about(app, Some("About Figori"), about_metadata)?;
     // Native terminate: can bypass the frontend dirty-close guard on macOS.
     let quit = MenuItem::with_id(app, "quit", "Quit Figori", true, Some("CmdOrCtrl+Q"))?;
     let settings = MenuItem::with_id(app, "settings", "Settings…", true, Some("CmdOrCtrl+,"))?;
