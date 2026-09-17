@@ -237,9 +237,13 @@ export function serializeMarkdown(
     const result = results.get(line.id);
     if (!result?.evaluation || result.source !== line.source) return line.source + line.ending;
     const e = result.evaluation;
-    const snapshot = JSON.stringify({result:e.ok ? e.formatted : undefined, diagnostics:e.ok ? undefined : e.diagnostics})
-      .replace(/</g,"\\u003c").replace(/>/g,"\\u003e").replace(/\u2028/g,"\\u2028").replace(/\u2029/g,"\\u2029");
-    return line.source + (line.ending || ending) + "<!-- figori-result: " + snapshot + " -->" + line.ending;
+    const label = e.ok ? "Result" : "Diagnostic";
+    const value = e.ok ? (e.formatted ?? "") : e.diagnostics.map(d => d.message).join("\n");
+    // Escape Markdown/HTML and prefix every line so text cannot become executable source.
+    const readable = value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/[\\`*_[\]{}]/g, "\\$&")
+      .split(/\r\n|\r|\n|\u2028|\u2029/).map((part, i) => "> " + (i === 0 ? label + ": " : "") + part).join(ending);
+    return line.source + (line.ending || ending) + readable + line.ending;
   }).join("");
   return {text,warnings};
 }

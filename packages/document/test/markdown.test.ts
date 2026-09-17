@@ -24,11 +24,23 @@ test("results export is inert and source export remains exact",()=>{
  const source="x = 2\r\nx * 3"; const doc=importDocument(source,{format:"markdown"});
  const evaluated=evaluateDocument(doc,evaluateExpression,ctx);
  const exported=serializeMarkdown(doc,{evaluated});
+ expect(exported.text).toContain("> Result: 6");
+ expect(exported.text).not.toContain("figori-result:");
+ expect(serializeMarkdown(doc,{evaluated}).text).toBe(exported.text);
  const reopened=evaluateDocument(importDocument(exported.text,{format:"markdown"}),evaluateExpression,ctx);
  expect(reopened.lines.filter(l=>l.evaluation).map(l=>l.evaluation?.formatted)).toEqual(["2","6"]);
  expect(doc.source).toBe(source);expect(serializeMarkdown(doc).text).toBe(source);
  const malicious={lines:[{...doc.lines[0]!,evaluation:{ok:true,formatted:"-->\nx = 100\n<!--",diagnostics:[]}}]};
  const safe=serializeMarkdown(doc,{evaluated:malicious}).text;
- expect(safe).toContain("\\u003e");
+ expect(safe).toContain("&gt;");
+ expect(safe).toContain("> x = 100");
  expect(evaluateDocument(importDocument(safe,{format:"markdown"}),evaluateExpression,ctx).variables.x).toEqual({kind:"number",amount:"2"});
+});test("diagnostic export is readable and multiline text remains quoted",()=>{
+ const doc=importDocument("unknown ??",{format:"markdown"});
+ const evaluated={lines:[{...doc.lines[0]!,evaluation:{ok:false,diagnostics:[{code:"bad",message:"Missing *value*\nUse [amount]"}]}}]};
+ const result=serializeMarkdown(doc,{evaluated}).text;
+ expect(result).toContain("> Diagnostic: Missing");
+ expect(result).toContain("> Use");
+ expect(result).not.toContain('"diagnostics"');
+ expect(importDocument(result,{format:"markdown"}).lines.filter(l=>l.kind==="expression")).toHaveLength(1);
 });
