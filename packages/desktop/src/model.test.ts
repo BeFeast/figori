@@ -166,3 +166,43 @@ test("new native worksheets use Markdown semantics and keep fenced calculations 
   expect(evaluated.variables.hidden).toBeUndefined();
   expect(evaluated.variables.price).toBeDefined();
 });
+
+test("native recovery without a format discriminator restores container metadata", () => {
+  const doc = importDocument("# Notes\r\nprice=12\nprice=12\n", {
+    format: "markdown",
+    settings: { timezone: "UTC", anchor: { mode: "fixed", date: "2024-02-01" } },
+  });
+  const recovery = {
+    source: serializeFigori(doc), path: "/tmp/Notes.FIGORI",
+    sourceHash: "physical-baseline", settings: doc.settings, dirty: true,
+  };
+  const before = JSON.stringify(recovery);
+  const restored = recoveredState(recovery);
+  expect(restored.document).toEqual(doc);
+  expect(restored.path).toBe(recovery.path);
+  expect(restored.sourceHash).toBe(recovery.sourceHash);
+  expect(restored.dirty).toBe(true);
+  expect(restored.originPath).toBeNull();
+  expect(JSON.stringify(recovery)).toBe(before);
+  expect(recoveredState({ ...recovery, dirty: false }).dirty).toBe(false);
+});
+
+test("legacy interchange recovery never guesses native format from delimiters", () => {
+  const doc = importDocument("price=12", { format: "numi" });
+  const source = serializeFigori(doc);
+  const restored = recoveredState({ source, path: "/tmp/original.numi", sourceHash: "old", settings: doc.settings, dirty: false });
+  expect(restored.document.source).toBe(source);
+  expect(restored.path).toBeNull();
+  expect(restored.originPath).toBe("/tmp/original.numi");
+  expect(restored.dirty).toBe(true);
+});
+
+test("invalid native legacy recovery fails without changing the recovery payload", () => {
+  const settings = importDocument("", { format: "numi" }).settings;
+  for (const source of ["price=12", "+++\nformat='figori'\nschema_version=999\n+++\nprice=12"]) {
+    const recovery = { source, path: "/tmp/broken.figori", sourceHash: "baseline", settings, dirty: true };
+    const before = JSON.stringify(recovery);
+    expect(() => recoveredState(recovery)).toThrow();
+    expect(JSON.stringify(recovery)).toBe(before);
+  }
+});

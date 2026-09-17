@@ -131,6 +131,10 @@ export function recoveredWorksheet(recovery: Recovery): Worksheet {
   if (recovery.format === "figori") return parseFigori(recovery.source);
   if (recovery.format !== undefined)
     throw new Error("Unsupported recovery format");
+  // Older native snapshots omitted the format discriminator. A native path
+  // still requires a valid container; never reinterpret corruption as text.
+  if (/\.figori$/i.test(recovery.path ?? ""))
+    return parseFigori(recovery.source);
   return importDocument(recovery.source, {
     format: formatForPath(recovery.path),
     settings: recovery.settings,
@@ -150,7 +154,8 @@ export function openedState(opened: Opened) {
 export function recoveredState(recovery: Recovery) {
   const document = recoveredWorksheet(recovery);
   const native =
-    recovery.format === "figori" &&
+    (recovery.format === "figori" ||
+      (recovery.format === undefined && /\.figori$/i.test(recovery.path ?? ""))) &&
     (!recovery.path || /\.figori$/i.test(recovery.path));
   return {
     document,
