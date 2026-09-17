@@ -113,7 +113,16 @@ function contextText() {
   }).format(new Date());
   return `${s.anchor.mode === "today" ? "Today " + today : s.anchor.date} · ${s.timezone}`;
 }
+let configuredDocumentPath: string | null | undefined;
+let documentConfiguration: Promise<unknown> = Promise.resolve();
 function updateChrome() {
+  if (configuredDocumentPath !== path) {
+    const currentPath = path;
+    configuredDocumentPath = currentPath;
+    documentConfiguration = documentConfiguration
+      .then(() => invoke("configure_document", { path: currentPath }))
+      .catch(report);
+  }
   const name =
     path?.split(/[\\/]/).at(-1) ??
     (originPath
@@ -745,6 +754,9 @@ async function openUnlocked(filePath?: string) {
       });
       await adopt(refreshed);
     } else await adopt(opened, prepared);
+    // Reads also occur before Cancel and during recovery validation. Only an
+    // adopted document counts as a successful user open.
+    await invoke("record_recent", { path: opened.path }).catch(report);
   } catch (error) {
     report(error);
   }
@@ -1092,6 +1104,8 @@ try {
     },
   });
   if (ready) {
+    configuredDocumentPath = undefined;
+    updateChrome();
     document.body.classList.add("native-chrome");
     const precisionControl = document.querySelector(".precision");
     if (precisionControl)
