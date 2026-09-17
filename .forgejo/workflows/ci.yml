@@ -17,3 +17,5 @@ jobs:
       - run: bun run typecheck
       - run: bun test
       - run: bun run build
+      - name: Build and typecheck Raycast extension
+        run: bun run --cwd packages/raycast build

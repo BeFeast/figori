@@ -30,3 +30,20 @@ bash /absolute/staging/rollback-cli-user.sh --apply /absolute/new/backup
 ```
 
 Use the Linux binary path instead when delivering only the Linux CLI. Omarchy's combined plugin+CLI installer remains a separate option; do not run both installers over the same executable in one delivery. The exact target staging path, checksum, and backup path are supplied with the concrete release approval.
+
+## Rebuild from the source archive
+
+The source archive contains a `my-numi/` root and all workspace packages. Extract it into a new working directory, then install the locked dependencies with Bun 1.3.14:
+
+```sh
+mkdir my-numi-source
+tar -xzf /absolute/staging/my-numi-source-COMMIT.tar.gz -C my-numi-source
+cd my-numi-source/my-numi
+bun install --frozen-lockfile
+bun run typecheck
+bun test
+bun run build
+bun run --cwd packages/raycast build
+```
+
+The source archive intentionally has no `.git` metadata, so `scripts/build-release.ts` (which verifies exact git provenance) runs from a checkout of the recorded commit instead. The ordinary build commands above work from the archive. For Raycast's development import, select the extracted `packages/raycast` directory after the workspace install; follow its README for the actual macOS registration step. Building the extension does not register it in Raycast.
