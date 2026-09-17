@@ -181,6 +181,7 @@ export async function runTui(options: TuiOptions = {}): Promise<void> {
     if (closed) return;
     if (key.ctrl && key.name === "d") { finish(); return; }
     if (busy) return;
+    if (key.ctrl && (key.name === "q" || key.name === "c")) { prompt = undefined; void perform(async () => { if (editor.dirty) await save(); finish(); }); return; }
     if (prompt) {
       if (key.ctrl && key.name === "u") prompt.value = "";
       else if (key.name === "escape") { prompt = undefined; status = "Cancelled"; }
@@ -193,7 +194,6 @@ export async function runTui(options: TuiOptions = {}): Promise<void> {
       render(); return;
     }
     if (key.ctrl) {
-      if (key.name === "q" || key.name === "c") { void perform(async () => { if (editor.dirty) await save(); finish(); }); return; }
       if (key.name === "s") { void perform(save); return; }
       if (key.name === "o") { void perform(openSaved); return; }
       if (key.name === "n") { void perform(async () => { if (editor.dirty) await save(); editor = createEditor(); status = "New worksheet"; }); return; }
