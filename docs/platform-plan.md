@@ -74,3 +74,15 @@ Desktop `.figori` interchange is feasible through `joplin.interop.registerImport
 Joplin's CM6 tutorial targets desktop and mobile, but that is not a promise that every desktop API transfers. `showOpenDialog` is desktop-only; import/export modules have no activation GUI on mobile. Android allows manual plugin installation; iOS permits only recommended plugins, so immediate private iOS delivery must not be promised. [Dialog API](https://joplinapp.org/api/references/plugin_api/classes/joplinviewsdialogs.html), [interop limits](https://joplinapp.org/api/references/plugin_api/classes/joplininterop.html), [plugin installation rules](https://joplinapp.org/help/apps/plugins/).
 
 Revised order: Omarchy standalone acceptance → desktop Joplin block MVP → optional Joplin interchange/rendering → CachyOS/Ubuntu verification as needed. Native Windows, a web app and Electron remain deferred; Joplin provides the first opportunity to test whether another Windows application is necessary.
+
+## Text worksheets and deferred preview direction
+
+User clarification (2026-09-17): image support is **not a Figori feature request**. Keep the standalone product focused on text worksheets, calculation-aware highlighting and explicit export. Joplin is the intended host for surrounding notes and images, with Figori calculations integrated through the scoped plugin direction above.
+
+A future Render/Preview may use a separate window or an external Markdown viewer. This is deferred exploration, not an approved implementation or a reason to embed an image editor, attachment manager or full notes system. Any later preview must remain distinct from editable calculation source and preserve document bytes and context; specify export/render fidelity separately before building it.
+
+## Multi-instance recovery investigation
+
+Current native code writes a single `recovery.json` per application-data directory (`src-tauri/src/lib.rs::save_recovery`). Each frontend serializes its own writes, but that queue does not coordinate separate application processes; the inspected startup has no single-instance plugin or interprocess recovery lock. Two copies running with the same bundle identity could therefore replace each other's recovery snapshot. Atomic file replacement prevents partial JSON, not this last-writer conflict.
+
+This is a confirmed architectural risk, not proof that a particular user's edits were lost. Preserve recovery backups and avoid simultaneous copies during controlled upgrades. A future issue should compare single-instance activation/forwarding with per-window or per-session recovery ownership, including crash recovery and startup reconciliation. Do not silently overwrite an existing recovery to resolve a UI or identity ambiguity. No runtime behavior changes are authorized by this planning note.
