@@ -3,7 +3,8 @@ use chrono::{NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, path::Path};
 
-const ENDPOINT: &str = "https://api.frankfurter.dev/v2/providers/ecb/rate/ils/usd";
+const ENDPOINT: &str =
+    "https://api.frankfurter.dev/v2/providers/ecb/rates?base=ils&quotes=usd,eur,gbp";
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
@@ -23,20 +24,25 @@ pub struct RateState {
 fn qualify(snapshot: Snapshot, today: NaiveDate) -> Result<RateState, String> {
     let date =
         NaiveDate::parse_from_str(&snapshot.as_of, "%Y-%m-%d").map_err(|_| "Invalid rate date")?;
-    let rate = snapshot
-        .rates
-        .get("USD")
-        .and_then(|v| v.parse::<f64>().ok())
-        .ok_or("Missing USD rate")?;
+    if !snapshot.rates.contains_key("USD") {
+        return Err("Missing USD rate".into());
+    }
+    let valid_rates = snapshot.rates.values().all(|value| {
+        value
+            .parse::<f64>()
+            .is_ok_and(|rate| rate.is_finite() && rate > 0.0)
+    });
+    let incomplete = ["USD", "EUR", "GBP"]
+        .iter()
+        .any(|code| !snapshot.rates.contains_key(*code));
     if snapshot.base != "ILS"
-        || !rate.is_finite()
-        || rate <= 0.0
+        || !valid_rates
         || date > today
         || snapshot.source != "ECB via Frankfurter"
     {
         return Err("Invalid exchange-rate snapshot".into());
     }
-    let status = if today.signed_duration_since(date).num_days() > 3 {
+    let status = if incomplete || today.signed_duration_since(date).num_days() > 3 {
         "stale"
     } else {
         "fresh"
@@ -44,7 +50,7 @@ fn qualify(snapshot: Snapshot, today: NaiveDate) -> Result<RateState, String> {
     Ok(RateState {
         status: status.into(),
         snapshot: Some(snapshot),
-        error: None,
+        error: incomplete.then(|| "Cached rates do not include all supported currencies. Refresh explicitly when online.".into()),
     })
 }
 pub fn load(data: &Path) -> RateState {
@@ -70,20 +76,37 @@ struct ProviderRate {
     rate: serde_json::Number,
 }
 fn parse_provider(text: &str, today: NaiveDate) -> Result<RateState, String> {
-    let response: ProviderRate = serde_json::from_str(text).map_err(|e| e.to_string())?;
-    if response.base.to_uppercase() != "ILS" || response.quote.to_uppercase() != "USD" {
-        return Err("Unexpected exchange-rate pair".into());
+    let response: Vec<ProviderRate> = serde_json::from_str(text).map_err(|e| e.to_string())?;
+    let date = response
+        .first()
+        .ok_or("Empty exchange-rate response")?
+        .date
+        .clone();
+    let mut rates = BTreeMap::new();
+    for row in response {
+        let quote = row.quote.to_uppercase();
+        if row.base.to_uppercase() != "ILS"
+            || !["USD", "EUR", "GBP"].contains(&quote.as_str())
+            || row.date != date
+            || rates.insert(quote, row.rate.to_string()).is_some()
+        {
+            return Err("Unexpected, duplicate, or inconsistent exchange-rate pair".into());
+        }
+    }
+    if rates.len() != 3 {
+        return Err("Incomplete exchange-rate response".into());
     }
     qualify(
         Snapshot {
             base: "ILS".into(),
-            rates: BTreeMap::from([("USD".into(), response.rate.to_string())]),
+            rates,
             source: "ECB via Frankfurter".into(),
-            as_of: response.date,
+            as_of: date,
         },
         today,
     )
 }
+
 pub async fn refresh(data: &Path) -> RateState {
     let mut previous = load(data);
     let result = async {
@@ -140,31 +163,59 @@ pub async fn refresh(data: &Path) -> RateState {
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn fixture() -> String {
+        r#"[{"date":"2026-09-16","base":"ILS","quote":"USD","rate":0.3299},{"date":"2026-09-16","base":"ILS","quote":"EUR","rate":0.287},{"date":"2026-09-16","base":"ILS","quote":"GBP","rate":0.247}]"#.into()
+    }
     #[test]
-    fn provider_pair_date_and_amount_are_validated_without_network() {
+    fn provider_batch_validates_amounts_pairs_and_one_publication_date() {
         let today = NaiveDate::from_ymd_opt(2026, 9, 17).unwrap();
-        let good = parse_provider(
-            r#"{"date":"2026-09-16","base":"ILS","quote":"USD","rate":0.3299}"#,
-            today,
-        )
-        .unwrap();
+        let good = parse_provider(&fixture(), today).unwrap();
         assert_eq!(good.status, "fresh");
-        assert_eq!(good.snapshot.unwrap().rates["USD"], "0.3299");
+        let snapshot = good.snapshot.unwrap();
+        assert_eq!(snapshot.rates["USD"], "0.3299");
+        assert_eq!(snapshot.rates["EUR"], "0.287");
+        assert_eq!(snapshot.rates["GBP"], "0.247");
         for text in [
-            r#"{"date":"2026-09-18","base":"ILS","quote":"USD","rate":0.3}"#,
-            r#"{"date":"2026-09-16","base":"EUR","quote":"USD","rate":0.3}"#,
-            r#"{"date":"2026-09-16","base":"ILS","quote":"USD","rate":-1}"#,
+            fixture().replace("2026-09-16", "2026-09-18"),
+            fixture().replacen("2026-09-16", "2026-09-15", 1),
+            fixture().replace("ILS", "EUR"),
+            fixture().replace("0.287", "-1"),
+            fixture().replace("GBP", "EUR"),
+            fixture().replace("GBP", "ABC"),
+            "[]".into(),
+            r#"[{"date":"2026-09-16","base":"ILS","quote":"USD","rate":0.3}]"#.into(),
         ] {
-            assert!(parse_provider(text, today).is_err());
+            assert!(parse_provider(&text, today).is_err(), "{text}");
         }
         assert_eq!(
-            parse_provider(
-                r#"{"date":"2026-09-01","base":"ILS","quote":"USD","rate":0.3}"#,
-                today
-            )
-            .unwrap()
-            .status,
+            parse_provider(&fixture().replace("2026-09-16", "2026-09-01"), today)
+                .unwrap()
+                .status,
             "stale"
         );
+    }
+    #[test]
+    fn legacy_usd_cache_is_retained_with_refresh_hint_and_added_rates_are_validated() {
+        let dir = tempfile::tempdir().unwrap();
+        let legacy = Snapshot {
+            base: "ILS".into(),
+            rates: BTreeMap::from([("USD".into(), "0.3".into())]),
+            source: "ECB via Frankfurter".into(),
+            as_of: Utc::now().date_naive().to_string(),
+        };
+        std::fs::write(
+            dir.path().join("rates.json"),
+            serde_json::to_string(&legacy).unwrap(),
+        )
+        .unwrap();
+        let loaded = load(dir.path());
+        assert_eq!(loaded.status, "stale");
+        assert!(loaded.error.unwrap().contains("Refresh"));
+        assert_eq!(loaded.snapshot.unwrap().rates["USD"], "0.3");
+        for bad in ["NaN", "inf", "-0.2", "0", "garbage"] {
+            let mut invalid = legacy.clone();
+            invalid.rates.insert("EUR".into(), bad.into());
+            assert!(qualify(invalid, Utc::now().date_naive()).is_err());
+        }
     }
 }
