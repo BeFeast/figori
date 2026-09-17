@@ -63,6 +63,7 @@ function snapshot(request: Request): Worksheet {
 }
 export function defaultDirectory(): string {
   return (
+    process.env.FIGORI_DATA_DIR ??
     process.env.MY_NUMI_DATA_DIR ??
     join(
       process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"),

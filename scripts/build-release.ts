@@ -34,8 +34,8 @@ await run([process.execPath, "run", "typecheck"]);
 await run([process.execPath, "test"]);
 await run([process.execPath, "run", "build"]);
 await run([process.execPath, "run", "--cwd", "packages/raycast", "build"]);
-const linux = join(out, "my-numi-linux-x64");
-const mac = join(out, "my-numi-macos-arm64");
+const linux = join(out, "figori-linux-x64");
+const mac = join(out, "figori-macos-arm64");
 await run([
   process.execPath,
   "build",
@@ -92,13 +92,13 @@ await cp(
 );
 await Bun.write(
   join(raycastStage, "SOURCE.txt"),
-  `Source commit: ${commit}\nFull rebuildable workspace is in my-numi-source-${label}.tar.gz.\nThis is a public developer preview, not a Raycast Store publication.\n`,
+  `Source commit: ${commit}\nFull rebuildable workspace is in figori-source-${label}.tar.gz.\nThis is a public developer preview, not a Raycast Store publication.\n`,
 );
-await archive(raycastStage, `my-numi-raycast-${label}`);
+await archive(raycastStage, `figori-raycast-${label}`);
 const omarchyStage = join(stage, "omarchy");
 await cp(join(root, "packages/omarchy"), omarchyStage, { recursive: true });
-await cp(linux, join(omarchyStage, "my-numi"));
-const innerFiles = ["my-numi", "Panel.qml", "manifest.json"];
+await cp(linux, join(omarchyStage, "figori"));
+const innerFiles = ["figori", "Panel.qml", "manifest.json", "figori-mark.svg"];
 await Bun.write(
   join(omarchyStage, "SHA256SUMS"),
   (
@@ -109,13 +109,13 @@ await Bun.write(
     )
   ).join("\n") + "\n",
 );
-await archive(omarchyStage, `my-numi-omarchy-${label}`);
-const sourceTar = join(out, `my-numi-source-${label}.tar`);
+await archive(omarchyStage, `figori-omarchy-${label}`);
+const sourceTar = join(out, `figori-source-${label}.tar`);
 await run([
   "git",
   "archive",
   "--format=tar",
-  "--prefix=my-numi/",
+  "--prefix=figori/",
   "--output",
   sourceTar,
   commit,

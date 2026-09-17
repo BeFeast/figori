@@ -36,7 +36,7 @@ let json = false;
 const expressions: string[] = [];
 function usage() {
   console.log(
-    "my-numi [--json] [--now ISO_INSTANT] [--timezone IANA] [--anchor YYYY-MM-DD] [--rates snapshot.json] EXPRESSION\nmy-numi --billing START END [--include-partial] [--json]\nmy-numi --tui  (interactive worksheet editor)\nmy-numi --request  (one JSON request line on stdin; document/storage/rates protocol)\nNo expression: read one expression per stdin line. JSON protocol version: 1.",
+    "figori [--json] [--now ISO_INSTANT] [--timezone IANA] [--anchor YYYY-MM-DD] [--rates snapshot.json] EXPRESSION\nfigori --billing START END [--include-partial] [--json]\nfigori --tui  (interactive worksheet editor)\nfigori --request  (one JSON request line on stdin; document/storage/rates protocol)\nNo expression: read one expression per stdin line. JSON protocol version: 1.",
   );
 }
 try {

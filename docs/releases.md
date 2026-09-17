@@ -22,10 +22,10 @@ For delivery, inspect the artifact manifest and scripts first, then copy the exa
 
 ## Exact CLI install and rollback (macOS / Linux)
 
-Release assets include [install-cli-user.sh](../scripts/install-cli-user.sh) and [rollback-cli-user.sh](../scripts/rollback-cli-user.sh). These scripts verify the approved binary checksum, record the previous `~/.local/bin/my-numi` executable or its absence in a new backup directory, then atomically replace only that executable. They do not modify PATH, shell profiles, desktop registration, services, or worksheet data.
+Release assets include [install-cli-user.sh](../scripts/install-cli-user.sh) and [rollback-cli-user.sh](../scripts/rollback-cli-user.sh). These scripts verify the approved binary checksum, record the previous `~/.local/bin/figori` executable or its absence in a new backup directory, then atomically replace only that executable. They do not modify PATH, shell profiles, desktop registration, services, or worksheet data.
 
 ```sh
-bash /absolute/staging/install-cli-user.sh --apply /absolute/staging/my-numi-macos-arm64 APPROVED_SHA256 /absolute/new/backup
+bash /absolute/staging/install-cli-user.sh --apply /absolute/staging/figori-macos-arm64 APPROVED_SHA256 /absolute/new/backup
 bash /absolute/staging/rollback-cli-user.sh --apply /absolute/new/backup
 ```
 
@@ -33,12 +33,12 @@ Use the Linux binary path instead when delivering only the Linux CLI. Omarchy's 
 
 ## Rebuild from the source archive
 
-The source archive contains a `my-numi/` root and all workspace packages. Extract it into a new working directory, then install the locked dependencies with Bun 1.3.14:
+The source archive contains a `figori/` root and all workspace packages. Extract it into a new working directory, then install the locked dependencies with Bun 1.3.14:
 
 ```sh
-mkdir my-numi-source
-tar -xzf /absolute/staging/my-numi-source-COMMIT.tar.gz -C my-numi-source
-cd my-numi-source/my-numi
+mkdir figori-source
+tar -xzf /absolute/staging/figori-source-COMMIT.tar.gz -C figori-source
+cd figori-source/figori
 bun install --frozen-lockfile
 bun run typecheck
 bun test
@@ -47,3 +47,5 @@ bun run --cwd packages/raycast build
 ```
 
 The source archive intentionally has no `.git` metadata, so `scripts/build-release.ts` (which verifies exact git provenance) runs from a checkout of the recorded commit instead. The ordinary build commands above work from the archive. For Raycast's development import, select the extracted `packages/raycast` directory after the workspace install; follow its README for the actual macOS registration step. Building the extension does not register it in Raycast.
+
+The public command is `figori`; the workspace CLI package also exposes the legacy `my-numi` alias. The standalone installer changes only `~/.local/bin/figori` and leaves any existing `my-numi` executable untouched. Existing worksheet storage paths and sidecar formats are retained. `FIGORI_DATA_DIR` takes precedence over legacy `MY_NUMI_DATA_DIR`, followed by the existing `my-numi/worksheets` default.

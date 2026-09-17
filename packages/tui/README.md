@@ -7,10 +7,10 @@ utility is needed for ordinary calculation and saving.
 
 From source: `bun run --cwd packages/tui start`.
 Build the standalone executable: `bun run --cwd packages/tui build`, producing
-`dist/my-numi-tui`. The unified CLI exposes the same view with `my-numi --tui`
+`dist/figori-tui`. The unified CLI exposes the same view with `figori --tui`
 once integrated. `runTui({directory?, source?, format?, id?})` is the adapter API.
 
-The default worksheet directory is `$MY_NUMI_DATA_DIR`, otherwise
+The default worksheet directory is `$FIGORI_DATA_DIR`, then legacy `$MY_NUMI_DATA_DIR`, otherwise
 `$XDG_DATA_HOME/my-numi/worksheets` (falling back to
 `~/.local/share/my-numi/worksheets`). Rates use its `rates/` subdirectory.
 
@@ -79,3 +79,5 @@ a pinned leap-year month resolving to 29 days, monthly-policy toggle, save,
 plain Numi export with sidecar, and reopen in a different terminal size. Synthetic
 worksheet data only was used. This does not establish Raycast or Omarchy desktop
 installation.
+
+Figori uses a small ANSI cyan header accent and the terminal’s own font. Set `NO_COLOR` (including an empty value) to disable the accent. Existing worksheet paths and `.numi.my-numi.json` sidecars remain compatible.

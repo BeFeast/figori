@@ -8,7 +8,8 @@ fi
 backup=$2
 [[ -f $backup/installed-sha256 ]] || { echo 'Missing install receipt' >&2; exit 2; }
 [[ -e $backup/cli || -L $backup/cli || -f $backup/cli-absent ]] || { echo 'Missing prior executable state' >&2; exit 2; }
-cli="$HOME/.local/bin/my-numi"
+cli="$HOME/.local/bin/figori"
+[[ -f $backup/installed-target && $(cat "$backup/installed-target") == "$cli" ]] || { echo 'Backup target does not match this Figori executable' >&2; exit 2; }
 [[ ! -d $cli ]] || { echo 'CLI destination became a directory' >&2; exit 2; }
 rm -f -- "$cli"
 if [[ ! -f $backup/cli-absent ]]; then cp -a "$backup/cli" "$cli"; fi

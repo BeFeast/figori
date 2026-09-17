@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "bin": {
+    "figori": "./src/index.ts",
     "my-numi": "./src/index.ts"
   }
 }
