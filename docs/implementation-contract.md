@@ -27,6 +27,7 @@ Core value categories include Decimal number, money, CalendarDate, ZonedDateTime
 
 ## Required expression families
 
+- Numeric literals accept English thousands grouping only: 1–3 initial digits followed by contiguous comma groups of exactly three digits, optional decimal point and exponent (e.g. `$2,659.57 to NIS`). Decimal commas, spaced groups and malformed groups are rejected. Commas are normalized only inside a matched numeric token, never globally. The single-argument `ln(1,000)` means `ln(1000)`; `ln(1, 000)` and unsupported multi-argument calls remain errors.
 - Arithmetic +, -, *, /, parentheses, natural logarithm (`16*ln(13)+31`), signed numbers, percentage basics, named variables and ordinary unit conversion.
 - English month dates (`13 may 2022`), date plus time (`24 feb 2022 4:00 am`, `7 oct 2023 6:00am`, `27 dec 1969 10:00pm`). Parse explicitly; do not rely on implementation-defined Date.parse.
 - `today`, `now`, `previous saturday 15:00`; date differences with grouping, nested arithmetic and `in years/months/weeks/days/hours`.

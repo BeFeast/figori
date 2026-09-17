@@ -730,7 +730,10 @@ class Parser {
         ),
       );
     }
-    const n = this.match(/^(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?/i);
+    // English grouping only: contiguous comma-separated groups of exactly three
+    // digits. Never strip commas globally (they may delimit function arguments).
+    const n = this.match(/^(?:\d{1,3}(?:,\d{3})+(?:\.\d*)?(?:e[+-]?\d+)?)(?![\d,])/i)
+      ?? this.match(/^(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?/i);
     if (n) {
       const multiplier = this.text
         .slice(this.pos)
@@ -743,9 +746,9 @@ class Parser {
             : multiplier[0] === "M"
               ? 1000000
               : 1000000000;
-        return num(new D(n[0]).mul(factor));
+        return num(new D(n[0].replaceAll(",", "")).mul(factor));
       }
-      return num(n[0]);
+      return num(n[0].replaceAll(",", ""));
     }
     const id = this.match(/^[A-Za-z_][\w]*/);
     if (id) {

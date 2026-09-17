@@ -520,3 +520,23 @@ test("shekel display uses the symbol while aliases and conversions retain ISO cu
     currency: "ILS",
   });
 });
+
+test("strict English grouping supports copied money without globally stripping commas", () => {
+ const context: EvaluationContext={...ctx,rates:{base:"USD",rates:{ILS:"3"},source:"synthetic",asOf:"2026-09-17"}};
+ for(const source of ["$2,659.57 to NIS","USD 2,659.57 to ILS","2,659.57 usd to NIS"]){
+  const result=evaluate(source,context);
+  expect(result.ok).toBe(true);
+  expect(result.value).toEqual({kind:"money",amount:"7978.71",currency:"ILS"});
+  expect(result.formatted).toBe("₪7978.71");
+ }
+ expect(value("1,234,567.89 + 0.01")).toBe("1234567.9");
+ expect(value("-1,234.5")).toBe("-1234.5");
+ expect(value("1,234k")).toBe("1234000");
+ expect(value("1,234e2")).toBe("123400");
+ expect(value("9,007,199,254,740,993 + 1")).toBe("9007199254740994");
+ expect(value("ln(1,000)")).toBe(value("ln(1000)"));
+ for(const source of ["$2,65.57 to NIS","12,34","1234,567","1,234,56","1, 234","1.234,56","ln(1,2)","ln(1, 200)","min(1,200)"]){
+  expect(evaluate(source,context).ok).toBe(false);
+ }
+ expect(value(".25 + 1.5")).toBe("1.75");
+});
