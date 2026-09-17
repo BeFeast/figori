@@ -45,9 +45,12 @@ export function fromEditor(previous: Worksheet, text: string): Worksheet {
     .join("");
   return updateDocument(previous, source);
 }
+export function formatForPath(path: string | null) {
+  return /\.md$/i.test(path ?? "") ? ("markdown" as const) : ("numi" as const);
+}
 export function openedWorksheet(value: Opened): Worksheet {
   return importDocument(value.source, {
-    format: "numi",
+    format: formatForPath(value.path),
     settings: value.settings,
   });
 }

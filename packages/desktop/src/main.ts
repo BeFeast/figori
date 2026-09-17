@@ -1,3 +1,4 @@
+import { markdownMarks } from "./markdown";
 import {
   readTypography,
   normalizeTypography,
@@ -46,6 +47,7 @@ import { evaluateExpression } from "@my-numi/core";
 import {
   evaluateDocument,
   importDocument,
+  serializeMarkdown,
   type Worksheet,
   type WorksheetSettings,
 } from "@my-numi/document";
@@ -54,6 +56,7 @@ import {
   editorText,
   fromEditor,
   openedWorksheet,
+  formatForPath,
   readableBasis,
   sourceTitle,
   type Opened,
@@ -336,6 +339,10 @@ function evaluate() {
           );
       }
     });
+    for (const mark of markdownMarks(view.state.doc.toString()))
+      marks.push(
+        Decoration.mark({ class: mark.className }).range(mark.from, mark.to),
+      );
     view.dispatch({
       effects: [
         setResults.of(RangeSet.of(markers, true)),
@@ -372,13 +379,17 @@ function editorState(doc: string) {
       autocompletion({
         override: [
           (context) =>
-            worksheetCompletions(context, {
-              now: new Date().toISOString(),
-              timezone: worksheet.settings.timezone,
-              anchor: worksheet.settings.anchor,
-              billing: worksheet.settings.billing,
-              rates: rates.snapshot,
-            }),
+            worksheetCompletions(
+              context,
+              {
+                now: new Date().toISOString(),
+                timezone: worksheet.settings.timezone,
+                anchor: worksheet.settings.anchor,
+                billing: worksheet.settings.billing,
+                rates: rates.snapshot,
+              },
+              worksheet.format,
+            ),
         ],
         activateOnTyping: true,
         defaultKeymap: false,
@@ -645,7 +656,7 @@ async function discardGuard(): Promise<boolean> {
   if (choice !== "discard") return false;
   replaceEditor(
     importDocument(baseline.source, {
-      format: "numi",
+      format: formatForPath(baseline.path),
       settings: baseline.settings,
     }),
   );
@@ -894,7 +905,7 @@ async function start() {
     if (recovery) {
       replaceEditor(
         importDocument(recovery.source, {
-          format: "numi",
+          format: formatForPath(recovery.path),
           settings: recovery.settings,
         }),
       );
@@ -939,8 +950,33 @@ void operations.run(async () => {
   }
 }, undefined);
 
+async function exportMarkdown(withResults: boolean) {
+  await operations.run(async () => {
+    try {
+      const exported = serializeMarkdown(
+        worksheet,
+        withResults ? { evaluated: compute() } : {},
+      );
+      const name = (path?.split(/[\\/]/).at(-1) ?? "Untitled").replace(
+        /\.(?:numi|md)$/i,
+        "",
+      );
+      const saved = await invoke<{ path: string } | null>("export_document", {
+        source: exported.text,
+        suggestedName: name + (withResults ? "-results" : "-export") + ".md",
+        currentPath: path,
+      });
+      if (saved) notice("Markdown exported. " + exported.warnings.join(" "));
+    } catch (error) {
+      report(error);
+    }
+  }, undefined);
+}
 void listen<string>("figori-menu", (event) => {
-  if (event.payload === "new") void newWorksheet();
+  if (event.payload === "export-markdown") void exportMarkdown(false);
+  else if (event.payload === "export-markdown-results")
+    void exportMarkdown(true);
+  else if (event.payload === "new") void newWorksheet();
   else if (event.payload === "open") void open();
   else if (event.payload === "save") void save();
   else if (event.payload === "save-as") void save(true);

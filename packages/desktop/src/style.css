@@ -772,3 +772,50 @@ body.light #details {
   outline: 2px solid var(--accent-text);
   outline-offset: 3px;
 }
+
+/* Quiet full-height surfaces distinguish columns without persistent rules. */
+:root {
+  --result-pane: #101112;
+}
+body.light {
+  --bg: #f7f5f2;
+  --result-pane: #f0eeeb;
+}
+.cm-gutters-after {
+  border-left: 0 !important;
+  background: var(--result-pane) !important;
+}
+footer,
+.context,
+header {
+  border-top: 0;
+  border-bottom: 0;
+}
+#column-splitter span {
+  opacity: 0;
+}
+#column-splitter:hover span,
+#column-splitter:focus-visible span,
+body.resizing-columns #column-splitter span {
+  opacity: 1;
+}
+.md-heading {
+  font-weight: 700;
+  color: var(--text);
+}
+.md-list {
+  color: var(--accent-text);
+  font-weight: 700;
+}
+.md-strong {
+  font-weight: 700;
+}
+.md-emphasis {
+  color: var(--accent-text);
+  font-style: italic;
+}
+.md-code {
+  color: var(--muted);
+  background: var(--active);
+  font-weight: 400;
+}

@@ -62,3 +62,25 @@ test("currency to targets and symbol-valued variables remain readable", () => {
       ?.detail,
   ).toBe("$12");
 });
+
+test("Markdown completion excludes fenced variable declarations", () => {
+  const doc = "```\nsecret = 99\n```\nprice = 12\npr";
+  const result = worksheetCompletions(
+    new CompletionContext(EditorState.create({ doc }), doc.length, true),
+    {},
+    "markdown",
+  )!;
+  expect(result.options.some((o) => o.label === "secret")).toBe(false);
+  expect(result.options.find((o) => o.label === "price")?.detail).toBe("12");
+});
+
+test("Markdown code fences do not offer calculator completions", () => {
+  const doc = "```\npri\n```";
+  expect(
+    worksheetCompletions(
+      new CompletionContext(EditorState.create({ doc }), 7, true),
+      {},
+      "markdown",
+    ),
+  ).toBeNull();
+});

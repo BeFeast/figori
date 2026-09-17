@@ -1,3 +1,4 @@
+import { markdownMarks } from "./markdown";
 import {
   type Completion,
   type CompletionResult,
@@ -77,7 +78,18 @@ const naturalLog: Completion = {
 export function worksheetCompletions(
   context: CompletionContext,
   evaluation: EvaluationContext = {},
+  format: "numi" | "markdown" = "numi",
 ): CompletionResult | null {
+  if (
+    format === "markdown" &&
+    markdownMarks(context.state.doc.toString()).some(
+      (mark) =>
+        mark.className === "md-code" &&
+        mark.from < context.pos &&
+        mark.to >= context.pos,
+    )
+  )
+    return null;
   const line = context.state.doc.lineAt(context.pos);
   const prefix = context.state.sliceDoc(line.from, context.pos);
   if (/^\s*(?:#|\/\/|;)/.test(prefix)) return null;
@@ -104,7 +116,7 @@ export function worksheetCompletions(
   const from = context.pos - (word?.[0].length ?? 0);
   if (converting) return { from, options: [...units, ...currencies] };
   const source = context.state.sliceDoc(0, line.from);
-  const doc = importDocument(source, { format: "numi" });
+  const doc = importDocument(source, { format });
   const evaluated = evaluateDocument(doc, evaluateExpression, {
     ...evaluation,
   });

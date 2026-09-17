@@ -35,3 +35,9 @@ Result details borrow the compact, contextual disclosure pattern of CleanShot: a
 ### macOS UI acceptance bar
 
 Use native AppKit controls first for window chrome, Settings and menus, with consistent SF Symbols, accessible labels and Reduced Motion support. Keep the main window focused on one worksheet. Do not add browser-style path tooltips, full-workspace modal scrims or generic web forms to replace native controls. Editor-specific result disclosures must stay compact and contextual. Review actual light and dark screenshots, keyboard navigation and typography alignment before delivering UI changes; a passing build alone is not visual acceptance.
+
+### Markdown source and export
+
+Open `.md` files to use Markdown worksheet mode: prose and fenced code stay unevaluated while calculator expressions outside fences retain live results. The editor highlights headings, list markers, emphasis and code without rendering or hiding Markdown syntax. Existing `.numi` files keep their compatible calculation semantics. Source bytes, editing and Undo remain intact.
+
+File → Export Markdown writes a separate `.md` copy through the native save dialog; Export Markdown with Results also adds readable, inert quoted results. Neither export changes the current file, dirty state or save destination. Export does not embed timezone/anchor/billing metadata. Worksheet columns use subtle contrasting surfaces, with a resize handle shown only on hover or keyboard focus.

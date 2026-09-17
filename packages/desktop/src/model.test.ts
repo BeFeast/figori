@@ -54,3 +54,20 @@ test("display precision does not change exact large numeric or calendar values",
   );
   expect(displayResult("1.23456789", 6)).toBe("1.234568");
 });
+
+test("Markdown files retain explicit parsing mode while Numi keeps compatibility", () => {
+  expect(
+    openedWorksheet({
+      path: "/tmp/Notes.MD",
+      source: "```\nx = 2\n```",
+      sourceHash: "test",
+    }).format,
+  ).toBe("markdown");
+  expect(
+    openedWorksheet({
+      path: "/tmp/Notes.numi",
+      source: "x = 2",
+      sourceHash: "test",
+    }).format,
+  ).toBe("numi");
+});
