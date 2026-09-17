@@ -15,3 +15,5 @@ Cloudflare Pages project: `figori`, production branch `main`, account `9fab831a1
 From the authoritative main checkout, deploy with `bunx wrangler@4.134.0 pages deploy site --project-name figori --branch main --commit-hash "$(git rev-parse HEAD)"`. Use normal `bunx` (Wrangler's supported Node runtime); forcing `--bun` exited during asset upload without a completed deployment in the initial verification.
 
 Read back the successful deployment and custom-domain status. Verify HTTPS, all three screenshot assets, downloadable examples and the actual release checksum. For rollback, select a prior successful production deployment in Pages, or redeploy the previously verified static tree with its original source revision; do not move git tags or overwrite release assets.
+
+Stylesheet links include a content-hash query version. When changing style.css, update that version from its SHA256 so returning browsers do not reuse the previous four-hour cached stylesheet.
