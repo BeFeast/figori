@@ -1,0 +1,54 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "my-numi",
+  "title": "My Numi",
+  "description": "Calendar-aware calculations and local worksheets",
+  "icon": "icon.png",
+  "author": "befeast",
+  "license": "MIT",
+  "categories": [
+    "Productivity",
+    "Developer Tools"
+  ],
+  "platforms": [
+    "macOS"
+  ],
+  "commands": [
+    {
+      "name": "quick-calculate",
+      "title": "Quick Calculate",
+      "description": "Calculate with explicit calendar context",
+      "mode": "view"
+    },
+    {
+      "name": "worksheets",
+      "title": "Saved Worksheets",
+      "description": "Open, edit, import and export local worksheets",
+      "mode": "view"
+    },
+    {
+      "name": "new-worksheet",
+      "title": "New Worksheet",
+      "description": "Create a local multiline worksheet",
+      "mode": "view"
+    }
+  ],
+  "scripts": {
+    "build": "ray build -e dist -o dist",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test src/model.test.ts",
+    "dev": "ray develop"
+  },
+  "dependencies": {
+    "@raycast/api": "2.4.1",
+    "@my-numi/core": "workspace:*",
+    "@my-numi/document": "workspace:*",
+    "react": "19.0.0",
+    "@my-numi/rates": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.10",
+    "@types/node": "22.19.17",
+    "typescript": "5.9.3"
+  }
+}
