@@ -10,7 +10,11 @@ backup=$2
 export OMARCHY_PATH=${OMARCHY_PATH:-/usr/share/omarchy}
 plugin_id=befeast.my-numi
 plugin="$HOME/.config/omarchy/plugins/$plugin_id"
-cli="$HOME/.local/bin/my-numi"
+# Legacy receipts predate Figori and refer to the old executable.
+cli_name=my-numi
+if [[ -f $backup/cli-name ]]; then cli_name=$(cat "$backup/cli-name"); fi
+[[ $cli_name == figori || $cli_name == my-numi ]] || { echo 'Unknown CLI receipt' >&2; exit 2; }
+cli="$HOME/.local/bin/$cli_name"
 # Verify both restore sources before changing live state.
 [[ -e $backup/cli || -L $backup/cli || -f $backup/cli-absent ]] || exit 2
 [[ -e $backup/plugin || -L $backup/plugin || -f $backup/plugin-absent ]] || exit 2

@@ -7,7 +7,11 @@ import Quickshell.Io
 Item {
     id: root
     property var shell: null
-    property string cli: "my-numi"
+    property string cli: "figori"
+    readonly property color brandCobalt: "#284BFF"
+    readonly property color brandLime: "#DDFC45"
+    readonly property color brandInk: "#111827"
+    readonly property color brandPaper: "#F7F8FC"
     property string documentId: ""
     property var rateSnapshot: null
     property string rateStatus: "Rates not loaded"
@@ -192,7 +196,7 @@ Item {
     FloatingWindow {
         id: window
         visible: false
-        title: "My Numi"
+        title: "Figori"
         implicitWidth: 1000
         implicitHeight: 720
         onVisibleChanged: {
@@ -202,10 +206,28 @@ Item {
             anchors.fill: parent
             anchors.margins: 16
             spacing: 10
-            RowLayout {
-                Label { text: "My Numi"; font.pixelSize: 24; Layout.fillWidth: true }
-                Button { text: "Copy results"; onClicked: Quickshell.clipboardText = root.resultText }
-                Button { text: "Close"; onClicked: root.requestClose() }
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 64
+                radius: 14
+                color: root.brandCobalt
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 12
+                    Image {
+                        source: Qt.resolvedUrl("figori-mark.svg")
+                        Layout.preferredWidth: 40
+                        Layout.preferredHeight: 40
+                        sourceSize.width: 80
+                        sourceSize.height: 80
+                        fillMode: Image.PreserveAspectFit
+                        Accessible.name: "Figori"
+                    }
+                    Label { text: "Figori"; color: root.brandPaper; font.pixelSize: 24; font.bold: true; Layout.fillWidth: true }
+                    Button { text: "Copy results"; onClicked: Quickshell.clipboardText = root.resultText }
+                    Button { text: "Close"; onClicked: root.requestClose() }
+                }
             }
             RowLayout {
                 Label { text: "Timezone" }

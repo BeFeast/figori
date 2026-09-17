@@ -40,6 +40,7 @@ function ImportForm({ onImported }: { onImported: () => void }) {
   }
   return (
     <Form
+      navigationTitle="Figori · Import Worksheet"
       actions={
         <ActionPanel>
           <Action.SubmitForm title="Import Worksheet" onSubmit={submit} />
@@ -164,7 +165,7 @@ export default function Worksheets() {
     </>
   );
   return (
-    <List isLoading={loading} searchBarPlaceholder="Find a saved worksheet">
+    <List navigationTitle="Figori · Saved Worksheets" isLoading={loading} searchBarPlaceholder="Find a saved worksheet">
       <List.EmptyView
         title={error ? "Could Not Load Worksheets" : "No Saved Worksheets"}
         description={error || "Create a worksheet or import a .numi file."}

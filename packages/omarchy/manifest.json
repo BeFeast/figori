@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "befeast.my-numi",
-  "name": "My Numi",
+  "name": "Figori",
   "version": "0.1.0",
   "author": "BeFeast",
-  "description": "Calendar-aware local calculator worksheets powered by the shared my-numi CLI.",
+  "description": "Calendar-aware local calculator worksheets powered by the shared Figori CLI.",
   "kinds": [
     "panel"
   ],
