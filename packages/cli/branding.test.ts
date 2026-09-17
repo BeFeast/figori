@@ -42,5 +42,5 @@ test("Figori and legacy storage overrides resolve identically without migrating 
 test("NO_COLOR disables the Figori header accent including an empty value", () => {
   expect(brandHeader("Figori", { NO_COLOR: "" })).toBe("Figori");
   expect(brandHeader("Figori", { NO_COLOR: "1" })).toBe("Figori");
-  expect(brandHeader("Figori", {})).toBe("\x1b[1;36mFigori\x1b[0m");
+  expect(brandHeader("Figori", {})).toBe("\x1b[1;92mFigori\x1b[0m");
 });

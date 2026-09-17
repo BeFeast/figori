@@ -80,4 +80,4 @@ plain Numi export with sidecar, and reopen in a different terminal size. Synthet
 worksheet data only was used. This does not establish Raycast or Omarchy desktop
 installation.
 
-Figori uses a small ANSI cyan header accent and the terminal’s own font. Set `NO_COLOR` (including an empty value) to disable the accent. Existing worksheet paths and `.numi.my-numi.json` sidecars remain compatible.
+Figori uses a small ANSI bright-green header accent (a terminal-native approximation of the lime brand accent) and the terminal’s own font. Set `NO_COLOR` (including an empty value) to disable the accent. Existing worksheet paths and `.numi.my-numi.json` sidecars remain compatible.

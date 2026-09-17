@@ -14,7 +14,7 @@ export function defaultDirectory(): string {
   return process.env.FIGORI_DATA_DIR ?? process.env.MY_NUMI_DATA_DIR ?? join(process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"), "my-numi", "worksheets");
 }
 export function brandHeader(text: string, env = process.env): string {
-  return env.NO_COLOR !== undefined ? text : `\x1b[1;36m${text}\x1b[0m`;
+  return env.NO_COLOR !== undefined ? text : `\x1b[1;92m${text}\x1b[0m`;
 }
 function pathFromInput(value: string): string {
   return resolve(value.startsWith("~/") ? join(homedir(), value.slice(2)) : value);
