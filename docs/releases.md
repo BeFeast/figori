@@ -1,4 +1,4 @@
-# Private release artifacts
+# Public preview release artifacts
 
 Run the build on a clean committed Linux development checkout with the pinned Bun version and GNU tar/gzip available:
 
