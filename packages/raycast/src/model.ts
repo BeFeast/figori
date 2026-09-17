@@ -80,3 +80,28 @@ export function textOf(value: unknown): string {
 export function escapeMarkdown(value: string): string {
   return value.replace(/[\\`*_{}\[\]<>()#!|]/g, "\\$&");
 }
+export function compactContext(settings: Settings, now: string): string {
+  if (validateSettings(settings)) return "Check date and timezone settings";
+  return `${settings.anchorMode === "today" ? "Today" : "Pinned"} ${resolvedAnchor(settings, now)} · ${settings.timezone}${settings.includePartial ? " · partial months included" : ""}`;
+}
+export function basisDescription(value: unknown): string {
+  if (!value || typeof value !== "object") return "";
+  const basis = value as {
+    timezone?: string;
+    anchorDate?: string;
+    anchorMode?: string;
+    notes?: string[];
+    rateSource?: string;
+    rateAsOf?: string;
+  };
+  return [
+    basis.anchorDate &&
+      `Date: ${basis.anchorDate}${basis.anchorMode === "today" ? " (today)" : " (pinned)"}`,
+    basis.timezone && `Timezone: ${basis.timezone}`,
+    ...(basis.notes ?? []),
+    basis.rateSource &&
+      `Rates: ${basis.rateSource}${basis.rateAsOf ? ` · ${basis.rateAsOf}` : ""}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}

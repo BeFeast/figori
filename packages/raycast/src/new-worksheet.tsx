@@ -1,4 +1,4 @@
-import { WorksheetEditor } from "./worksheet-ui";
+import { WorksheetDetail } from "./worksheet-ui";
 export default function NewWorksheet() {
-  return <WorksheetEditor />;
+  return <WorksheetDetail />;
 }
