@@ -25,6 +25,10 @@
       "name": "@my-numi/core",
       "version": "0.1.0",
     },
+    "packages/document": {
+      "name": "@my-numi/document",
+      "version": "0.1.0",
+    },
     "packages/rates": {
       "name": "@my-numi/rates",
       "version": "0.1.0",
@@ -36,6 +40,8 @@
     "@my-numi/cli": ["@my-numi/cli@workspace:packages/cli"],
 
     "@my-numi/core": ["@my-numi/core@workspace:packages/core"],
+
+    "@my-numi/document": ["@my-numi/document@workspace:packages/document"],
 
     "@my-numi/rates": ["@my-numi/rates@workspace:packages/rates"],
 
