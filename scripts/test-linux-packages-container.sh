@@ -14,7 +14,7 @@ if [[ $kind == deb ]]; then
   remove_package() { apt-get purge -y "$name"; }
   installed_version() { dpkg-query -W -f='${Version}\n' "$name"; }
 else
-  dnf install -y --setopt=install_weak_deps=False desktop-file-utils file findutils diffutils xorg-x11-server-Xvfb xorg-x11-utils dbus-daemon util-linux shadow-utils
+  dnf install -y --setopt=install_weak_deps=False desktop-file-utils file findutils diffutils xorg-x11-server-Xvfb xdpyinfo xwininfo dbus-daemon util-linux shadow-utils
   name=$(rpm -qp --qf '%{NAME}' /artifacts/current.rpm)
   install_package() { dnf install -y --setopt=install_weak_deps=False "$1"; }
   reinstall_package() { dnf reinstall -y /artifacts/current.rpm; }
