@@ -42,3 +42,12 @@ test("annotations never swallow arbitrary words or exact variables", () => {
     "division_by_zero",
   );
 });
+
+test("current boundary: stored or multiplied percentages are numeric ratios", () => {
+  const percentage = evaluate("25%", ctx).value!;
+  const stored = evaluate("55 + tip_rate", {...ctx,variables:{tip_rate:percentage}});
+  expect(stored.formatted).toBe("55.25");
+  expect(evaluate("55 + (25% * 2)", ctx).formatted).toBe("55.5");
+  // Explicit arithmetic preserves intended financial meaning without relying on provenance.
+  expect(evaluate("55 * (1 + tip_rate)", {...ctx,variables:{tip_rate:percentage}}).formatted).toBe("68.75");
+});
