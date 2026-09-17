@@ -7,15 +7,32 @@
 
 **Your numbers, in context. — by [BeFeast](https://befeast.com).**
 
-[Download the signed and notarized macOS ARM64 desktop preview](https://github.com/BeFeast/figori/releases/tag/v0.3.4) · [Canonical Forgejo release](https://git.oklabs.uk/BeFeast/figori/releases/tag/v0.3.4). Product website address: [figori.befeast.com](https://figori.befeast.com).
+[Download the signed and notarized macOS ARM64 desktop preview](https://github.com/BeFeast/figori/releases/tag/v0.3.6) · [Canonical Forgejo release](https://git.oklabs.uk/BeFeast/figori/releases/tag/v0.3.6). Product website address: [figori.befeast.com](https://figori.befeast.com).
 
 A local-first calculator worksheet: write calculations beside your notes and see the date anchor, timezone and currency basis behind the answer.
 
-The **native desktop app is in preview**, with a continuous worksheet editor. The downloadable 0.3.4 DMG targets macOS Apple Silicon; Linux desktop work remains in progress. The preview is built from the exact release tag on [feat/standalone-desktop](https://git.oklabs.uk/BeFeast/figori/src/branch/feat/standalone-desktop), tracked in [PR32](https://git.oklabs.uk/BeFeast/figori/pulls/32); it has not been merged into this main branch. This branch contains the existing Raycast, terminal and Omarchy adapters.
+The **native desktop app is in preview**, with a continuous worksheet editor. The downloadable 0.3.6 DMG targets macOS Apple Silicon; Linux desktop work remains in progress. The preview is built from the exact release tag on [feat/standalone-desktop](https://git.oklabs.uk/BeFeast/figori/src/branch/feat/standalone-desktop), tracked in [PR32](https://git.oklabs.uk/BeFeast/figori/pulls/32); it has not been merged into this main branch. This branch contains the existing Raycast, terminal and Omarchy adapters.
 
 [Forgejo](https://git.oklabs.uk/BeFeast/figori) remains the canonical development, issues, pull requests and CI home. [GitHub](https://github.com/BeFeast/figori) is the downstream source and release mirror.
 
 Figori uses a charcoal, warm off-white and coral identity derived from HedRoom. See the [brand guide](docs/branding.md).
+
+## A worksheet, in practice
+
+![Figori native macOS app calculating a consulting proposal with a discount, contingency and staged payments](site/assets/project-quote.jpg)
+
+Build a proposal from named values, explore a trip budget in multiple currencies, or connect launch dates to recurring costs. These are real native app captures of public synthetic examples, not mockups.
+
+<details>
+<summary>Travel budget and calendar planning</summary>
+
+![Figori trip budget with dated currency conversion results](site/assets/trip-budget.jpg)
+
+![Figori calendar worksheet with kickoff, launch and review dates](site/assets/calendar-plan.jpg)
+
+</details>
+
+Try the [consulting](site/examples/consulting-project.figori), [travel](site/examples/trip-budget.figori), and [calendar](site/examples/calendar-plan.figori) worksheets. Example values are illustrative; currency conversions use the dated snapshot shown in the app.
 
 ## Inspired by Numi
 
