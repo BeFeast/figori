@@ -118,3 +118,46 @@ describe("money and billing", () => {
     expect(countBillingMonths("2024-01-31", "2024-03-31").billed).toBe(2);
   });
 });
+
+describe("legacy worksheet intervals and rent", () => {
+  test("default interval is useful calendar decomposition with endpoints retained", () => {
+    const r = evaluate("1 may 2024 - 15 feb 2023", ctx);
+    expect(r.formatted).toBe("1 years 2 months 16 days");
+    expect(r.value?.kind).toBe("interval");
+    expect(value("1 feb 2024 - 1 feb 2024")).toBe("0 days");
+    expect(value("1 feb 2024 - 1 mar 2024")).toBe("−1 months");
+  });
+  test("legacy months multiplied by rent follows explicit whole-period policy", () => {
+    const source = "((30 mar 2024 - 31 jan 2024) in months) * 1000 nis";
+    expect(value(source, { ...ctx, billing: "completed" })).toBe("1000.00 ILS");
+    expect(value(source, { ...ctx, billing: "include-partial" })).toBe(
+      "2000.00 ILS",
+    );
+    expect(
+      evaluate(source, { ...ctx, billing: "include-partial" }).basis.notes.join(
+        " ",
+      ),
+    ).toContain("2 billed");
+    expect(
+      value("1000 nis * ((29 feb 2024 - 31 jan 2024) in months)", {
+        ...ctx,
+        billing: "include-partial",
+      }),
+    ).toBe("1000.00 ILS");
+  });
+  test("rejects fake month names and fractional-money shortcuts without anchors", () => {
+    expect(evaluate("1 janxxxxx 2024", ctx).ok).toBe(false);
+    expect(evaluate("1.5 months * 1000 nis", ctx).diagnostics[0].code).toBe(
+      "billing_anchor_required",
+    );
+  });
+});
+test("chained anchored conversions keep source endpoints; altered counts do not reuse billing provenance", () => {
+  expect(value("((1 mar 2023 - 1 feb 2023) in months) in days")).toBe(
+    "28 days",
+  );
+  expect(
+    evaluate("(-((30 mar 2024 - 31 jan 2024) in months)) * 1000 nis", ctx)
+      .diagnostics[0].code,
+  ).toBe("billing_anchor_required");
+});

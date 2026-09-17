@@ -5,7 +5,12 @@ export type DateValue = { kind: "date" | "datetime"; iso: string };
 export type Value =
   | { kind: "number"; amount: string }
   | { kind: "money"; amount: string; currency: string }
-  | { kind: "quantity"; amount: string; unit: string }
+  | {
+      kind: "quantity";
+      amount: string;
+      unit: string;
+      interval?: { start: DateValue; end: DateValue };
+    }
   | DateValue
   | { kind: "interval"; start: DateValue; end: DateValue };
 export interface RateSnapshot {
@@ -258,13 +263,25 @@ function convert(
     };
   }
   if (v.kind === "interval")
-    return { kind: "quantity", amount: intervalAmount(v, u, basis), unit: u };
+    return {
+      kind: "quantity",
+      amount: intervalAmount(v, u, basis),
+      unit: u,
+      interval: { start: v.start, end: v.end },
+    };
   if (v.kind !== "quantity")
     return fail(
       "incompatible_units",
       "Only quantities, intervals, or money can be converted.",
     );
   if (v.unit === u) return v;
+  if (v.interval)
+    return {
+      kind: "quantity",
+      amount: intervalAmount({ kind: "interval", ...v.interval }, u, basis),
+      unit: u,
+      interval: v.interval,
+    };
   if (["months", "years"].includes(v.unit) || ["months", "years"].includes(u)) {
     const end = shift(date(basis.anchorDate), v.amount, v.unit, basis);
     basis.notes.push(`Calendar conversion anchored at ${basis.anchorDate}.`);
@@ -316,6 +333,48 @@ function binary(
     );
   if (a.kind === "quantity" && isDate(b) && op === "+")
     return shift(b, a.amount, a.unit, basis);
+  if (
+    op === "*" &&
+    ((a.kind === "money" && b.kind === "quantity") ||
+      (b.kind === "money" && a.kind === "quantity"))
+  ) {
+    const money =
+      a.kind === "money" ? a : (b as Extract<Value, { kind: "money" }>);
+    const period =
+      a.kind === "quantity" ? a : (b as Extract<Value, { kind: "quantity" }>);
+    if (period.unit !== "months" || !period.interval)
+      return fail(
+        "billing_anchor_required",
+        "Monthly money multiplication requires an anchored date interval in months.",
+      );
+    const { start, end } = period.interval;
+    const startDate =
+      start.kind === "date"
+        ? start.iso
+        : Temporal.ZonedDateTime.from(start.iso).toPlainDate().toString();
+    const endDate =
+      end.kind === "date"
+        ? end.iso
+        : Temporal.ZonedDateTime.from(end.iso).toPlainDate().toString();
+    const count = countBillingMonths(
+      startDate,
+      endDate,
+      ctx.billing ?? "completed",
+    );
+    if (start.kind === "datetime" || end.kind === "datetime")
+      return fail(
+        "billing_date_required",
+        "Monthly billing requires date-only endpoints; choose billing dates explicitly.",
+      );
+    basis.notes.push(
+      `Monthly billing ${ctx.billing ?? "completed"}: ${count.completed} completed, ${count.billed} billed; partial=${count.partial}. Fractional calendar-month display is replaced by the selected whole-month billing count; source remains unchanged.`,
+    );
+    return {
+      kind: "money",
+      currency: money.currency,
+      amount: new D(money.amount).mul(count.billed).toString(),
+    };
+  }
   if (a.kind === "interval") a = convert(a, "days", ctx, basis);
   if (b.kind === "interval") b = convert(b, "days", ctx, basis);
   if (!("amount" in a) || !("amount" in b))
@@ -337,7 +396,11 @@ function binary(
         "incompatible_types",
         "Addition and subtraction require matching value types.",
       );
-    return { ...a, amount: (op === "+" ? x.plus(y) : x.minus(y)).toString() };
+    return {
+      ...a,
+      ...(a.kind === "quantity" ? { interval: undefined } : {}),
+      amount: (op === "+" ? x.plus(y) : x.minus(y)).toString(),
+    };
   }
   if (op === "/" && a.kind === b.kind) return num(x.div(y));
   if (a.kind !== "number" && b.kind !== "number")
@@ -353,6 +416,7 @@ function binary(
   const prototype = a.kind === "number" ? b : a;
   return {
     ...prototype,
+    ...(prototype.kind === "quantity" ? { interval: undefined } : {}),
     amount: (op === "*" ? x.mul(y) : x.div(y)).toString(),
   };
 }
@@ -424,6 +488,9 @@ class Parser {
         );
       return {
         ...v,
+        ...(v.kind === "quantity" && op[0] === "-"
+          ? { interval: undefined }
+          : {}),
         amount: op[0] === "-" ? new D(v.amount).neg().toString() : v.amount,
       };
     }
@@ -476,7 +543,23 @@ class Parser {
     if (iso) return this.withTime(Temporal.PlainDate.from(iso[0]));
     const english = this.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})\b/);
     if (english) {
-      const month = months.indexOf(english[2].toLowerCase().slice(0, 3)) + 1;
+      const monthName = english[2].toLowerCase();
+      const fullNames = [
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
+      ];
+      const month =
+        Math.max(months.indexOf(monthName), fullNames.indexOf(monthName)) + 1;
       if (!month) fail("invalid_date", "Unknown English month.");
       return this.withTime(
         Temporal.PlainDate.from(
@@ -489,7 +572,10 @@ class Parser {
     if (n) return num(n[0]);
     const id = this.match(/^[A-Za-z_][\w]*/);
     if (id) {
-      const v = this.ctx.variables?.[id[0]];
+      const v =
+        this.ctx.variables && Object.hasOwn(this.ctx.variables, id[0])
+          ? this.ctx.variables[id[0]]
+          : undefined;
       if (v) return v;
       return fail("unknown_variable", `Unknown variable: ${id[0]}`);
     }
@@ -528,7 +614,30 @@ export function formatValue(v: Value): string {
   if (v.kind === "number") return v.amount;
   if (v.kind === "money") return `${new D(v.amount).toFixed(2)} ${v.currency}`;
   if (v.kind === "quantity") return `${v.amount} ${v.unit}`;
-  if (v.kind === "interval") return `${v.start.iso} → ${v.end.iso}`;
+  if (v.kind === "interval") {
+    let duration: Temporal.Duration;
+    if (v.start.kind === "date" && v.end.kind === "date")
+      duration = Temporal.PlainDate.from(v.start.iso).until(
+        Temporal.PlainDate.from(v.end.iso),
+        { largestUnit: "years" },
+      );
+    else {
+      const zone = Temporal.ZonedDateTime.from(
+        v.start.kind === "datetime" ? v.start.iso : v.end.iso,
+      ).timeZoneId;
+      const local = (d: DateValue) =>
+        d.kind === "datetime"
+          ? Temporal.ZonedDateTime.from(d.iso)
+          : Temporal.PlainDate.from(d.iso).toZonedDateTime(zone);
+      duration = local(v.start).until(local(v.end), { largestUnit: "years" });
+    }
+    const parts = (
+      ["years", "months", "days", "hours", "minutes", "seconds"] as const
+    )
+      .filter((unit) => duration[unit] !== 0)
+      .map((unit) => `${Math.abs(duration[unit])} ${unit}`);
+    return (duration.sign < 0 ? "−" : "") + (parts.join(" ") || "0 days");
+  }
   return v.iso;
 }
 export function evaluateExpression(
