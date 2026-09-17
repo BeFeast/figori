@@ -345,7 +345,8 @@ export function WorksheetDetail({
           />
         )}
         {evaluation.value?.lines.map((line) =>
-          line.kind === "blank" ? null : (
+          line.kind === "blank" ||
+          (line.id === editing && input.trim()) ? null : (
             <List.Item
               key={line.id}
               id={line.id}
