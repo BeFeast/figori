@@ -127,8 +127,8 @@ export async function listDocuments(options: StorageOptions): Promise<Array<{
   const ids = new Set(files.filter((file) => file.endsWith(".json")).map((file) => file.replace(/(?:\.recovery)?\.json$/, "")));
   const result = [];
   for (const id of ids) {
-    checkId(id);
     try {
+    checkId(id);
     const loaded = await loadDocument(id, options);
     const target = paths(id, options);
     const snapshot = await readSnapshot(loaded.recovered ? target.recoveryPath : target.path, id);

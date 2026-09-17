@@ -173,3 +173,11 @@ test("one irrecoverable worksheet does not hide healthy documents", async () => 
 });
 
 test("question headings and prose time units are not expressions", () => { const doc=importDocument("Reward?\nNo snacks (every day)",{format:"markdown"});expect(doc.lines.map(line=>line.kind)).toEqual(["heading","heading"]); });
+
+test("standalone named references evaluate while prose headings stay headings", () => {
+ const doc=importDocument("rent = 12\nrent\nSummary for the year\ntotal = 34\ntotal\nsum = 56\nsum",{format:"numi"});
+ const result=evaluateDocument(doc,(source,ctx):Evaluation<number>=>{const value=ctx.variables[source] ?? Number(source);return Number.isFinite(value)?{ok:true,value,diagnostics:[]}:{ok:false,diagnostics:[{code:"unknown_variable",message:"Unknown variable"}]};},{});
+ expect(result.lines[1]?.evaluation?.value).toBe(12);expect(result.lines[4]?.evaluation?.value).toBe(34);expect(result.lines[6]?.evaluation?.value).toBe(56);expect(result.lines[2]?.evaluation).toBeUndefined();
+});
+
+test("malformed snapshot filename cannot hide healthy worksheets", async()=>{const dir=await directory();const doc=importDocument("3+4",{format:"numi"});await saveDocument(doc,{directory:dir});await writeFile(join(dir,"invalid name.json"),"{}");const rows=await listDocuments({directory:dir});expect(rows.find(row=>row.id===doc.id)?.error).toBeUndefined();expect(rows.find(row=>row.id==="invalid name")?.error).toContain("Invalid worksheet id");});
