@@ -9,18 +9,43 @@ export function rateDescription(state: RateState): string {
 }
 export function useRates() {
   const [state, setState] = useState<RateState>({ status: "unavailable" });
-  const [loading, setLoading] = useState(false); const generation = useRef(0);
+  const [loading, setLoading] = useState(false);
+  const generation = useRef(0);
   const read = useCallback(async (network: boolean) => {
-    const current = ++generation.current; setLoading(true);
+    const current = ++generation.current;
+    setLoading(true);
     try {
-      const value = await (network ? refreshRates(options) : loadRates(options));
+      const value = await (network
+        ? refreshRates(options)
+        : loadRates(options));
       if (current !== generation.current) return;
       setState(value);
-      if (network) await showToast(value.status === "fresh" ? Toast.Style.Success : Toast.Style.Failure, value.status === "fresh" ? "Rates Updated" : "Rates Not Refreshed", value.error ?? rateDescription(value));
+      if (network)
+        await showToast(
+          value.status === "fresh" && !value.error
+            ? Toast.Style.Success
+            : Toast.Style.Failure,
+          value.status === "fresh" && !value.error
+            ? "Rates Updated"
+            : "Rates Not Refreshed",
+          value.error ?? rateDescription(value),
+        );
     } catch (error) {
-      if (current === generation.current) setState(old => ({ ...old, error: String(error) }));
-    } finally { if (current === generation.current) setLoading(false); }
+      if (current === generation.current)
+        setState((old) => ({ ...old, error: String(error) }));
+    } finally {
+      if (current === generation.current) setLoading(false);
+    }
   }, []);
-  useEffect(() => { void read(false); const timer = setInterval(() => { void read(false); }, 60_000); return () => { generation.current++; clearInterval(timer); }; }, [read]);
+  useEffect(() => {
+    void read(false);
+    const timer = setInterval(() => {
+      void read(false);
+    }, 60_000);
+    return () => {
+      generation.current++;
+      clearInterval(timer);
+    };
+  }, [read]);
   return { state, loading, refreshRates: () => read(true) };
 }

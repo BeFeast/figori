@@ -28,3 +28,17 @@ Dynamic anchors resolve against one current instant and the selected IANA timezo
 ## Acceptance still required
 
 A TypeScript/build pass does not establish desktop acceptance. On macOS verify all three commands, keyboard copy, multiline editing, reopen persistence, invalid input, midnight/resume refresh, native `.numi` reopen, and rate availability/offline status. No worker installs or modifies the live Raycast application.
+
+## macOS developer installation
+
+With the matching Raycast application available, the operator can run:
+
+```sh
+bun run --cwd packages/raycast dev
+```
+
+This invokes Raycast's supported development workflow and imports the extension into the desktop application. It is an operator installation step, not part of CI or worker verification. Distribution output is written explicitly to `packages/raycast/dist`; all three bundled commands and icon assets are included.
+
+Exchange rates are loaded from the shared rates package's local cache. **Refresh Exchange Rates** performs the explicit provider request; no rate request sends worksheet content. Fresh/stale/unavailable state, source, as-of date and refresh failures remain visible. Refresh failures retain usable cached rates and do not masquerade as a successful refresh.
+
+Export supports both Numi plain text and the original Markdown source. Neither overwrites an existing destination. Markdown source export does not carry application metadata; Numi export can include a separate My Numi sidecar.

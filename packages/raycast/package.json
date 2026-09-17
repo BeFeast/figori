@@ -34,9 +34,10 @@
     }
   ],
   "scripts": {
-    "build": "ray build -e dist",
+    "build": "ray build -e dist -o dist",
     "typecheck": "tsc --noEmit",
-    "test": "bun test src/model.test.ts"
+    "test": "bun test src/model.test.ts",
+    "dev": "ray develop"
   },
   "dependencies": {
     "@raycast/api": "2.4.1",
