@@ -25,6 +25,10 @@
       "name": "@my-numi/core",
       "version": "0.1.0",
     },
+    "packages/rates": {
+      "name": "@my-numi/rates",
+      "version": "0.1.0",
+    },
   },
   "packages": {
     "@js-temporal/polyfill": ["@js-temporal/polyfill@0.5.1", "", { "dependencies": { "jsbi": "^4.3.0" } }, "sha512-hloP58zRVCRSpgDxmqCWJNlizAlUgJFqG2ypq79DCvyv9tHjRYMDOcPFjzfl/A1/YxDvRCZz8wvZvmapQnKwFQ=="],
@@ -32,6 +36,8 @@
     "@my-numi/cli": ["@my-numi/cli@workspace:packages/cli"],
 
     "@my-numi/core": ["@my-numi/core@workspace:packages/core"],
+
+    "@my-numi/rates": ["@my-numi/rates@workspace:packages/rates"],
 
     "@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 
