@@ -103,6 +103,29 @@ function parseLine(raw: string, ending: string, format: SourceFormat): DocumentL
   return line;
 }
 
+
+function parseLines(source: string, format: SourceFormat): DocumentLine[] {
+  let fence: { char: string; length: number } | undefined;
+  return splitLines(source).map(({source: raw, ending}) => {
+    if (format !== "markdown") return parseLine(raw, ending, format);
+    const text = raw.replace(/^\uFEFF/, "");
+    const marker = text.match(/^ {0,3}(\x60{3,}|~{3,})(.*)$/);
+    let inert = false;
+    if (fence) {
+      inert = true;
+      if (marker && marker[1]![0] === fence.char && marker[1]!.length >= fence.length && !marker[2]!.trim()) fence = undefined;
+    } else if (marker && !(marker[1]![0] === String.fromCharCode(96) && marker[2]!.includes(String.fromCharCode(96)))) {
+      fence = {char: marker[1]![0]!, length: marker[1]!.length};
+      inert = true;
+    } else {
+      inert = /^(?: {4}|\t|\s{0,3}>|\s{0,3}(?:[-+*]|\d+[.)])\s+|\s*<!--)/.test(text)
+        || /\x60|\*\*|__|\[[^\]]*\]\([^)]*\)/.test(text)
+        || /^\s*(?:\*[^*]+\*|_[^_]+_)\s*$/.test(text);
+    }
+    return inert ? {id:crypto.randomUUID(),source:raw,ending,kind:"comment" as const,expression:""} : parseLine(raw, ending, format);
+  });
+}
+
 export function importDocument(
   source: string,
   options: { format: SourceFormat; id?: string; settings?: Partial<WorksheetSettings> },
@@ -111,7 +134,7 @@ export function importDocument(
   validateSettings(settings);
   return {
     schemaVersion: 1, id: options.id ?? crypto.randomUUID(), source, format: options.format, settings,
-    lines: splitLines(source).map(({ source, ending }) => parseLine(source, ending, options.format)),
+    lines: parseLines(source, options.format),
   };
 }
 
@@ -199,4 +222,24 @@ export function serializeNumi(document: Worksheet): { text: string; warnings: st
     return line.source.slice(0, equals).trimEnd() + line.ending;
   }).join("");
   return { text, warnings };
+}
+
+/** Exact source export, or inert result annotations that survive Markdown reimport. */
+export function serializeMarkdown(
+  document: Worksheet,
+  options: { evaluated?: {lines: Array<DocumentLine & {evaluation?: Evaluation<unknown>}>} } = {},
+): {text: string; warnings: string[]} {
+  const warnings = ["Markdown does not embed Figori timezone, anchor or billing settings; retain application metadata."];
+  if (!options.evaluated) return {text:document.source,warnings};
+  const results = new Map(options.evaluated.lines.map(line => [line.id,line]));
+  const ending = document.lines.find(line => line.ending)?.ending || "\n";
+  const text = document.lines.map(line => {
+    const result = results.get(line.id);
+    if (!result?.evaluation || result.source !== line.source) return line.source + line.ending;
+    const e = result.evaluation;
+    const snapshot = JSON.stringify({result:e.ok ? e.formatted : undefined, diagnostics:e.ok ? undefined : e.diagnostics})
+      .replace(/</g,"\\u003c").replace(/>/g,"\\u003e").replace(/\u2028/g,"\\u2028").replace(/\u2029/g,"\\u2029");
+    return line.source + (line.ending || ending) + "<!-- figori-result: " + snapshot + " -->" + line.ending;
+  }).join("");
+  return {text,warnings};
 }
