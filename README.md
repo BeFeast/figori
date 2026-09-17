@@ -7,7 +7,11 @@
 
 **Your numbers, in context.**
 
-A local-first calculator worksheet for **Raycast, the terminal, and Omarchy**. Write calculations beside your notes; see the date anchor, timezone and currency basis behind the answer.
+A local-first calculator worksheet: write calculations beside your notes and see the date anchor, timezone and currency basis behind the answer.
+
+The **native macOS and Linux desktop app is in preview**, with a continuous worksheet editor. Follow its [implementation and preview status in PR32](https://git.oklabs.uk/BeFeast/figori/pulls/32). This branch also contains the existing Raycast, terminal and Omarchy adapters.
+
+Figori uses a charcoal, warm off-white and coral identity derived from HedRoom. See the [brand guide](docs/branding.md).
 
 ## Inspired by Numi
 

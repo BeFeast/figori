@@ -2,52 +2,71 @@
 
 **Figori — Your numbers, in context.**
 
-The selected identity combines a folded-worksheet **F**, cobalt, lime, ink and paper. The three-path symbol is flat vector artwork: a vertical fold, a long upper arm and a shorter lime calculation line. Rounded arm ends soften the geometric fold. The primary source is the SVG geometry, not an image-generation reference.
+The folded-worksheet F and Figori name remain the product identity. On 2026-09-17,
+the user requested HedRoom's visual direction: charcoal surfaces, warm off-white
+text and three red accent levels replace the original cobalt/lime palette.
+The three-path vector geometry is unchanged.
 
-## Palette
+## Palette and provenance
+
+Tokens were checked against HedRoom's [brand guide](https://git.oklabs.uk/BeFeast/hedroom/src/commit/dec56d1f74e2bd91c9e76f796ca4d2d2e82a167c/design/brand/BRAND.md),
+[brand sheet](https://git.oklabs.uk/BeFeast/hedroom/src/commit/dec56d1f74e2bd91c9e76f796ca4d2d2e82a167c/design/brand/brand-sheet.html)
+and [product CSS](https://git.oklabs.uk/BeFeast/hedroom/src/commit/dec56d1f74e2bd91c9e76f796ca4d2d2e82a167c/apps/web/src/app/globals.css).
+Figori adopts the palette, not HedRoom's ring-and-dot mark.
 
 | Token | Color | Role |
 | --- | --- | --- |
-| Cobalt | `#284BFF` | Brand surfaces, emphasis and primary actions |
-| Lime | `#DDFC45` | Accent line, high-contrast mark on cobalt, selected highlights |
-| Ink | `#111827` | Body text and dark surfaces |
-| Paper | `#F7F8FC` | Light canvas and inverse text |
+| bg | `#0b0c0d` | Charcoal canvas |
+| surface | `#141618` | Raised surface |
+| raised | `#1c1f21` | Higher surface / hover |
+| recessed | `#101112` | Input wells |
+| tint | `#15100f` | Warm surface |
+| ac | `#b8443c` | Borders, decorative marks; not small text |
+| ac2 | `#d9776d` | Accent labels |
+| ac3 | `#e59c92` | Bright accent / numeric emphasis |
+| text | `#e8e6e3` | Warm off-white body text |
 
-Use ink on paper (16.72:1), paper on cobalt (5.59:1), ink on lime (15.28:1), or lime on cobalt (5.11:1) for text. Ratios use the WCAG sRGB luminance calculation. **Do not use lime text on paper (1.09:1) or cobalt text on ink (2.99:1).** The decorative two-color symbol may sit on paper/ink; it does not replace readable labels or a visible focus indicator. Selection and errors must also have text or shape cues.
+Against bg, ac is about 3.7:1, ac2 6.4:1, ac3 8.9:1 and text 15.7:1.
+Use ac2/ac3 for text; ac is decorative or a non-text boundary.
+Selection and errors also need words or shape cues. HedRoom defines no light
+theme; Figori's retained light asset is a compatibility presentation, not a
+claim that the dark palette can be inverted for accessible UI.
 
-Machine-readable tokens: [palette.json](../assets/brand/palette.json).
+Machine-readable source: [palette.json](../assets/brand/palette.json).
 
-## Assets
+## Assets and compatibility filenames
 
-| Asset | Use |
-| --- | --- |
-| [figori-mark.svg](../assets/brand/figori-mark.svg) | Primary cobalt/lime symbol, transparent canvas |
-| [figori-mark-mono.svg](../assets/brand/figori-mark-mono.svg) | One-color ink reproduction |
-| [figori-mark-inverse.svg](../assets/brand/figori-mark-inverse.svg) | One-color paper reproduction on dark backgrounds |
-| [figori-mark-lime.svg](../assets/brand/figori-mark-lime.svg) | Lime mark on cobalt, including the Omarchy header |
-| [figori-app.svg](../assets/brand/figori-app.svg) | Primary two-color symbol on ink app tile |
-| [figori-app-cobalt.svg](../assets/brand/figori-app-cobalt.svg) | High-contrast lime symbol on cobalt tile, Raycast variant |
-| [figori-app-light.svg](../assets/brand/figori-app-light.svg) | Light-background presentation |
-| [figori-wordmark.svg](../assets/brand/figori-wordmark.svg) | Outlined Space Grotesk Bold wordmark |
-| [figori-lockup.svg](../assets/brand/figori-lockup.svg) | Horizontal symbol + wordmark |
-| [figori-social.png](../assets/brand/figori-social.png) | 1200×630 social preview |
+[figori-mark.svg](../assets/brand/figori-mark.svg) is the primary deep-red F with
+the brighter middle arm. Monochrome/inverse variants use charcoal/off-white.
+[figori-app.svg](../assets/brand/figori-app.svg) places it on a charcoal tile and
+is the canonical desktop app icon source. SVG wordmarks and lockups remain
+outlined, portable artwork. App PNG sizes 16/32/64/128/256/512 live in
+[icons](../assets/brand/icons); [social preview](../assets/brand/figori-social.png)
+is 1200×630.
 
-Inverse wordmark/lockup variants accompany the originals. App PNG sizes: **16, 32, 64, 128, 256 and 512 px** in [icons](../assets/brand/icons). The cobalt-tile variant includes a 512 px adapter asset. Use the symbol alone below 96 px; do not squeeze the wordmark into a small icon.
+Legacy filenames `figori-mark-lime.svg`, `figori-app-cobalt.svg` and
+`figori-cobalt-512.png` are retained for consumers: their colors now follow the
+HedRoom palette. The former lime mark is ac3; the former cobalt tile is the
+raised charcoal surface with an ac3 mark. Filenames do not define active tokens.
+Existing installed adapter assets are updated separately, not by editing this
+canonical source.
 
-Keep at least one stem-width of space around a placed mark when layout permits. SVG canvases include consistent base padding; preserve their aspect ratio. Do not add gradients, shadows, outlines, beveled folds or independent rotations of the three parts. The social composition can rotate the complete decorative mark as one unit. Use supplied outlines for the wordmark instead of retyping it with a substitute font.
+Keep supplied proportions and padding. Do not introduce gradients, beveled folds,
+shadows or independent rotations of the F components. Use the symbol alone for
+small icons; keep the wordmark legible at larger sizes.
 
 ## Typography and native surfaces
 
-- **Display/marketing Latin:** Space Grotesk Bold for names and headlines; regular/medium weights may be used for supporting copy.
-- **Numbers/code in designed marketing material:** IBM Plex Mono, with tabular alignment where appropriate.
-- **Application UI:** keep native Raycast typography, the configured terminal font and Omarchy/system fonts. Do not require custom font installation, fake a DOM editor in Raycast or override user accessibility settings.
-- Preserve Unicode and system fallback fonts for Hebrew/Russian text. Brand fonts are not a reason to replace supported scripts.
+Canonical Figori artwork retains outlined Space Grotesk Bold; adopting HedRoom's
+palette does not replace the Figori name or glyph. The desktop interface can use
+HedRoom's Heebo direction while native Raycast, terminal and Omarchy keep their
+platform typography. Preserve Hebrew/Russian fallback and accessibility settings.
 
-The wordmark is outlined from a pinned upstream [Space Grotesk](https://github.com/floriankarsten/space-grotesk) font. Source/notice are in [fonts/SOURCE.md](../assets/brand/fonts/SOURCE.md) and [fonts/OFL.txt](../assets/brand/fonts/OFL.txt). The application does not load this font. [IBM Plex](https://github.com/IBM/plex) is a typography recommendation; no Plex font is bundled or installed.
+Font provenance and notices: [Space Grotesk source](../assets/brand/fonts/SOURCE.md)
+and [OFL](../assets/brand/fonts/OFL.txt). IBM Plex Mono remains a marketing numeric
+recommendation, not an installed system requirement.
 
 ## Regeneration
-
-Generation is isolated from the application workspace. Bun creates SVGs; librsvg renders the native vector artwork deterministically to PNG:
 
 ```sh
 bun install --cwd assets/brand --frozen-lockfile
@@ -55,10 +74,16 @@ bun run --cwd assets/brand generate
 bun run --cwd assets/brand render
 ```
 
-The renderer command is `rsvg-convert`; changing its version may change antialiasing bytes. The mark has exactly three geometric paths with solid fills. Wordmark/social lettering is converted to paths so output does not depend on fonts installed on the viewing machine.
+Bun generates the flat SVG geometry and outlined lettering. The existing
+`rsvg-convert` renders PNGs; native icon containers are generated from the same
+SVG. No raster recoloring is used. Renderer version changes may alter
+antialiasing bytes.
 
 ## Naming and Numi acknowledgement
 
-Figori is independent, inspired by [Numi](https://numi.app). Keep the acknowledgement and original developer support link visible in the README. Never imply affiliation, endorsement, complete syntax compatibility or that Numi is defective because Figori chooses different calendar semantics.
+Figori is independent, inspired by [Numi](https://numi.app). Preserve the README's
+acknowledgement and original developer support link. Do not imply endorsement
+or complete syntax/numerical compatibility.
 
-The old My Numi name is historical. Internal compatibility identifiers and existing data paths are intentionally retained by the adapters. Visual branding must not change evaluator behavior, `.numi` source, metadata identity, storage paths or legacy command compatibility. Repository redirects/renames are managed separately from this artwork.
+My Numi is the historical working name. Palette changes do not change evaluator
+semantics, .numi bytes, settings identities, data paths or compatibility commands.
