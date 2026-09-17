@@ -1,0 +1,54 @@
+{
+  "mainBinaryName": "figori-desktop",
+  "bundle": {
+    "targets": [
+      "deb",
+      "rpm"
+    ],
+    "publisher": "BeFeast",
+    "homepage": "https://figori.befeast.com",
+    "shortDescription": "Calendar-aware calculator worksheets",
+    "category": "Productivity",
+    "icon": [
+      "icons/icon.png"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "figori"
+        ],
+        "name": "Figori Document",
+        "description": "Figori calculation worksheet",
+        "mimeType": "application/x-figori",
+        "role": "Editor"
+      }
+    ],
+    "linux": {
+      "deb": {
+        "desktopTemplate": "packaging/figori-desktop.desktop",
+        "depends": [
+          "libc6 (>= 2.35)",
+          "libgtk-3-0",
+          "libwebkit2gtk-4.1-0",
+          "libsoup-3.0-0"
+        ],
+        "recommends": [
+          "xdg-desktop-portal"
+        ]
+      },
+      "rpm": {
+        "desktopTemplate": "packaging/figori-desktop.desktop",
+        "depends": [
+          "glibc >= 2.35",
+          "gtk3",
+          "webkit2gtk4.1",
+          "libsoup3"
+        ],
+        "recommends": [
+          "xdg-desktop-portal"
+        ]
+      }
+    }
+  },
+  "productName": "figori-desktop"
+}

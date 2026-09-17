@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Figori
+Comment=Calendar-aware calculator worksheets
+Exec=figori-desktop %f
+Icon=figori-desktop
+Terminal=false
+Categories=Office;
+StartupWMClass=figori-desktop
+MimeType=application/x-figori;
