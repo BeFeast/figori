@@ -258,3 +258,44 @@ describe("calendar-day questions", () => {
     }
   });
 });
+
+describe("bare English month dates", () => {
+  const today = { now: "2026-09-17T12:00:00Z", timezone: "Asia/Jerusalem" };
+  test("full and abbreviated months assume day one and the anchor year", () => {
+    for (const month of ["november", "Nov", "NOVEMBER"]) {
+      expect(value(`days until ${month}`, today)).toBe("45 days");
+    }
+    expect(value("november", today)).toBe("2026-11-01");
+    expect(value("days until january", today)).toBe("-259 days");
+    expect(evaluate("november", today).basis.notes.join(" ")).toContain(
+      "assumes day 1 and year 2026 from anchor 2026-09-17",
+    );
+  });
+  test("pinned anchor chooses the omitted year but explicit year wins", () => {
+    const pinned = {
+      ...today,
+      anchor: { mode: "fixed" as const, date: "2024-02-29" },
+    };
+    expect(value("november", pinned)).toBe("2024-11-01");
+    expect(value("november 2027", pinned)).toBe("2027-11-01");
+    expect(value("days until november 2027", pinned)).toBe("410 days");
+    expect(evaluate("november 2027", pinned).basis.notes.join(" ")).toContain(
+      "assumes day 1; explicit year 2027",
+    );
+  });
+  test("existing exact-name variables have priority; units and day-month dates retain meaning", () => {
+    const variables = { november: { kind: "number" as const, amount: "3" } };
+    expect(value("november + 2", { ...today, variables })).toBe("5");
+    expect(evaluate("days until november", { ...today, variables }).ok).toBe(
+      false,
+    );
+    expect(value("9 months", today)).toBe("9 months");
+    expect(value("27 nov", today)).toBe("2026-11-27");
+    expect(value("november 2027 12:00", today)).toContain(
+      "2027-11-01T12:00:00",
+    );
+    for (const invalid of ["novemberish", "november 202", "months", "month"]) {
+      expect(evaluate(invalid, today).ok).toBe(false);
+    }
+  });
+});

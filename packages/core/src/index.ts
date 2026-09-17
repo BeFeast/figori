@@ -445,6 +445,20 @@ const months = [
   "nov",
   "dec",
 ];
+const fullNames = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
+];
 class Parser {
   pos = 0;
   constructor(
@@ -591,20 +605,6 @@ class Parser {
       );
     if (english) {
       const monthName = english[2].toLowerCase();
-      const fullNames = [
-        "january",
-        "february",
-        "march",
-        "april",
-        "may",
-        "june",
-        "july",
-        "august",
-        "september",
-        "october",
-        "november",
-        "december",
-      ];
       const month =
         Math.max(months.indexOf(monthName), fullNames.indexOf(monthName)) + 1;
       if (!month) fail("invalid_date", "Unknown English month.");
@@ -633,6 +633,26 @@ class Parser {
           ? this.ctx.variables[id[0]]
           : undefined;
       if (v) return v;
+      const monthName = id[0].toLowerCase();
+      const month =
+        Math.max(months.indexOf(monthName), fullNames.indexOf(monthName)) + 1;
+      if (month > 0) {
+        const explicitYear = this.match(/^\d{4}\b/);
+        const year = explicitYear
+          ? +explicitYear[0]
+          : Temporal.PlainDate.from(this.basis.anchorDate).year;
+        this.basis.notes.push(
+          explicitYear
+            ? `Month "${id[0]} ${explicitYear[0]}" assumes day 1; explicit year ${year}.`
+            : `Month "${id[0]}" assumes day 1 and year ${year} from anchor ${this.basis.anchorDate}; no future-year rollover.`,
+        );
+        return this.withTime(
+          Temporal.PlainDate.from(
+            { year, month, day: 1 },
+            { overflow: "reject" },
+          ),
+        );
+      }
       return fail("unknown_variable", `Unknown variable: ${id[0]}`);
     }
     return fail("syntax", `Unexpected input at column ${this.pos + 1}.`);
