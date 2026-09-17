@@ -215,12 +215,40 @@
       </form>
     </dialog>
     <dialog id="details" aria-labelledby="detail-expression">
+      <button
+        id="detail-close"
+        aria-label="Close details"
+        title="Close details (Escape)"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="m6 6 12 12M18 6 6 18" />
+        </svg>
+      </button>
       <h2 id="detail-expression"></h2>
       <pre id="detail-result"></pre>
       <p id="detail-basis"></p>
       <div class="dialog-actions">
-        <button id="detail-copy">Copy result</button
-        ><button id="detail-close" class="primary">Done</button>
+        <button id="detail-copy">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="8" y="8" width="12" height="12" rx="2" />
+            <path d="M16 8V4H4v12h4" /></svg
+          >Copy result
+        </button>
       </div>
     </dialog>
     <script type="module" src="main.js"></script>

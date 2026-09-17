@@ -703,3 +703,72 @@ dialog {
 .native-chrome footer {
   gap: 14px;
 }
+
+#details {
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px #0004;
+  border: 1px solid var(--border);
+}
+body.light #details {
+  box-shadow: 0 8px 28px #0002;
+}
+#details #detail-expression {
+  margin: 0 30px 10px 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+#details #detail-result {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+#details #detail-basis {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+#detail-close {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 26px;
+  height: 26px;
+  padding: 5px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+}
+#detail-close:hover {
+  background: var(--active);
+  color: var(--text);
+}
+#detail-close svg {
+  width: 16px;
+  height: 16px;
+}
+#detail-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--accent-text);
+  color: var(--bg);
+  border: 0;
+  border-radius: 7px;
+  padding: 7px 11px;
+  font-weight: 600;
+  font-size: 12px;
+}
+#detail-copy:hover {
+  filter: brightness(1.1);
+}
+#detail-copy svg {
+  width: 15px;
+  height: 15px;
+}
+#detail-copy:focus-visible,
+#detail-close:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 3px;
+}
