@@ -10,8 +10,9 @@
     <header>
       <span class="brand" aria-label="Figori">ƒ<span>Figori</span></span>
       <div class="file-heading">
-        <strong id="filename">Untitled</strong
-        ><span id="save-status">New worksheet</span>
+        <strong id="filename" aria-live="polite" aria-atomic="true"
+          >Untitled</strong
+        ><span id="save-status" role="status" hidden></span>
       </div>
       <nav aria-label="File actions">
         <button id="new" title="New worksheet (⌘N)">New</button
@@ -36,7 +37,19 @@
       >
     </div>
     <div id="notice" role="status" hidden></div>
-    <main id="editor" aria-label="Calculation worksheet"></main>
+    <main id="editor" aria-label="Calculation worksheet">
+      <div
+        id="column-splitter"
+        role="separator"
+        tabindex="0"
+        aria-label="Resize expression and result columns"
+        aria-orientation="vertical"
+        aria-controls="source-editor result-column"
+        title="Drag to resize columns. Double-click to fit visible results. Arrow keys resize; Home/End use minimum/maximum width."
+      >
+        <span aria-hidden="true"></span>
+      </div>
+    </main>
     <footer>
       <span id="line-status">Type freely. Results appear beside each line.</span
       ><button id="rates" title="Refresh exchange rates">Exchange rates</button>

@@ -1,3 +1,4 @@
+import { columnLimits, resultWidth, savedColumnRatio } from "./splitter";
 import { OperationGate } from "./operation";
 import { Compartment } from "@codemirror/state";
 import {
@@ -94,19 +95,20 @@ function contextText() {
 }
 function updateChrome() {
   const name = path?.split(/[\\/]/).at(-1) ?? "Untitled";
-  el("filename").textContent = name;
-  el("filename").title = path ?? "New worksheet";
-  el("save-status").textContent = busy
-    ? "Working…"
-    : dirty
-      ? "Unsaved changes"
-      : path
-        ? "Saved"
-        : "New worksheet";
+  const title = name + (dirty ? "*" : "");
+  const filename = el("filename");
+  if (filename.textContent !== title) filename.textContent = title;
+  filename.classList.toggle("dirty", dirty);
+  filename.title =
+    (path ?? "New worksheet") + (dirty ? " — Unsaved changes" : "");
+  filename.setAttribute(
+    "aria-label",
+    name + (dirty ? ", unsaved changes" : ""),
+  );
+  el("save-status").hidden = !busy;
+  el("save-status").textContent = busy ? "Working…" : "";
   el("context-button").textContent = contextText();
-  void nativeWindow
-    .setTitle(`${dirty ? "● " : ""}${name} — Figori`)
-    .catch(report);
+  void nativeWindow.setTitle(`${title} — Figori`).catch(report);
 }
 function setDirty() {
   dirty = true;
@@ -323,12 +325,14 @@ function evaluate() {
     // Hidden captured output changes visual line geometry. Marker equality alone
     // does not make CodeMirror resync gutters after its first measured layout.
     measureResultGutter();
+    positionColumnSplitter();
     // CodeMirror hides gutters by default because they normally contain line
     // numbers. Our result gutter contains interactive controls, so expose it.
     for (const gutter of view.dom.querySelectorAll(".cm-gutters-after")) {
       gutter.setAttribute("aria-hidden", "false");
       gutter.setAttribute("role", "region");
       gutter.setAttribute("aria-label", "Calculation results");
+      gutter.id = "result-column";
     }
     updateChrome();
   } catch (error) {
@@ -368,6 +372,7 @@ function editorState(doc: string) {
       ),
       keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
       EditorView.contentAttributes.of({
+        id: "source-editor",
         "aria-label": "Worksheet source",
         spellcheck: "false",
       }),
@@ -394,6 +399,111 @@ function editorState(doc: string) {
 await document.fonts.ready;
 const view = new EditorView({ parent: el("editor"), state: editorState("") });
 document.fonts.addEventListener("loadingdone", () => measureResultGutter());
+const splitter = el("column-splitter");
+const splitterMeasureKey = {};
+let preferredResultRatio = savedColumnRatio(
+  localStorage.getItem("result-column-ratio"),
+);
+let columnDrag: number | null = null;
+function positionColumnSplitter() {
+  view.requestMeasure({
+    key: splitterMeasureKey,
+    read: (current) => {
+      const gutter = current.dom.querySelector(".cm-gutters-after");
+      return gutter
+        ? gutter.getBoundingClientRect().left -
+            el("editor").getBoundingClientRect().left
+        : null;
+    },
+    write: (left) => {
+      if (left !== null) {
+        splitter.style.left = left - 5 + "px";
+        splitter.style.visibility = "visible";
+      }
+    },
+  });
+}
+function setColumnWidth(requested?: number, persist = false) {
+  const available = view.scrollDOM.clientWidth;
+  if (!available) return;
+  const width = resultWidth(
+    available,
+    requested ?? available * preferredResultRatio,
+  );
+  el("editor").style.setProperty("--result-width", width + "px");
+  const limits = columnLimits(available);
+  splitter.setAttribute("aria-valuemin", String(Math.round(limits.minimum)));
+  splitter.setAttribute("aria-valuemax", String(Math.round(limits.maximum)));
+  splitter.setAttribute("aria-valuenow", String(Math.round(width)));
+  splitter.setAttribute(
+    "aria-valuetext",
+    Math.round(width) +
+      " pixels for results, " +
+      Math.round(available - width) +
+      " for expressions",
+  );
+  if (persist) {
+    preferredResultRatio = width / available;
+    localStorage.setItem("result-column-ratio", String(preferredResultRatio));
+  }
+  measureResultGutter();
+  positionColumnSplitter();
+}
+function dragColumns(event: PointerEvent) {
+  const bounds = view.scrollDOM.getBoundingClientRect();
+  setColumnWidth(
+    bounds.left + view.scrollDOM.clientWidth - event.clientX,
+    true,
+  );
+}
+splitter.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  columnDrag = event.pointerId;
+  splitter.setPointerCapture(event.pointerId);
+  document.body.classList.add("resizing-columns");
+  splitter.focus();
+});
+splitter.addEventListener("pointermove", (event) => {
+  if (columnDrag === event.pointerId) dragColumns(event);
+});
+function finishColumns(event: PointerEvent) {
+  if (columnDrag !== event.pointerId) return;
+  columnDrag = null;
+  document.body.classList.remove("resizing-columns");
+  if (splitter.hasPointerCapture(event.pointerId))
+    splitter.releasePointerCapture(event.pointerId);
+}
+splitter.addEventListener("pointerup", finishColumns);
+splitter.addEventListener("pointercancel", finishColumns);
+splitter.addEventListener("lostpointercapture", () => {
+  columnDrag = null;
+  document.body.classList.remove("resizing-columns");
+});
+splitter.addEventListener("dblclick", () => {
+  const widths = Array.from(
+    view.dom.querySelectorAll<HTMLElement>(".result-gutter .result"),
+    (button) => button.scrollWidth,
+  );
+  if (widths.length) setColumnWidth(Math.max(...widths) + 26, true);
+});
+splitter.addEventListener("keydown", (event) => {
+  const width = resultWidth(
+    view.scrollDOM.clientWidth,
+    view.scrollDOM.clientWidth * preferredResultRatio,
+  );
+  const step = event.shiftKey ? 64 : 16;
+  if (event.key === "ArrowLeft") setColumnWidth(width + step, true);
+  else if (event.key === "ArrowRight") setColumnWidth(width - step, true);
+  else if (event.key === "Home") setColumnWidth(0, true);
+  else if (event.key === "End")
+    setColumnWidth(view.scrollDOM.clientWidth, true);
+  else return;
+  event.preventDefault();
+});
+new ResizeObserver(() => setColumnWidth()).observe(view.scrollDOM);
+setColumnWidth();
+
 requestAnimationFrame(() => view.requestMeasure());
 const operations = new OperationGate((active) => {
   busy = active;

@@ -185,6 +185,8 @@ input {
   padding: 4px 6px;
 }
 #editor {
+  position: relative;
+  --result-width: 34%;
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -216,9 +218,8 @@ input {
 .result-gutter {
   font-family: inherit;
   line-height: inherit;
-  min-width: 220px;
-  max-width: 340px;
-  width: 30vw;
+  min-width: 0;
+  width: var(--result-width);
   text-align: right;
   padding: 0 14px 0 8px;
 }
@@ -386,10 +387,6 @@ body.dragging #editor {
   nav button {
     padding: 7px;
   }
-  .result-gutter {
-    min-width: 170px;
-    width: 34vw;
-  }
   .cm-editor {
     font-size: 14px;
   }
@@ -399,4 +396,42 @@ body.dragging #editor {
 }
 [hidden] {
   display: none !important;
+}
+
+#column-splitter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 11px;
+  z-index: 250;
+  cursor: col-resize;
+  touch-action: none;
+  visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#column-splitter span {
+  width: 3px;
+  height: 30px;
+  border-radius: 3px;
+  background: var(--border-strong);
+  pointer-events: none;
+}
+#column-splitter:hover span,
+#column-splitter:focus-visible span,
+body.resizing-columns #column-splitter span {
+  background: var(--accent-text);
+}
+#column-splitter:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -3px;
+}
+body.resizing-columns {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.file-heading strong.dirty {
+  color: var(--accent-text);
 }
