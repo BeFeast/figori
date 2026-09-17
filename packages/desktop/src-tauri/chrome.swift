@@ -13,6 +13,7 @@ final class Chrome: NSObject, NSToolbarDelegate, NSWindowDelegate {
     var settings: NSWindow?
     let font = NSPopUpButton()
     let theme = NSPopUpButton()
+    let precision = NSPopUpButton()
     let size = NSSlider(value: 16, minValue: 12, maxValue: 24, target: nil, action: nil)
     let spacing = NSSlider(value: 1.9, minValue: 1.4, maxValue: 2.2, target: nil, action: nil)
     let sizeLabel = NSTextField(labelWithString: "16 pt")
@@ -52,6 +53,7 @@ final class Chrome: NSObject, NSToolbarDelegate, NSWindowDelegate {
         window.appearance = appearance; settings?.appearance = appearance
         font.selectItem(at: (prefs["font"] as? String == "system") ? 1 : 0)
         theme.selectItem(at: ["system", "light", "dark"].firstIndex(of: mode) ?? 0)
+        precision.selectItem(withTitle: String(prefs["precision"] as? Int ?? 2))
         size.doubleValue = prefs["size"] as? Double ?? 16
         spacing.doubleValue = prefs["spacing"] as? Double ?? 1.9
         updateLabels()
@@ -62,18 +64,24 @@ final class Chrome: NSObject, NSToolbarDelegate, NSWindowDelegate {
     }
     func showSettings() {
         if let settings { settings.makeKeyAndOrderFront(nil); return }
-        let panel = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 260), styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        let panel = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 315), styleMask: [.titled, .closable], backing: .buffered, defer: false)
         panel.title = "Settings"; panel.isReleasedWhenClosed = false
         let content = NSStackView()
         content.orientation = .vertical; content.alignment = .leading; content.spacing = 20
         content.edgeInsets = NSEdgeInsets(top: 28, left: 28, bottom: 28, right: 28)
         font.addItems(withTitles: ["JetBrains Mono Nerd Font", "System Monospaced"])
         theme.addItems(withTitles: ["Follow System", "Light", "Dark"])
-        for control in [font, theme, size, spacing] as [NSControl] { control.target = self; control.action = #selector(changed(_:)) }
+        precision.addItems(withTitles: ["0", "1", "2", "3", "4", "6"])
+        font.setAccessibilityLabel("Worksheet Font")
+        theme.setAccessibilityLabel("Appearance")
+        size.setAccessibilityLabel("Text Size")
+        spacing.setAccessibilityLabel("Line Spacing")
+        precision.setAccessibilityLabel("Decimal Places")
+        for control in [font, theme, size, spacing, precision] as [NSControl] { control.target = self; control.action = #selector(changed(_:)) }
         size.isContinuous = true; spacing.isContinuous = true
         size.numberOfTickMarks = 13; size.allowsTickMarkValuesOnly = true
         spacing.numberOfTickMarks = 9; spacing.allowsTickMarkValuesOnly = true
-        for (label, control, value) in [("Font", font as NSView, nil), ("Text Size", size as NSView, sizeLabel), ("Line Spacing", spacing as NSView, spacingLabel), ("Appearance", theme as NSView, nil)] {
+        for (label, control, value) in [("Font", font as NSView, nil), ("Text Size", size as NSView, sizeLabel), ("Line Spacing", spacing as NSView, spacingLabel), ("Appearance", theme as NSView, nil), ("Decimals", precision as NSView, nil)] {
             let title = NSTextField(labelWithString: label)
             title.widthAnchor.constraint(equalToConstant: 92).isActive = true
             let row = NSStackView(views: [title, control] + (value.map { [$0] } ?? []))
@@ -86,8 +94,9 @@ final class Chrome: NSObject, NSToolbarDelegate, NSWindowDelegate {
         panel.makeKeyAndOrderFront(nil)
     }
     @objc func changed(_ sender: NSControl) {
-        configure(["font": font.indexOfSelectedItem == 0 ? "nerd" : "system", "size": size.doubleValue.rounded(), "spacing": (spacing.doubleValue * 10).rounded() / 10, "theme": ["system", "light", "dark"][max(0, theme.indexOfSelectedItem)]])
+        configure(["font": font.indexOfSelectedItem == 0 ? "nerd" : "system", "size": size.doubleValue.rounded(), "spacing": (spacing.doubleValue * 10).rounded() / 10, "theme": ["system", "light", "dark"][max(0, theme.indexOfSelectedItem)], "precision": Int(precision.titleOfSelectedItem ?? "2") ?? 2])
         send(["type": "appearance", "value": preferences])
+        if sender === precision { send(["type": "precision", "value": preferences["precision"] ?? 2]) }
     }
 }
 @_cdecl("figori_chrome_configure")

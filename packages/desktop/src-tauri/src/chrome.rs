@@ -21,7 +21,9 @@ mod mac {
             return;
         };
         if let Some(app) = APP.get() {
-            let name = if event["type"] == "appearance" {
+            let name = if event["type"] == "precision" {
+                "figori-precision"
+            } else if event["type"] == "appearance" {
                 "figori-appearance"
             } else {
                 "figori-menu"
