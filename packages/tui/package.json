@@ -1,0 +1,18 @@
+{
+  "name": "@my-numi/tui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "start": "bun src/main.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "bun build src/main.ts --target=bun --compile --outfile ../../dist/my-numi-tui"
+  },
+  "dependencies": {
+    "@my-numi/core": "workspace:*",
+    "@my-numi/document": "workspace:*",
+    "@my-numi/rates": "workspace:*"
+  }
+}
