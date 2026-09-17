@@ -1,4 +1,6 @@
-# My Numi v0 implementation contract
+# Figori v0 implementation contract
+
+Product name: Figori. The original working name My Numi remains in compatibility identifiers and historical evidence where needed; the accepted behavior below is unchanged.
 
 Status: user-authorized implementation, 2026-09-17. Stack: TypeScript, Temporal, Bun tooling. This is a product contract, not evidence of delivery.
 
