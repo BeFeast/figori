@@ -16,7 +16,7 @@ async function run(command: string[], cwd = root): Promise<string> {
 }
 async function hash(path: string): Promise<string> {
   return createHash("sha256")
-    .update(await Bun.file(path).arrayBuffer())
+    .update(new Uint8Array(await Bun.file(path).arrayBuffer()))
     .digest("hex");
 }
 const commit = await run(["git", "rev-parse", "HEAD"]);
