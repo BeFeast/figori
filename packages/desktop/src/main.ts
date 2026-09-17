@@ -214,7 +214,7 @@ function details(index: number, anchor?: HTMLElement) {
     : (line.evaluation?.diagnostics.map((d) => d.message).join("\n") ??
       line.source);
   const duration = line.evaluation?.ok
-    ? elapsedDurationPresentation(line.evaluation.value) : undefined;
+    ? elapsedDurationPresentation(line.evaluation.value, line.evaluation.basis) : undefined;
   if (duration) resultCopy = duration.exact;
   el("detail-copy-label").textContent = duration ? "Copy exact result" : "Copy result";
   el("detail-result").textContent = duration?.display ?? resultCopy;
@@ -349,7 +349,7 @@ function evaluate() {
           ? (line.evaluation.formatted ?? "")
           : line.evaluation.diagnostics.map((d) => d.message).join("; ");
         const failed = !line.evaluation.ok;
-        const duration = !failed ? elapsedDurationPresentation(line.evaluation.value) : undefined;
+        const duration = !failed ? elapsedDurationPresentation(line.evaluation.value, line.evaluation.basis) : undefined;
         markers.push(
           new ResultMarker(
             failed ? full : (duration?.display ?? displayResult(full, precision)),

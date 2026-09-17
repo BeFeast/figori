@@ -1,3 +1,4 @@
+import { Temporal } from "@js-temporal/polyfill";
 import Decimal from "decimal.js";
 import {
   importDocument,
@@ -171,12 +172,26 @@ export function newNativeWorksheet(settings?: WorksheetSettings): Worksheet {
 }
 
 /** Display elapsed timestamp intervals, never infer duration semantics from a unit alone. */
-export function elapsedDurationPresentation(value: unknown): { display: string; exact: string } | undefined {
-  const v = value as { kind?: string; amount?: string; unit?: string; interval?: { start: { kind: string }; end: { kind: string } } } | undefined;
+export function elapsedDurationPresentation(value: unknown, basis?: unknown): { display: string; exact: string } | undefined {
+  const v = value as { kind?: string; amount?: string; unit?: string; interval?: { start: { kind: string; iso: string }; end: { kind: string; iso: string } } } | undefined;
   if (v?.kind !== "quantity" || !v.interval ||
       (v.interval.start.kind !== "datetime" && v.interval.end.kind !== "datetime") ||
       typeof v.amount !== "string") return;
   const factors: Record<string, string> = { weeks: "604800", days: "86400", hours: "3600", minutes: "60", seconds: "1" };
+  if (v.unit === "months" || v.unit === "years") {
+    const timezone = (basis as { timezone?: string } | undefined)?.timezone ?? "UTC";
+    const zoned = (endpoint: { kind: string; iso: string }) => endpoint.kind === "date"
+      ? Temporal.PlainDate.from(endpoint.iso).toZonedDateTime(timezone)
+      : Temporal.ZonedDateTime.from(endpoint.iso).withTimeZone(timezone);
+    const duration = zoned(v.interval.start).until(zoned(v.interval.end), {
+      largestUnit: v.unit, smallestUnit: "seconds", roundingMode: "trunc",
+    });
+    const parts = (["years", "months", "days", "hours", "minutes", "seconds"] as const)
+      .filter(unit => duration[unit] !== 0)
+      .map(unit => { const amount = Math.abs(duration[unit]); return `${amount} ${amount === 1 ? unit.slice(0, -1) : unit}`; });
+    const text = parts.join(" ") || "0 seconds";
+    return { display: duration.sign < 0 ? (parts.length > 1 ? `−(${text})` : `-${text}`) : text, exact: `${v.amount} ${v.unit}` };
+  }
   const factor = factors[v.unit ?? ""];
   if (!factor) return; // Calendar months/years do not have a fixed elapsed length.
   const Exact = Decimal.clone({ precision: Math.max(80, v.amount.length + 20) });

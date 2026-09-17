@@ -218,6 +218,16 @@ test("elapsed timestamp duration presentation shares compact text and exact tool
  expect(elapsedDurationPresentation(make("9007199254740993","days"))?.display).toBe("9007199254740993 days");
  expect(elapsedDurationPresentation({...make("1.5"),interval:undefined})).toBeUndefined();
  expect(elapsedDurationPresentation({...make("1.5"),interval:{start:{kind:"date"},end:{kind:"date"}}})).toBeUndefined();
- expect(elapsedDurationPresentation(make("1.5","months"))).toBeUndefined();
  expect(elapsedDurationPresentation({kind:"money",amount:"1.5",currency:"USD"})).toBeUndefined();
+});
+
+test("calendar duration display uses actual month boundaries, leap years and timezone transitions", () => {
+ const value=(start:string,end:string,unit:string)=>({kind:"quantity",amount:"1.234567890123456789",unit,interval:{start:{kind:"datetime",iso:start},end:{kind:"datetime",iso:end}}});
+ const jan="2024-01-31T12:00:00+00:00[UTC]", feb="2024-02-29T13:02:03.999+00:00[UTC]";
+ expect(elapsedDurationPresentation(value(jan,feb,"months"),{timezone:"UTC"})?.display).toBe("29 days 1 hour 2 minutes 3 seconds");
+ expect(elapsedDurationPresentation(value("2024-02-29T12:00+00:00[UTC]","2025-02-28T12:00+00:00[UTC]","years"),{timezone:"UTC"})?.display).toBe("11 months 30 days");
+ const dst=value("2024-02-10T12:00-05:00[America/New_York]","2024-03-10T12:00-04:00[America/New_York]","months");
+ expect(elapsedDurationPresentation(dst,{timezone:"America/New_York"})?.display).toBe("1 month");
+ expect(elapsedDurationPresentation({...dst,amount:"-1.234",interval:{start:dst.interval.end,end:dst.interval.start}},{timezone:"America/New_York"})?.display).toBe("-1 month");
+ expect(elapsedDurationPresentation(dst,{timezone:"America/New_York"})?.exact).toBe("1.234567890123456789 months");
 });
