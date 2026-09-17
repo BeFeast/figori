@@ -25,3 +25,12 @@ No installation occurs during build or tests. After approving a concrete install
 5. Rollback: hide and disable this plugin, restore or remove only the plugin/executable/launcher paths changed in this install, restore the recorded plugin enabled state, and rescan. Keep worksheet storage; removing the plugin does not authorize deleting user data. A wholesale shell.json restore could overwrite newer unrelated settings, so use it only if unchanged since this install.
 
 Default worksheet storage follows `MY_NUMI_DATA_DIR`, otherwise `$XDG_DATA_HOME/my-numi/worksheets`, otherwise `~/.local/share/my-numi/worksheets`. Export is an explicit copy; it does not overwrite imported originals automatically. Settings live in the application's versioned storage/sidecar, not inside `.numi` plain text.
+
+The exact user-scope delivery implementation is in `scripts/install-user.sh` and `scripts/rollback-user.sh`. Installation requires an artifact directory containing `my-numi`, `Panel.qml`, `manifest.json`, and `SHA256SUMS`, plus a new absolute backup directory. It verifies hashes, snapshots the old CLI/plugin and current plugin enabled state, preserves a reference copy of shell.json, replaces only this executable/plugin, rescans and enables this plugin. It does not install launcher bindings or touch services. Rollback restores the recorded CLI/plugin paths and enabled state while retaining user worksheets and unrelated settings.
+
+```sh
+bash scripts/install-user.sh --apply /absolute/reviewed/artifact /absolute/new/backup
+bash scripts/rollback-user.sh --apply /absolute/new/backup
+```
+
+These are reviewable delivery scripts, not commands run by this implementation. The panel refreshes the local clock and cached rate age every 60 seconds while visible and idle, including after resume; no background network refresh is introduced.

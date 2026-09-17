@@ -147,6 +147,16 @@ Item {
         if (shell && typeof shell.hide === "function") shell.hide("befeast.my-numi")
         else window.visible = false
     }
+    Timer {
+        interval: 60000
+        repeat: true
+        running: window.visible
+        onTriggered: {
+            // Refresh only local cache age and one captured document clock.
+            // User operations always win; skipped ticks are harmless.
+            if (!root.busy) root.send("rates.load", {})
+        }
+    }
     Timer { id: debounce; interval: 250; onTriggered: root.evaluate() }
     Timer {
         id: timeout
@@ -240,7 +250,7 @@ Item {
                 Label { text: root.rateStatus; wrapMode: Text.Wrap; Layout.fillWidth: true }
                 Button { text: "Refresh ILS/USD rates"; enabled: !root.busy; onClicked: root.send("rates.refresh", {}) }
             }
-            Label { text: root.statusText; wrapMode: Text.Wrap; Layout.fillWidth: true }
+            Label { text: (root.dirty ? "Unsaved · " : "") + root.statusText; wrapMode: Text.Wrap; Layout.fillWidth: true }
         }
         Dialog {
             id: discardDialog
