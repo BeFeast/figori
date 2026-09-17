@@ -819,3 +819,33 @@ body.resizing-columns #column-splitter span {
   background: var(--active);
   font-weight: 400;
 }
+
+/* ATX hierarchy applies equally to .numi and .md, without rendering markers.
+   Inline line-height remains tight; CodeMirror owns each measured row height. */
+.cm-line .md-heading {
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+}
+.cm-line .md-h1 {
+  font-size: 1.3em;
+  color: var(--result);
+}
+.cm-line .md-h2 {
+  font-size: 1.22em;
+  color: var(--result);
+}
+.cm-line .md-h3 {
+  font-size: 1.15em;
+  color: var(--accent-text);
+}
+.cm-line .md-h4 {
+  font-size: 1.09em;
+}
+.cm-line .md-h5 {
+  font-size: 1.04em;
+}
+.cm-line .md-h6 {
+  font-size: 1em;
+  color: var(--accent-text);
+}

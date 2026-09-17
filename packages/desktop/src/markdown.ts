@@ -1,4 +1,9 @@
 export type MarkdownMark = { from: number; to: number; className: string };
+/** ATX headings retain all markers, accept an empty title and reject seven hashes. */
+export function headingLevel(text: string): number | null {
+  const match = text.match(/^ {0,3}(#{1,6})(?:[ \t]+|$)/);
+  return match ? match[1]!.length : null;
+}
 /** Source-only styling: no replacement, HTML rendering or document mutation. */
 export function markdownMarks(source: string): MarkdownMark[] {
   const marks: MarkdownMark[] = [];
@@ -28,11 +33,12 @@ export function markdownMarks(source: string): MarkdownMark[] {
         className: "md-code",
       });
     } else {
-      if (/^ {0,3}#{1,6}\s+/.test(text))
+      const level = headingLevel(text);
+      if (level !== null)
         marks.push({
           from: offset,
           to: offset + text.length,
-          className: "md-heading",
+          className: `md-heading md-h${level}`,
         });
       const list = text.match(/^\s*(?:[-+*]|\d+[.)])\s+/);
       if (list)

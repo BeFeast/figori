@@ -1,4 +1,4 @@
-import { markdownMarks } from "./markdown";
+import { headingLevel, markdownMarks } from "./markdown";
 import {
   readTypography,
   normalizeTypography,
@@ -323,6 +323,7 @@ function evaluate() {
         );
       else if (
         (line.kind === "heading" || line.kind === "comment") &&
+        headingLevel(position.text) === null &&
         position.length
       )
         marks.push(
