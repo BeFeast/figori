@@ -27,6 +27,7 @@ final class Chrome: NSObject, NSToolbarDelegate, NSWindowDelegate {
         toolbar.allowsUserCustomization = false
         window.toolbar = toolbar
         window.toolbarStyle = .unified
+        window.titlebarSeparatorStyle = .none
         window.titleVisibility = .visible
     }
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] { toolbarDefaultItemIdentifiers(toolbar) }

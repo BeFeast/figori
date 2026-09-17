@@ -9,7 +9,35 @@ pub fn install(app: &tauri::App) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, "open", "Open…", true, Some("CmdOrCtrl+O"))?;
     let save = MenuItem::with_id(app, "save", "Save", true, Some("CmdOrCtrl+S"))?;
     let save_as = MenuItem::with_id(app, "save-as", "Save As…", true, Some("CmdOrCtrl+Shift+S"))?;
-    let file = Submenu::with_items(app, "File", true, &[&new, &open, &save, &save_as])?;
+    let export_source = MenuItem::with_id(
+        app,
+        "export-markdown",
+        "Export Markdown Source…",
+        true,
+        None::<&str>,
+    )?;
+    let export_results = MenuItem::with_id(
+        app,
+        "export-markdown-results",
+        "Export Markdown with Results…",
+        true,
+        None::<&str>,
+    )?;
+    let separator = PredefinedMenuItem::separator(app)?;
+    let file = Submenu::with_items(
+        app,
+        "File",
+        true,
+        &[
+            &new,
+            &open,
+            &save,
+            &save_as,
+            &separator,
+            &export_source,
+            &export_results,
+        ],
+    )?;
     let undo = PredefinedMenuItem::undo(app, None)?;
     let redo = PredefinedMenuItem::redo(app, None)?;
     let cut = PredefinedMenuItem::cut(app, None)?;

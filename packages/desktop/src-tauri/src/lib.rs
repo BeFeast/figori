@@ -1,4 +1,5 @@
 mod chrome;
+mod export;
 mod files;
 mod menu;
 mod rates;
@@ -184,12 +185,22 @@ pub fn run() {
                 }
             } else if id == "settings" {
                 chrome::settings(app);
-            } else if ["new", "open", "save", "save-as"].contains(&id) {
+            } else if [
+                "new",
+                "open",
+                "save",
+                "save-as",
+                "export-markdown",
+                "export-markdown-results",
+            ]
+            .contains(&id)
+            {
                 let _ = app.emit("figori-menu", id);
             }
         })
         .invoke_handler(tauri::generate_handler![
             chrome::configure_chrome,
+            export::export_document,
             open_document,
             read_document,
             save_document,
