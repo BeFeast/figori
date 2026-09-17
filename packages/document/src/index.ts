@@ -69,7 +69,7 @@ function parseLine(raw: string, ending: string, format: SourceFormat): DocumentL
       const right = text.slice(equals + 1).trim();
       // A bare identifier on the left is a native assignment, never a captured result.
       const expressionSource = left.replace(/^[\p{L}][\p{L}\p{N} _/-]*:\s+/u, "");
-      const expressionLeft = /^(?:[+-]?\s*(?:\d|\.\d|\()|(?:today|now|previous)\b|days\s+(?:since|until)\b|[\p{L}_][\p{L}\p{N}_]*\s*(?:[+*/(=]|-\s*|\bin\b))/iu.test(expressionSource);
+      const expressionLeft = /^(?:[+-]?\s*(?:\d|\.\d|\()|(?:today|now|previous)\b|(?:years?|months?|weeks?|days?)\s+(?:since|until)\b|[\p{L}_][\p{L}\p{N}_]*\s*(?:[+*/(=]|-\s*|\bin\b))/iu.test(expressionSource);
       if (left && right && expressionLeft && (!identifier.test(left) || /^(today|now)$/i.test(left)) && !/[<>=!]$/.test(left)) {
         line.historicalResult = right;
         text = left;
@@ -91,7 +91,7 @@ function parseLine(raw: string, ending: string, format: SourceFormat): DocumentL
   // Plain headings may contain years, parentheses and slashes. A compact function
   // call, date, known relative date, assignment or captured result is still math.
   const plainHeading = /^[\p{L}][\p{L}\p{N}\s/()'’"—–#\-]*$/u.test(text.replace(/\?$/, ""))
-    && !/^days\s+(?:since|until)\b/i.test(text)
+    && !/^(?:years?|months?|weeks?|days?)\s+(?:since|until)\b/i.test(text)
     && !/\p{L}\(/u.test(text)
     && !/\b(?:today|now|previous|in)\b/i.test(text)
     && !(/\d/.test(text) && /\b(?:years?|months?|weeks?|days?|hours?|minutes?|seconds?|nis|ils|usd)\b/i.test(text));

@@ -478,22 +478,25 @@ class Parser {
     return m;
   }
   expression(): Value {
-    const question = this.match(/^days\s+(since|until)\b/i);
+    const question = this.match(
+      /^(years?|months?|weeks?|days?)\s+(since|until)\b/i,
+    );
     let a = this.sum();
     if (question) {
       if (a.kind !== "date")
         fail(
           "incompatible_types",
-          "Days since/until requires a date-only value; subtract timestamps explicitly for elapsed time.",
+          "Calendar since/until questions require a date-only value; subtract timestamps explicitly for elapsed time.",
         );
       const today = date(this.now.toPlainDate().toString());
-      const since = question[1].toLowerCase() === "since";
+      const unit = canonical(question[1]);
+      const since = question[2].toLowerCase() === "since";
       this.basis.notes.push(
-        `Calendar days ${since ? "since" : "until"} ${a.iso}, using actual local today ${today.iso}.`,
+        `Calendar ${unit} ${since ? "since" : "until"} ${a.iso}, using actual local today ${today.iso}.`,
       );
       a = convert(
         { kind: "interval", start: since ? a : today, end: since ? today : a },
-        "days",
+        unit,
         this.ctx,
         this.basis,
       );
@@ -744,7 +747,10 @@ export function formatValue(v: Value): string {
       ["years", "months", "days", "hours", "minutes", "seconds"] as const
     )
       .filter((unit) => duration[unit] !== 0)
-      .map((unit) => `${Math.abs(duration[unit])} ${unit}`);
+      .map((unit) => {
+        const amount = Math.abs(duration[unit]);
+        return `${amount} ${amount === 1 ? unit.slice(0, -1) : unit}`;
+      });
     return (duration.sign < 0 ? "−" : "") + (parts.join(" ") || "0 days");
   }
   return v.iso;

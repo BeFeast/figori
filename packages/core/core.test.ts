@@ -122,10 +122,10 @@ describe("money and billing", () => {
 describe("legacy worksheet intervals and rent", () => {
   test("default interval is useful calendar decomposition with endpoints retained", () => {
     const r = evaluate("1 may 2024 - 15 feb 2023", ctx);
-    expect(r.formatted).toBe("1 years 2 months 16 days");
+    expect(r.formatted).toBe("1 year 2 months 16 days");
     expect(r.value?.kind).toBe("interval");
     expect(value("1 feb 2024 - 1 feb 2024")).toBe("0 days");
-    expect(value("1 feb 2024 - 1 mar 2024")).toBe("−1 months");
+    expect(value("1 feb 2024 - 1 mar 2024")).toBe("−1 month");
   });
   test("legacy months multiplied by rent follows explicit whole-period policy", () => {
     const source = "((30 mar 2024 - 31 jan 2024) in months) * 1000 nis";
@@ -357,5 +357,58 @@ describe("human-readable converted durations", () => {
       "≈-0.958333333333 days",
     );
     expect(value("(11 mar 2024 - 10 mar 2024) in weeks", c)).toBe("1 day");
+  });
+});
+
+describe("calendar-unit since/until questions", () => {
+  const today: EvaluationContext = {
+    now: "2026-09-17T12:00:00Z",
+    timezone: "Asia/Jerusalem",
+    variables: {
+      stocks_date: { kind: "date", iso: "2025-05-01" },
+      morgage_date: { kind: "date", iso: "2028-06-01" },
+    },
+  };
+  test("variable operands support singular/plural units with existing interval semantics", () => {
+    for (const [unit, past, future] of [
+      ["year", "1 year 4 months 16 days", "1 year 8 months 15 days"],
+      ["month", "16 months 16 days", "20 months 15 days"],
+      ["week", "72 weeks", "89 weeks"],
+      ["day", "504 days", "623 days"],
+    ]) {
+      for (const name of [unit, unit + "s"]) {
+        expect(value(`${name} since stocks_date`, today)).toBe(past);
+        expect(value(`${name} until morgage_date`, today)).toBe(future);
+      }
+    }
+  });
+  test("reverse direction stays signed; pinned anchor does not replace actual today", () => {
+    const pinned = {
+      ...today,
+      anchor: { mode: "fixed" as const, date: "2030-01-01" },
+    };
+    expect(value("years until stocks_date", pinned)).toBe(
+      "−(1 year 4 months 16 days)",
+    );
+    expect(value("weeks since morgage_date", pinned)).toBe("-89 weeks");
+    expect(value("days since morgage_date", pinned)).toBe("-623 days");
+    expect(value("years until morgage_date", pinned)).toBe(
+      "1 year 8 months 15 days",
+    );
+    expect(
+      evaluate("months since stocks_date", pinned).basis.notes.join(" "),
+    ).toContain("actual local today 2026-09-17");
+  });
+  test("questions preserve date arithmetic, chained conversions and invalid-input diagnostics", () => {
+    expect(value("weeks since (stocks_date + 7 days)", today)).toBe("71 weeks");
+    expect(value("years until morgage_date in days", today)).toBe("623 days");
+    for (const expression of [
+      "years since",
+      "weeks until 3",
+      "months since 18 sep 2026 12:00",
+      "years since absent_date",
+      "hours since stocks_date",
+    ])
+      expect(evaluate(expression, today).ok).toBe(false);
   });
 });
