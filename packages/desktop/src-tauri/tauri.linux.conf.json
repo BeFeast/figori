@@ -39,7 +39,8 @@
       "rpm": {
         "desktopTemplate": "packaging/figori-desktop.desktop",
         "depends": [
-          "glibc >= 2.35",
+          "glibc",
+          "libc.so.6(GLIBC_2.35)(64bit)",
           "gtk3",
           "webkit2gtk4.1",
           "libsoup3"
