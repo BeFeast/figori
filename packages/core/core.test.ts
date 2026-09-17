@@ -98,7 +98,7 @@ describe("money and billing", () => {
         asOf: "2024-02-01",
       },
     };
-    expect(value("(0.1+0.2) nis")).toBe("0.30 ILS");
+    expect(value("(0.1+0.2) nis")).toBe("₪0.30");
     expect(value("37 nis in usd", c)).toBe("$10.00");
     expect(evaluate("37 nis in usd", ctx).diagnostics[0].code).toBe(
       "rate_unavailable",
@@ -129,9 +129,9 @@ describe("legacy worksheet intervals and rent", () => {
   });
   test("legacy months multiplied by rent follows explicit whole-period policy", () => {
     const source = "((30 mar 2024 - 31 jan 2024) in months) * 1000 nis";
-    expect(value(source, { ...ctx, billing: "completed" })).toBe("1000.00 ILS");
+    expect(value(source, { ...ctx, billing: "completed" })).toBe("₪1000.00");
     expect(value(source, { ...ctx, billing: "include-partial" })).toBe(
-      "2000.00 ILS",
+      "₪2000.00",
     );
     expect(
       evaluate(source, { ...ctx, billing: "include-partial" }).basis.notes.join(
@@ -143,7 +143,7 @@ describe("legacy worksheet intervals and rent", () => {
         ...ctx,
         billing: "include-partial",
       }),
-    ).toBe("1000.00 ILS");
+    ).toBe("₪1000.00");
   });
   test("rejects fake month names and fractional-money shortcuts without anchors", () => {
     expect(evaluate("1 janxxxxx 2024", ctx).ok).toBe(false);
@@ -427,7 +427,7 @@ describe("currency aliases and conversion phrases", () => {
     for (const [code, aliases, display] of [
       ["USD", ["usd", "USD", "$"], "$12.00"],
       ["EUR", ["eur", "EUR", "€"], "€12.00"],
-      ["ILS", ["ils", "NIS", "₪"], "12.00 ILS"],
+      ["ILS", ["ils", "NIS", "₪"], "₪12.00"],
       ["GBP", ["gbp", "GBP", "£"], "12.00 GBP"],
     ] as const) {
       for (const alias of aliases) {
@@ -491,5 +491,32 @@ describe("currency aliases and conversion phrases", () => {
     expect(value("today to 3 feb 2024 in days", c)).toBe("2 days");
     expect(value("1 m to cm", c)).toBe("100 cm");
     expect(evaluate("usdExtra", c).ok).toBe(false);
+  });
+});
+
+test("shekel display uses the symbol while aliases and conversions retain ISO currency", () => {
+  for (const alias of ["ILS", "NIS", "nis", "₪"]) {
+    const result = evaluate("-12.50 " + alias, ctx);
+    expect(result.formatted).toBe("-₪12.50");
+    expect(result.value).toEqual({
+      kind: "money",
+      amount: "-12.5",
+      currency: "ILS",
+    });
+  }
+  const result = evaluate("$33 to nis", {
+    ...ctx,
+    rates: {
+      base: "ILS",
+      rates: { USD: "0.33" },
+      source: "synthetic",
+      asOf: "2024-02-01",
+    },
+  });
+  expect(result.formatted).toBe("₪100.00");
+  expect(result.value).toEqual({
+    kind: "money",
+    amount: "100",
+    currency: "ILS",
   });
 });

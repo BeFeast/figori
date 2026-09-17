@@ -730,7 +730,13 @@ export function formatValue(v: Value): string {
   if (v.kind === "money") {
     const amount = new D(v.amount);
     const symbol =
-      v.currency === "USD" ? "$" : v.currency === "EUR" ? "€" : undefined;
+      v.currency === "USD"
+        ? "$"
+        : v.currency === "EUR"
+          ? "€"
+          : v.currency === "ILS"
+            ? "₪"
+            : undefined;
     return symbol
       ? `${amount.isNegative() ? "-" : ""}${symbol}${amount.abs().toFixed(2)}`
       : `${amount.toFixed(2)} ${v.currency}`;
