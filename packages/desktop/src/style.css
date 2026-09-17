@@ -1,16 +1,47 @@
+/* Palette and chrome typography adapted from HedRoom's canonical brand sheet. */
+@font-face {
+  font-family: Heebo;
+  src: url("fonts/Heebo-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: Heebo;
+  src: url("fonts/Heebo-SemiBold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
 :root {
   color-scheme: dark;
-  --bg: #111827;
-  --surface: #172033;
-  --border: #2b364a;
-  --text: #e8ecf4;
-  --muted: #96a4b9;
-  --lime: #ddfc45;
-  --cyan: #71d8e5;
-  --error: #ffa28f;
-  --active: #ffffff05;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --bg: #0b0c0d;
+  --surface: #141618;
+  --surface-raised: #1c1f21;
+  --recessed: #101112;
+  --tint: #15100f;
+  --border: rgba(232, 230, 227, 0.14);
+  --border-strong: rgba(232, 230, 227, 0.24);
+  --text: #e8e6e3;
+  --muted: rgba(232, 230, 227, 0.68);
+  --accent: #b8443c;
+  --accent-text: #d9776d;
+  --result: #e59c92;
+  --variable: #d9776d;
+  --error: #edc28d;
+  --active: rgba(232, 230, 227, 0.025);
+  --selection: rgba(184, 68, 60, 0.32);
+  --button-bg: rgba(184, 68, 60, 0.14);
+  --button-hover: rgba(184, 68, 60, 0.28);
+  font-family:
+    Heebo,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   font-size: 13px;
+  -webkit-font-smoothing: antialiased;
 }
 * {
   box-sizing: border-box;
@@ -24,17 +55,27 @@ body {
   flex-direction: column;
   overflow: hidden;
 }
+/* Derived light theme uses the same warm ink/paper and deep terracotta. */
 body.light {
   color-scheme: light;
-  --bg: #f7f8fc;
-  --surface: #fff;
-  --border: #dce1eb;
-  --text: #111827;
-  --muted: #637086;
-  --lime: #496508;
-  --cyan: #087784;
-  --error: #b13d28;
-  --active: #284bff05;
+  --bg: #e8e6e3;
+  --surface: #f4f2ef;
+  --surface-raised: #ffffff;
+  --recessed: #e1ded9;
+  --tint: #eee4df;
+  --border: rgba(11, 12, 13, 0.14);
+  --border-strong: rgba(11, 12, 13, 0.24);
+  --text: #0b0c0d;
+  --muted: rgba(11, 12, 13, 0.68);
+  --accent: #b8443c;
+  --accent-text: #9b372f;
+  --result: #9b372f;
+  --variable: #9b372f;
+  --error: #794913;
+  --active: rgba(184, 68, 60, 0.045);
+  --selection: rgba(184, 68, 60, 0.2);
+  --button-bg: rgba(184, 68, 60, 0.08);
+  --button-hover: rgba(184, 68, 60, 0.16);
 }
 header {
   height: 66px;
@@ -44,20 +85,22 @@ header {
   align-items: center;
   padding: 0 22px;
   border-bottom: 1px solid var(--border);
+  background: linear-gradient(100deg, var(--tint), var(--bg) 55%);
 }
 .brand {
   font-size: 30px;
-  color: var(--lime);
+  color: var(--result);
   font-weight: 800;
   display: flex;
   gap: 8px;
   align-items: center;
 }
 .brand span {
-  font-size: 15px;
+  font-size: 12.5px;
   color: var(--text);
-  font-weight: 650;
-  letter-spacing: -0.4px;
+  font-weight: 600;
+  letter-spacing: 0.176em;
+  text-transform: uppercase;
 }
 .file-heading {
   flex: 1;
@@ -88,18 +131,18 @@ input {
 }
 button {
   border: 0;
-  border-radius: 6px;
+  border-radius: 4px;
   background: transparent;
   padding: 7px 10px;
   cursor: pointer;
 }
 button:hover {
-  background: var(--surface);
+  background: var(--surface-raised);
 }
 button:focus-visible,
 select:focus-visible,
 input:focus-visible {
-  outline: 2px solid #284bff;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 button:disabled {
@@ -107,11 +150,13 @@ button:disabled {
   cursor: wait;
 }
 .primary {
-  background: #284bff;
-  color: white;
+  background: var(--button-bg);
+  border: 1px solid var(--accent);
+  color: var(--result);
+  font-weight: 600;
 }
 .primary:hover {
-  background: #3658ff;
+  background: var(--button-hover);
 }
 .context {
   display: flex;
@@ -130,8 +175,8 @@ button:disabled {
 }
 select,
 input {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--recessed);
+  border: 1px solid var(--border-strong);
   border-radius: 5px;
   padding: 5px 8px;
 }
@@ -155,7 +200,7 @@ input {
 }
 .cm-content {
   padding: 22px 0 !important;
-  caret-color: var(--lime);
+  caret-color: var(--result);
 }
 .cm-line {
   padding: 0 12px 0 24px !important;
@@ -187,7 +232,7 @@ input {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--lime);
+  color: var(--result);
   padding: 0 8px;
   border-radius: 3px;
   letter-spacing: -0.3px;
@@ -195,12 +240,34 @@ input {
 }
 .result.error {
   color: var(--error);
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  font-weight: 600;
+  font-family:
+    Heebo,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   font-size: 12px;
   letter-spacing: 0;
 }
+.result.error::before {
+  content: "!";
+  display: inline-block;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  line-height: 11px;
+  text-align: center;
+  font-size: 9px;
+  margin-right: 5px;
+  vertical-align: 1px;
+}
 .variable {
-  color: var(--cyan);
+  color: var(--variable);
+  font-weight: 600;
 }
 .heading {
   color: var(--muted);
@@ -210,13 +277,13 @@ input {
   background: var(--active) !important;
 }
 .cm-selectionBackground {
-  background: #284bff40 !important;
+  background: var(--selection) !important;
 }
 .cm-focused {
   outline: none !important;
 }
 .cm-cursor {
-  border-left-color: var(--lime) !important;
+  border-left-color: var(--result) !important;
 }
 footer {
   height: 34px;
@@ -274,7 +341,7 @@ form > label {
   align-items: center;
 }
 .check input {
-  accent-color: #284bff;
+  accent-color: var(--accent);
 }
 .dialog-actions {
   display: flex;
@@ -289,7 +356,7 @@ form > label {
 }
 #detail-result {
   font-family: ui-monospace, monospace;
-  color: var(--lime);
+  color: var(--result);
   font-size: 19px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -301,7 +368,7 @@ form > label {
   line-height: 1.7;
 }
 body.dragging #editor {
-  outline: 2px dashed var(--lime);
+  outline: 2px dashed var(--result);
   outline-offset: -8px;
 }
 @media (max-width: 720px) {
@@ -326,4 +393,6 @@ body.dragging #editor {
     padding-left: 14px !important;
   }
 }
-[hidden] { display: none !important; }
+[hidden] {
+  display: none !important;
+}

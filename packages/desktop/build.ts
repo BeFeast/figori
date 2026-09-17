@@ -1,4 +1,4 @@
-import { mkdir, copyFile } from "node:fs/promises";
+import { mkdir, copyFile, cp } from "node:fs/promises";
 await mkdir("dist", { recursive: true });
 const result = await Bun.build({
   entrypoints: ["src/main.ts"],
@@ -15,4 +15,5 @@ if (!result.success) {
 await Promise.all([
   copyFile("index.html", "dist/index.html"),
   copyFile("src/style.css", "dist/style.css"),
+  cp("src/assets/fonts", "dist/fonts", { recursive: true }),
 ]);
