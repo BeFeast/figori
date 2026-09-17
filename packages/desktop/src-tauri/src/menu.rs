@@ -3,7 +3,8 @@ pub fn install(app: &tauri::App) -> tauri::Result<()> {
     let about = PredefinedMenuItem::about(app, Some("About Figori"), None)?;
     // Native terminate: can bypass the frontend dirty-close guard on macOS.
     let quit = MenuItem::with_id(app, "quit", "Quit Figori", true, Some("CmdOrCtrl+Q"))?;
-    let application = Submenu::with_items(app, "Figori", true, &[&about, &quit])?;
+    let settings = MenuItem::with_id(app, "settings", "Settings…", true, Some("CmdOrCtrl+,"))?;
+    let application = Submenu::with_items(app, "Figori", true, &[&about, &settings, &quit])?;
     let new = MenuItem::with_id(app, "new", "New Worksheet", true, Some("CmdOrCtrl+N"))?;
     let open = MenuItem::with_id(app, "open", "Open…", true, Some("CmdOrCtrl+O"))?;
     let save = MenuItem::with_id(app, "save", "Save", true, Some("CmdOrCtrl+S"))?;

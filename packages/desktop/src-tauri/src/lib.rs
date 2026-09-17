@@ -1,3 +1,4 @@
+mod chrome;
 mod files;
 mod menu;
 mod rates;
@@ -181,11 +182,14 @@ pub fn run() {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.close();
                 }
+            } else if id == "settings" {
+                chrome::settings(app);
             } else if ["new", "open", "save", "save-as"].contains(&id) {
                 let _ = app.emit("figori-menu", id);
             }
         })
         .invoke_handler(tauri::generate_handler![
+            chrome::configure_chrome,
             open_document,
             read_document,
             save_document,
