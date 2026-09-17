@@ -47,7 +47,8 @@ for attempt in {1..20}; do xdpyinfo >/dev/null 2>&1 && break; sleep 0.2; done
 app_pid=$!
 for attempt in {1..30}; do
   kill -0 "$app_pid" || { cat /tmp/figori-startup.log; exit 1; }
-  if xwininfo -root -tree | grep -Eq '"[^"]*Figori[^"]*"'; then
+  window_id=$(xwininfo -root -tree | awk 'tolower($0) ~ /"[^"]*figori[^"]*"/ && $1 ~ /^0x/ { print $1; exit }')
+  if [[ -n $window_id ]] && xwininfo -id "$window_id" | grep -q 'Map State: IsViewable'; then
     echo 'PASS: headless X11 mapped Figori window'
     sleep 2
     kill -0 "$app_pid"
