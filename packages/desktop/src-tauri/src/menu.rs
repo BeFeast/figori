@@ -1,7 +1,8 @@
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 pub fn install(app: &tauri::App) -> tauri::Result<()> {
     let about = PredefinedMenuItem::about(app, Some("About Figori"), None)?;
-    let quit = PredefinedMenuItem::quit(app, Some("Quit Figori"))?;
+    // Native terminate: can bypass the frontend dirty-close guard on macOS.
+    let quit = MenuItem::with_id(app, "quit", "Quit Figori", true, Some("CmdOrCtrl+Q"))?;
     let application = Submenu::with_items(app, "Figori", true, &[&about, &quit])?;
     let new = MenuItem::with_id(app, "new", "New Worksheet", true, Some("CmdOrCtrl+N"))?;
     let open = MenuItem::with_id(app, "open", "Open…", true, Some("CmdOrCtrl+O"))?;

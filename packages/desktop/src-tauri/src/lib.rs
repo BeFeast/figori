@@ -177,7 +177,11 @@ pub fn run() {
         })
         .on_menu_event(|app, event| {
             let id = event.id().as_ref();
-            if ["new", "open", "save", "save-as"].contains(&id) {
+            if id == "quit" {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.close();
+                }
+            } else if ["new", "open", "save", "save-as"].contains(&id) {
                 let _ = app.emit("figori-menu", id);
             }
         })
