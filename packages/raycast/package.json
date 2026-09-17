@@ -1,7 +1,7 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "my-numi",
-  "title": "My Numi",
+  "title": "Figori",
   "description": "Calendar-aware calculations and local worksheets",
   "icon": "icon.png",
   "author": "befeast",

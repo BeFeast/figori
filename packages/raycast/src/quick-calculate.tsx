@@ -41,6 +41,7 @@ export default function QuickCalculate() {
       "Enter an expression.");
   return (
     <Form
+      navigationTitle="Figori · Quick Calculate"
       isLoading={!loaded || loadingRates}
       actions={
         <ActionPanel>

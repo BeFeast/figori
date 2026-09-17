@@ -218,7 +218,7 @@ export function ExportForm({ document }: { document: Worksheet }) {
       />
       <Form.Checkbox
         id="sidecar"
-        label="Write settings sidecar for My Numi (Numi export only)"
+        label="Write settings sidecar for Figori (Numi export only)"
         value={sidecar}
         onChange={setSidecar}
       />
