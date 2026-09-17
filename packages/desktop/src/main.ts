@@ -979,7 +979,7 @@ async function exportMarkdown(withResults: boolean) {
         withResults ? { evaluated: compute() } : {},
       );
       const name = (path?.split(/[\\/]/).at(-1) ?? "Untitled").replace(
-        /\.(?:numi|md)$/i,
+        /\.(?:figori|numi|md|txt)$/i,
         "",
       );
       const saved = await invoke<{ path: string } | null>("export_document", {
@@ -987,7 +987,7 @@ async function exportMarkdown(withResults: boolean) {
         suggestedName: name + (withResults ? "-results" : "-export") + ".md",
         currentPath: path ?? originPath,
       });
-      if (saved) notice("Markdown exported. " + exported.warnings.join(" "));
+      if (saved) notice("Markdown exported. Keep the .figori document to retain calculation settings.");
     } catch (error) {
       report(error);
     }
@@ -1002,7 +1002,7 @@ async function exportNumi() {
         suggestedName: "Worksheet-export.numi",
         currentPath: path ?? originPath,
       });
-      if (saved) notice("Numi exported. " + exported.warnings.join(" "));
+      if (saved) notice("Numi exported. Keep the .figori document to retain calculation settings.");
     } catch (error) {
       report(error);
     }
