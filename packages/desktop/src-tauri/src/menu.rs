@@ -7,6 +7,18 @@ pub fn install(app: &tauri::App) -> tauri::Result<()> {
     let application = Submenu::with_items(app, "Figori", true, &[&about, &settings, &quit])?;
     let new = MenuItem::with_id(app, "new", "New Worksheet", true, Some("CmdOrCtrl+N"))?;
     let open = MenuItem::with_id(app, "open", "Open…", true, Some("CmdOrCtrl+O"))?;
+    let recent = Submenu::with_id(app, "open-recent", "Open Recent", true)?;
+    let reveal = MenuItem::with_id(
+        app,
+        "show-in-finder",
+        if cfg!(target_os = "macos") {
+            "Show in Finder"
+        } else {
+            "Show in File Manager"
+        },
+        false,
+        None::<&str>,
+    )?;
     let save = MenuItem::with_id(app, "save", "Save", true, Some("CmdOrCtrl+S"))?;
     let save_as = MenuItem::with_id(app, "save-as", "Save As…", true, Some("CmdOrCtrl+Shift+S"))?;
     let export_numi = MenuItem::with_id(
@@ -38,8 +50,10 @@ pub fn install(app: &tauri::App) -> tauri::Result<()> {
         &[
             &new,
             &open,
+            &recent,
             &save,
             &save_as,
+            &reveal,
             &separator,
             &export_numi,
             &export_source,

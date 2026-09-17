@@ -13,6 +13,8 @@ mod mac {
             callback: extern "C" fn(*const c_char),
         );
         fn figori_chrome_settings();
+        fn figori_document_path(window: *mut c_void, path: *const c_char);
+        fn figori_reveal_path(path: *const c_char);
     }
     extern "C" fn event(json: *const c_char) {
         let Ok(event) =
@@ -42,6 +44,20 @@ mod mac {
             .run_on_main_thread(move || unsafe {
                 figori_chrome_configure(pointer as *mut c_void, prefs.as_ptr(), event)
             })
+            .map_err(|e| e.to_string())
+    }
+    pub fn document(window: tauri::WebviewWindow, path: Option<String>) -> Result<(), String> {
+        let pointer = window.ns_window().map_err(|e| e.to_string())? as usize;
+        let path = CString::new(path.unwrap_or_default()).map_err(|e| e.to_string())?;
+        window
+            .run_on_main_thread(move || unsafe {
+                figori_document_path(pointer as *mut c_void, path.as_ptr())
+            })
+            .map_err(|e| e.to_string())
+    }
+    pub fn reveal(app: &tauri::AppHandle, path: &std::path::Path) -> Result<(), String> {
+        let path = CString::new(path.to_string_lossy().as_bytes()).map_err(|e| e.to_string())?;
+        app.run_on_main_thread(move || unsafe { figori_reveal_path(path.as_ptr()) })
             .map_err(|e| e.to_string())
     }
     pub fn settings(app: &tauri::AppHandle) {
@@ -106,5 +122,32 @@ mod tests {
             bad[key] = value;
             assert!(validate_appearance(&bad).is_err());
         }
+    }
+}
+
+pub fn document(window: tauri::WebviewWindow, path: Option<String>) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        mac::document(window, path)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (window, path);
+        Ok(())
+    }
+}
+pub fn reveal(app: &tauri::AppHandle, path: &std::path::Path) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        mac::reveal(app, path)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = app;
+        std::process::Command::new("xdg-open")
+            .arg(path.parent().ok_or("Missing parent directory")?)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+        Ok(())
     }
 }

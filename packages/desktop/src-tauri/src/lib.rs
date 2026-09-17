@@ -4,6 +4,7 @@ mod files;
 mod menu;
 mod migration;
 mod rates;
+mod recent;
 use files::{Opened, Recovery};
 use serde_json::Value;
 use std::{
@@ -90,9 +91,10 @@ async fn save_document(
     let expected = files::save_expectation(&selected, dialog, expected_hash)?;
     files::atomic_write(&selected, source.as_bytes(), expected.as_deref(), true)?;
     let selected = std::fs::canonicalize(&selected).map_err(|e| e.to_string())?;
-    let _ = app;
+    let recent_warning =
+        recent::record_recent(app.clone(), selected.to_string_lossy().into_owned()).err();
     let source_hash = files::hash(&source);
-    let warning = None;
+    let warning = recent_warning;
     Ok(Some(Opened {
         path: selected.to_string_lossy().into(),
         source,
@@ -189,12 +191,31 @@ pub fn run() {
         .collect();
     let app = tauri::Builder::default()
         .manage(PendingPaths(Mutex::new(paths)))
+        .manage(recent::DocumentState::default())
         .setup(|app| {
             menu::install(app)?;
+            let _ = recent::refresh(app.handle());
             Ok(())
         })
         .on_menu_event(|app, event| {
             let id = event.id().as_ref();
+            match recent::action(app, id) {
+                Ok(true) => return,
+                Err(message) => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        tauri::async_runtime::spawn(async move {
+                            rfd::AsyncMessageDialog::new()
+                                .set_parent(&window)
+                                .set_title("Figori")
+                                .set_description(message)
+                                .show()
+                                .await;
+                        });
+                    }
+                    return;
+                }
+                Ok(false) => {}
+            }
             if id == "quit" {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.close();
@@ -217,6 +238,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             chrome::configure_chrome,
+            recent::record_recent,
+            recent::configure_document,
             export::export_document,
             export::export_numi,
             open_document,

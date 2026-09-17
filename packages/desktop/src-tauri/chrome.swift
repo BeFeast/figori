@@ -108,3 +108,15 @@ public func configureChrome(_ pointer: UnsafeMutableRawPointer, _ json: UnsafePo
 }
 @_cdecl("figori_chrome_settings")
 public func showChromeSettings() { chrome?.showSettings() }
+
+// Standard AppKit proxy icon/title path menu, including Command-click navigation.
+@_cdecl("figori_document_path")
+func figoriDocumentPath(_ pointer: UnsafeMutableRawPointer, _ path: UnsafePointer<CChar>) {
+    let window = Unmanaged<NSWindow>.fromOpaque(pointer).takeUnretainedValue()
+    let value = String(cString: path)
+    window.representedURL = value.isEmpty ? nil : URL(fileURLWithPath: value)
+}
+@_cdecl("figori_reveal_path")
+func figoriRevealPath(_ path: UnsafePointer<CChar>) {
+    NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: String(cString: path))])
+}
