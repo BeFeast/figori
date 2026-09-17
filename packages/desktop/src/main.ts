@@ -48,6 +48,9 @@ import {
   evaluateDocument,
   importDocument,
   serializeMarkdown,
+  serializeNumi,
+  serializeFigori,
+  validateSettings,
   type Worksheet,
   type WorksheetSettings,
 } from "@my-numi/document";
@@ -56,7 +59,11 @@ import {
   editorText,
   fromEditor,
   openedWorksheet,
-  formatForPath,
+  recoverySnapshot,
+  recoveredWorksheet,
+  recoveredState,
+  openedState,
+  newNativeWorksheet,
   readableBasis,
   sourceTitle,
   type Opened,
@@ -68,7 +75,8 @@ const el = <T extends HTMLElement = HTMLElement>(id: string) =>
 const nativeWindow = getCurrentWindow();
 let initializing = true;
 const readOnly = new Compartment();
-let worksheet = importDocument("", { format: "numi" });
+let worksheet = newNativeWorksheet();
+let originPath: string | null = null;
 let path: string | null = null,
   sourceHash: string | null = null,
   dirty = false,
@@ -77,13 +85,7 @@ let path: string | null = null,
 if (![0, 1, 2, 3, 4, 6].includes(precision)) precision = 2;
 let rates: RateState = { status: "unavailable" },
   revision = 0;
-let baseline: Recovery = {
-  path: null,
-  source: "",
-  sourceHash: null,
-  settings: worksheet.settings,
-  dirty: false,
-};
+let baseline: Recovery = recoverySnapshot(worksheet, null, null, false);
 let recoveryTimer: ReturnType<typeof setTimeout> | undefined,
   evaluationTimer: ReturnType<typeof setTimeout> | undefined;
 function compute() {
@@ -112,7 +114,13 @@ function contextText() {
   return `${s.anchor.mode === "today" ? "Today " + today : s.anchor.date} · ${s.timezone}`;
 }
 function updateChrome() {
-  const name = path?.split(/[\\/]/).at(-1) ?? "Untitled";
+  const name =
+    path?.split(/[\\/]/).at(-1) ??
+    (originPath
+      ?.split(/[\\/]/)
+      .at(-1)
+      ?.replace(/\.(numi|md)$/i, ".figori") ||
+      "Untitled.figori");
   const title = name + (dirty ? "*" : "");
   const filename = el("filename");
   if (filename.textContent !== title) filename.textContent = title;
@@ -135,13 +143,13 @@ function setDirty() {
 }
 let recoveryWrite: Promise<unknown> = Promise.resolve();
 function persistRecovery() {
-  const snapshot = {
-    source: worksheet.source,
-    settings: worksheet.settings,
+  const snapshot = recoverySnapshot(
+    worksheet,
     path,
     sourceHash,
     dirty,
-  };
+    originPath,
+  );
   recoveryWrite = recoveryWrite
     .catch(() => {})
     .then(() => invoke("save_recovery", snapshot));
@@ -625,21 +633,21 @@ async function saveUnlocked(saveAs = false): Promise<boolean> {
   try {
     const result = await invoke<Opened | null>("save_document", {
       path,
-      source: submitted.source,
+      source: serializeFigori(submitted),
       settings: submitted.settings,
       saveAs,
+      suggestedName:
+        (path ?? originPath)
+          ?.split(/[\\/]/)
+          .at(-1)
+          ?.replace(/\.(?:numi|md|figori)$/i, ".figori") ?? "Worksheet.figori",
       expectedHash: sourceHash,
     });
     if (!result) return false;
     path = result.path;
     sourceHash = result.sourceHash;
-    baseline = {
-      path,
-      source: submitted.source,
-      settings: submitted.settings,
-      sourceHash,
-      dirty: false,
-    };
+    originPath = null;
+    baseline = recoverySnapshot(submitted, path, sourceHash, false);
     dirty = revision !== start;
     notice(result.warning ?? "");
     await flushRecovery();
@@ -655,32 +663,38 @@ async function discardGuard(): Promise<boolean> {
   if (choice === "cancel") return false;
   if (choice === "save") return saveUnlocked();
   if (choice !== "discard") return false;
-  replaceEditor(
-    importDocument(baseline.source, {
-      format: formatForPath(baseline.path),
-      settings: baseline.settings,
-    }),
-  );
+  replaceEditor(recoveredWorksheet(baseline));
   path = baseline.path;
+  originPath = baseline.originPath ?? null;
   sourceHash = baseline.sourceHash;
   dirty = false;
   await flushRecovery();
   updateChrome();
   return true;
 }
-async function adopt(opened: Opened) {
-  replaceEditor(openedWorksheet(opened));
-  path = opened.path;
-  sourceHash = opened.sourceHash;
-  dirty = false;
-  baseline = {
+async function adopt(opened: Opened, prepared = openedState(opened)) {
+  replaceEditor(prepared.document);
+  path = prepared.path;
+  sourceHash = prepared.sourceHash;
+  originPath = prepared.originPath;
+  dirty = prepared.dirty;
+  baseline = recoverySnapshot(
+    dirty
+      ? importDocument("", {
+          format: worksheet.format,
+          settings: worksheet.settings,
+        })
+      : worksheet,
     path,
-    source: worksheet.source,
     sourceHash,
-    settings: worksheet.settings,
-    dirty: false,
-  };
-  notice(opened.warning ?? "");
+    false,
+  );
+  notice(
+    opened.warning ??
+      (dirty
+        ? "Imported worksheet. Save a .figori copy to keep your work; the original stays unchanged."
+        : ""),
+  );
   updateChrome();
   await flushRecovery();
 }
@@ -689,11 +703,19 @@ async function open(filePath?: string) {
 }
 async function openUnlocked(filePath?: string) {
   try {
-    if (!(await discardGuard())) return;
     const opened = filePath
       ? await invoke<Opened>("read_document", { path: filePath })
       : await invoke<Opened | null>("open_document");
-    if (opened) await adopt(opened);
+    if (!opened) return;
+    const prepared = openedState(opened); // Validate before any discard/save transition.
+    if (!(await discardGuard())) return;
+    // Saving during the guard may have updated this very file after validation.
+    if (path === opened.path && sourceHash !== opened.sourceHash) {
+      const refreshed = await invoke<Opened>("read_document", {
+        path: opened.path,
+      });
+      await adopt(refreshed);
+    } else await adopt(opened, prepared);
   } catch (error) {
     report(error);
   }
@@ -704,19 +726,12 @@ async function newWorksheet() {
 async function newWorksheetUnlocked() {
   try {
     if (!(await discardGuard())) return;
-    replaceEditor(
-      importDocument("", { format: "numi", settings: worksheet.settings }),
-    );
+    replaceEditor(newNativeWorksheet(worksheet.settings));
     path = null;
+    originPath = null;
     sourceHash = null;
     dirty = false;
-    baseline = {
-      path,
-      source: "",
-      sourceHash,
-      settings: worksheet.settings,
-      dirty: false,
-    };
+    baseline = recoverySnapshot(worksheet, null, null, false);
     notice();
     updateChrome();
     await flushRecovery();
@@ -824,7 +839,8 @@ el<HTMLFormElement>("settings-form").onsubmit = (event) => {
         ? "include-partial"
         : "completed",
     };
-    worksheet = importDocument(worksheet.source, { ...worksheet, settings });
+    validateSettings(settings);
+    worksheet = { ...worksheet, settings };
     setDirty();
     el<HTMLDialogElement>("settings").close();
     notice();
@@ -904,37 +920,41 @@ async function start() {
     }
     const recovery = await invoke<Recovery | null>("load_recovery");
     if (recovery) {
-      replaceEditor(
-        importDocument(recovery.source, {
-          format: formatForPath(recovery.path),
-          settings: recovery.settings,
+      const restored = recoveredState(recovery);
+      replaceEditor(restored.document);
+      path = restored.path;
+      sourceHash = restored.sourceHash;
+      originPath = restored.originPath;
+      dirty = restored.dirty;
+      baseline = recoverySnapshot(
+        importDocument("", {
+          format: worksheet.format,
+          settings: worksheet.settings,
         }),
+        null,
+        null,
+        false,
       );
-      path = recovery.path;
-      sourceHash = recovery.sourceHash;
-      dirty = recovery.dirty;
-      if (path && dirty) {
-        try {
-          const original = await invoke<Opened>("read_document", { path });
-          baseline = {
-            path: original.path,
-            source: original.source,
-            sourceHash: original.sourceHash,
-            settings: original.settings ?? worksheet.settings,
-            dirty: false,
-          };
-        } catch {
-          baseline = {
-            path: null,
-            source: "",
-            sourceHash: null,
-            settings: worksheet.settings,
-            dirty: false,
-          };
-        }
-      } else baseline = { ...recovery, dirty: false };
+      if (path) {
+        if (dirty) {
+          try {
+            const original = await invoke<Opened>("read_document", { path });
+            const saved = openedState(original);
+            baseline = recoverySnapshot(
+              saved.document,
+              saved.path,
+              saved.sourceHash,
+              false,
+            );
+          } catch {
+            /* Preserve recovered edits; Discard falls back to a new worksheet. */
+          }
+        } else baseline = recoverySnapshot(worksheet, path, sourceHash, false);
+      }
       notice(
-        dirty ? "Recovered unsaved worksheet. Save to keep these changes." : "",
+        dirty
+          ? "Recovered unsaved worksheet. Save a .figori file to keep these changes."
+          : "",
       );
     }
   } catch (error) {
@@ -965,7 +985,7 @@ async function exportMarkdown(withResults: boolean) {
       const saved = await invoke<{ path: string } | null>("export_document", {
         source: exported.text,
         suggestedName: name + (withResults ? "-results" : "-export") + ".md",
-        currentPath: path,
+        currentPath: path ?? originPath,
       });
       if (saved) notice("Markdown exported. " + exported.warnings.join(" "));
     } catch (error) {
@@ -973,8 +993,24 @@ async function exportMarkdown(withResults: boolean) {
     }
   }, undefined);
 }
+async function exportNumi() {
+  await operations.run(async () => {
+    try {
+      const exported = serializeNumi(worksheet);
+      const saved = await invoke<{ path: string } | null>("export_numi", {
+        source: exported.text,
+        suggestedName: "Worksheet-export.numi",
+        currentPath: path ?? originPath,
+      });
+      if (saved) notice("Numi exported. " + exported.warnings.join(" "));
+    } catch (error) {
+      report(error);
+    }
+  }, undefined);
+}
 void listen<string>("figori-menu", (event) => {
-  if (event.payload === "export-markdown") void exportMarkdown(false);
+  if (event.payload === "export-numi") void exportNumi();
+  else if (event.payload === "export-markdown") void exportMarkdown(false);
   else if (event.payload === "export-markdown-results")
     void exportMarkdown(true);
   else if (event.payload === "new") void newWorksheet();

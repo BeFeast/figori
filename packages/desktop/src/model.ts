@@ -1,6 +1,8 @@
 import Decimal from "decimal.js";
 import {
   importDocument,
+  parseFigori,
+  serializeFigori,
   updateDocument,
   type Worksheet,
   type WorksheetSettings,
@@ -13,6 +15,8 @@ export type Opened = {
   warning?: string;
 };
 export type Recovery = {
+  format?: string;
+  originPath?: string | null;
   path: string | null;
   source: string;
   sourceHash: string | null;
@@ -49,6 +53,7 @@ export function formatForPath(path: string | null) {
   return /\.md$/i.test(path ?? "") ? ("markdown" as const) : ("numi" as const);
 }
 export function openedWorksheet(value: Opened): Worksheet {
+  if (/\.figori$/i.test(value.path)) return parseFigori(value.source);
   return importDocument(value.source, {
     format: formatForPath(value.path),
     settings: value.settings,
@@ -103,4 +108,59 @@ export function readableBasis(basis: unknown): string {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+export function recoverySnapshot(
+  document: Worksheet,
+  path: string | null,
+  sourceHash: string | null,
+  dirty: boolean,
+  originPath: string | null = null,
+): Recovery {
+  return {
+    format: "figori",
+    source: serializeFigori(document),
+    settings: document.settings,
+    path,
+    sourceHash,
+    dirty,
+    originPath,
+  };
+}
+export function recoveredWorksheet(recovery: Recovery): Worksheet {
+  if (recovery.format === "figori") return parseFigori(recovery.source);
+  if (recovery.format !== undefined)
+    throw new Error("Unsupported recovery format");
+  return importDocument(recovery.source, {
+    format: formatForPath(recovery.path),
+    settings: recovery.settings,
+  });
+}
+export function openedState(opened: Opened) {
+  const document = openedWorksheet(opened);
+  const native = /\.figori$/i.test(opened.path);
+  return {
+    document,
+    path: native ? opened.path : null,
+    sourceHash: native ? opened.sourceHash : null,
+    dirty: !native,
+    originPath: native ? null : opened.path,
+  };
+}
+export function recoveredState(recovery: Recovery) {
+  const document = recoveredWorksheet(recovery);
+  const native =
+    recovery.format === "figori" &&
+    (!recovery.path || /\.figori$/i.test(recovery.path));
+  return {
+    document,
+    path: native ? recovery.path : null,
+    sourceHash: native ? recovery.sourceHash : null,
+    dirty: native ? recovery.dirty : true,
+    originPath: recovery.originPath ?? (!native ? recovery.path : null),
+  };
+}
+
+export function newNativeWorksheet(settings?: WorksheetSettings): Worksheet {
+  return importDocument("", { format: "markdown", settings });
 }

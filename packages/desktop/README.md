@@ -41,3 +41,9 @@ Use native AppKit controls first for window chrome, Settings and menus, with con
 Open `.md` files to use Markdown worksheet mode: prose and fenced code stay unevaluated while calculator expressions outside fences retain live results. The editor highlights headings, list markers, emphasis and code without rendering or hiding Markdown syntax. Existing `.numi` files keep their compatible calculation semantics. Source bytes, editing and Undo remain intact.
 
 File → Export Markdown writes a separate `.md` copy through the native save dialog; Export Markdown with Results also adds readable, inert quoted results. Neither export changes the current file, dirty state or save destination. Export does not embed timezone/anchor/billing metadata. Worksheet columns use subtle contrasting surfaces, with a resize handle shown only on hover or keyboard focus.
+
+## Native .figori documents
+
+New worksheets save as `.figori`: TOML frontmatter between `+++` delimiters followed by the exact, unescaped Markdown worksheet source. Versioned metadata retains document identity, line identities, source syntax and calculation context; derived results are recalculated. New documents use Markdown semantics. Imported `.numi` files retain their compatible syntax mode.
+
+Opening `.numi` or `.md` imports an unsaved native document, retaining the original filename as the suggested `.figori` name without making the original a save destination. Legacy recovery snapshots are detached from interchange originals on upgrade. Explicit Numi/Markdown exports remain separate, and never change the active save destination. Native saves hash the complete physical file for conflict checks; recovery retains source, settings and identity. Changing context does not recreate line IDs. Existing line matching during arbitrary duplicate-line rearrangements remains heuristic; stable serialization is not a promise of semantic identity across every reorder.
