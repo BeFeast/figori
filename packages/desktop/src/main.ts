@@ -366,7 +366,12 @@ function editorState(doc: string) {
     ],
   });
 }
+// WebKit can cache gutter geometry before bundled chrome fonts finish loading.
+// Build the editor after that first layout, then remeasure any later font load.
+await document.fonts.ready;
 const view = new EditorView({ parent: el("editor"), state: editorState("") });
+document.fonts.addEventListener("loadingdone", () => view.requestMeasure());
+requestAnimationFrame(() => view.requestMeasure());
 const operations = new OperationGate((active) => {
   busy = active;
   view.dispatch({
