@@ -1,0 +1,8 @@
+{
+  "name": "@my-numi/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "my-numi": "./src/index.ts"
+  }
+}
