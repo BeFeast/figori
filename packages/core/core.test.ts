@@ -99,7 +99,7 @@ describe("money and billing", () => {
       },
     };
     expect(value("(0.1+0.2) nis")).toBe("0.30 ILS");
-    expect(value("37 nis in usd", c)).toBe("10.00 USD");
+    expect(value("37 nis in usd", c)).toBe("$10.00");
     expect(evaluate("37 nis in usd", ctx).diagnostics[0].code).toBe(
       "rate_unavailable",
     );
@@ -197,7 +197,7 @@ describe("textual dates with an omitted year", () => {
     expect(evaluate("31 apr", september).ok).toBe(false);
     expect(evaluate("27 decemberish", september).ok).toBe(false);
     expect(value("29 feb 12:30", ctx)).toContain("2024-02-29T12:30:00+02:00");
-    expect(value("12 USD", september)).toBe("12.00 USD");
+    expect(value("12 USD", september)).toBe("$12.00");
     expect(value("9 months", september)).toBe("9 months");
   });
 });
@@ -343,7 +343,7 @@ describe("human-readable converted durations", () => {
       multiplied.value?.kind === "quantity" && multiplied.value.amount,
     ).toBe("2.06451612903225806451612903225806451613");
     expect(value("0.1 + 0.2")).toBe("0.3");
-    expect(value("12 USD")).toBe("12.00 USD");
+    expect(value("12 USD")).toBe("$12.00");
   });
   test("timestamp formatting bounds precision without pretending DST days are 24 hours", () => {
     const c = { ...ctx, timezone: "America/New_York" };
@@ -410,5 +410,86 @@ describe("calendar-unit since/until questions", () => {
       "hours since stocks_date",
     ])
       expect(evaluate(expression, today).ok).toBe(false);
+  });
+});
+
+describe("currency aliases and conversion phrases", () => {
+  const moneyContext: EvaluationContext = {
+    ...ctx,
+    rates: {
+      base: "ILS",
+      rates: { USD: "0.33", EUR: "0.30", GBP: "0.26" },
+      source: "synthetic ECB-like fixture",
+      asOf: "2024-02-01",
+    },
+  };
+  test("codes and symbols share prefix, suffix and conversion target semantics", () => {
+    for (const [code, aliases, display] of [
+      ["USD", ["usd", "USD", "$"], "$12.00"],
+      ["EUR", ["eur", "EUR", "€"], "€12.00"],
+      ["ILS", ["ils", "NIS", "₪"], "12.00 ILS"],
+      ["GBP", ["gbp", "GBP", "£"], "12.00 GBP"],
+    ] as const) {
+      for (const alias of aliases) {
+        for (const expression of [
+          alias + "12",
+          "12 " + alias,
+          alias + " (6 + 6)",
+        ]) {
+          // Textual codes require a token boundary before a number.
+          const source = /^[A-Za-z]+12$/.test(expression)
+            ? alias + " 12"
+            : expression;
+          const result = evaluate(source, moneyContext);
+          expect(result.value).toEqual({
+            kind: "money",
+            amount: "12",
+            currency: code,
+          });
+          expect(result.formatted).toBe(display);
+        }
+        expect(value("12 " + alias + " to " + alias, moneyContext)).toBe(
+          display,
+        );
+      }
+    }
+    for (const target of ["$", "usd", "USD"])
+      for (const connector of ["in", "to"])
+        expect(
+          value(
+            "(2 * (40 + 10) nis) " + connector + " " + target,
+            moneyContext,
+          ),
+        ).toBe("$33.00");
+    for (const target of ["€", "eur", "EUR"])
+      expect(value("100 ILS to " + target, moneyContext)).toBe("€30.00");
+    expect(value("€30 to USD", moneyContext)).toBe("$33.00");
+    expect(value("-12 usd", moneyContext)).toBe("-$12.00");
+    expect(value("EUR -12", moneyContext)).toBe("-€12.00");
+  });
+  test("dimensionless amounts never invent a source currency", () => {
+    for (const expression of ["2 * (40 + 10) to $", "100 in EUR"]) {
+      const result = evaluate(expression, moneyContext);
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics[0]?.code).toBe("currency_required");
+    }
+    expect(evaluate("12 USD in days", moneyContext).ok).toBe(false);
+  });
+  test("exact currency-named variables and date ranges retain precedence", () => {
+    const c: EvaluationContext = {
+      ...moneyContext,
+      variables: {
+        usd: { kind: "number", amount: "7" },
+        USD: { kind: "number", amount: "8" },
+        rent_months: { kind: "number", amount: "2" },
+        rent: { kind: "number", amount: "40" },
+        muni: { kind: "number", amount: "10" },
+      },
+    };
+    expect(value("usd + USD", c)).toBe("15");
+    expect(value("(rent_months * (rent + muni) nis) in $", c)).toBe("$33.00");
+    expect(value("today to 3 feb 2024 in days", c)).toBe("2 days");
+    expect(value("1 m to cm", c)).toBe("100 cm");
+    expect(evaluate("usdExtra", c).ok).toBe(false);
   });
 });

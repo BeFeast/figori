@@ -93,9 +93,22 @@ const units = new Set([
   "kg",
   "g",
 ]);
+const currencyAliases: Record<string, string> = {
+  USD: "USD",
+  $: "USD",
+  EUR: "EUR",
+  "€": "EUR",
+  ILS: "ILS",
+  NIS: "ILS",
+  "₪": "ILS",
+  GBP: "GBP",
+  "£": "GBP",
+};
 const currency = (s: string) =>
-  s.toUpperCase() === "NIS" ? "ILS" : s.toUpperCase();
-const currencies = new Set(["nis", "ils", "usd", "eur", "gbp"]);
+  currencyAliases[s.toUpperCase()] ?? s.toUpperCase();
+const currencyToken = /^(?:USD\b|EUR\b|ILS\b|NIS\b|GBP\b|[$€₪£])/i;
+const isCurrency = (s: string) =>
+  Object.hasOwn(currencyAliases, s.toUpperCase());
 const canonical = (s: string) =>
   unitAliases[s.toLowerCase()] ?? s.toLowerCase();
 const timeFactors: Record<string, string> = {
@@ -231,6 +244,11 @@ function convert(
   basis: Basis,
 ): Value {
   const u = canonical(target);
+  if (isCurrency(target) && v.kind !== "money")
+    fail(
+      "currency_required",
+      "Specify the source currency before conversion, for example (amount) ILS to USD.",
+    );
   if (v.kind === "date" && u === "days") {
     basis.notes.push(
       `Calendar days from reference anchor ${basis.anchorDate} to ${v.iso}.`,
@@ -243,6 +261,8 @@ function convert(
     );
   }
   if (v.kind === "money") {
+    if (!isCurrency(target))
+      fail("incompatible_units", "Money requires a supported target currency.");
     const to = currency(target);
     if (to === v.currency) return v;
     const r = ctx.rates;
@@ -501,7 +521,7 @@ class Parser {
         this.basis,
       );
     }
-    if (this.match(/^to\b/i)) {
+    if ((a.kind === "date" || a.kind === "datetime") && this.match(/^to\b/i)) {
       const end = this.sum();
       if (
         (a.kind !== "date" && a.kind !== "datetime") ||
@@ -514,8 +534,8 @@ class Parser {
       this.basis.notes.push(`Date range from ${a.iso} to ${end.iso}.`);
       a = { kind: "interval", start: a, end };
     }
-    while (this.match(/^in\b/i)) {
-      const t = this.match(/^[A-Za-z]+/);
+    while (this.match(/^(?:in|to)\b/i)) {
+      const t = this.match(/^(?:[A-Za-z]+\b|[$€₪£])/);
       if (!t) fail("syntax", "Expected conversion unit.");
       a = convert(a, t[0], this.ctx, this.basis);
     }
@@ -564,10 +584,10 @@ class Parser {
       v = num(new D(v.amount).div(100));
     }
     const saved = this.pos;
-    const suffix = this.match(/^[A-Za-z]+\b/);
+    const suffix = this.match(/^(?:[A-Za-z]+\b|[$€₪£])/);
     if (suffix) {
       const u = canonical(suffix[0]);
-      if (v.kind === "number" && currencies.has(suffix[0].toLowerCase()))
+      if (v.kind === "number" && isCurrency(suffix[0]))
         v = { kind: "money", amount: v.amount, currency: currency(suffix[0]) };
       else if (v.kind === "number" && units.has(u))
         v = { kind: "quantity", amount: v.amount, unit: u };
@@ -576,6 +596,22 @@ class Parser {
     return v;
   }
   primary(): Value {
+    const prefixStart = this.pos;
+    const prefix = this.match(currencyToken);
+    if (prefix && !Object.hasOwn(this.ctx.variables ?? {}, prefix[0])) {
+      const amount = this.unary();
+      if (amount.kind !== "number")
+        fail(
+          "incompatible_types",
+          "Currency prefix requires a dimensionless amount.",
+        );
+      return {
+        kind: "money",
+        amount: amount.amount,
+        currency: currency(prefix[0]),
+      };
+    }
+    this.pos = prefixStart;
     if (this.match(/^\(/)) {
       const v = this.expression();
       if (!this.match(/^\)/)) fail("syntax", "Expected closing parenthesis.");
@@ -691,7 +727,14 @@ class Parser {
 }
 export function formatValue(v: Value): string {
   if (v.kind === "number") return v.amount;
-  if (v.kind === "money") return `${new D(v.amount).toFixed(2)} ${v.currency}`;
+  if (v.kind === "money") {
+    const amount = new D(v.amount);
+    const symbol =
+      v.currency === "USD" ? "$" : v.currency === "EUR" ? "€" : undefined;
+    return symbol
+      ? `${amount.isNegative() ? "-" : ""}${symbol}${amount.abs().toFixed(2)}`
+      : `${amount.toFixed(2)} ${v.currency}`;
+  }
   if (v.kind === "quantity") {
     if (v.interval) {
       const { start, end } = v.interval;
