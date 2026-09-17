@@ -14,5 +14,9 @@
   },
   "displayFont": "Space Grotesk",
   "numericFont": "IBM Plex Mono",
-  "nativeUiFonts": "system defaults"
+  "nativeUiFonts": "system defaults",
+  "publisher": "BeFeast",
+  "website": "https://figori.befeast.com",
+  "publicRepository": "https://github.com/befeast/figori",
+  "developmentRepository": "https://git.oklabs.uk/BeFeast/figori"
 }

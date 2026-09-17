@@ -5,7 +5,7 @@
 
 # Figori
 
-**Your numbers, in context.**
+**Figori by BeFeast — Your numbers, in context.**
 
 A local-first calculator worksheet with a **standalone desktop app**, plus Raycast, terminal and Omarchy integrations. Write calculations beside your notes and see results beside each line, with the date anchor, timezone and currency basis behind the answer.
 
@@ -77,7 +77,7 @@ Unsupported syntax produces diagnostics: v0 does not promise arbitrary natural l
 
 ## Product identity and compatibility
 
-**Figori** is the product name. **My Numi** was its working name. Existing compatibility identifiers, package names, data directories and the `my-numi` command are retained where needed so branding does not orphan saved worksheets or break existing integrations. Do not rename user storage manually.
+**Figori** is a **BeFeast** product. **My Numi** was its working name. Existing compatibility identifiers, package names, data directories and the `my-numi` command are retained where needed so branding does not orphan saved worksheets or break existing integrations. Do not rename user storage manually.
 
 - [Standalone desktop app and build guide](docs/desktop-build.md)
 - [Brand assets and usage](docs/branding.md)
@@ -86,4 +86,4 @@ Unsupported syntax produces diagnostics: v0 does not promise arbitrary natural l
 - [Omarchy package](packages/omarchy/README.md)
 - [Canonical Forgejo development](https://git.oklabs.uk/BeFeast/figori)
 
-Forgejo owns issues, PRs, CI and releases. GitHub is a downstream mirror for backup and discovery. Personal worksheets, account data and private planning history do not belong in the repository.
+Forgejo remains the main development repository and owns issues, PRs, CI and releases. The designated public website is [figori.befeast.com](https://figori.befeast.com); [github.com/befeast/figori](https://github.com/befeast/figori) is the intended downstream public mirror for discovery. These are product destinations, not a migration of development to GitHub. Their public deployment is tracked separately; this branding change does not assert they are already live. Personal worksheets, account data and private planning history do not belong in the repository.

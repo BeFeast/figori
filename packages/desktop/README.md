@@ -47,3 +47,7 @@ File → Export Markdown writes a separate `.md` copy through the native save di
 New worksheets save as `.figori`: TOML frontmatter between `+++` delimiters followed by the exact, unescaped Markdown worksheet source. Versioned metadata retains document identity, line identities, source syntax and calculation context; derived results are recalculated. New documents use Markdown semantics. Imported `.numi` files retain their compatible syntax mode.
 
 Opening `.numi` or `.md` imports an unsaved native document, retaining the original filename as the suggested `.figori` name without making the original a save destination. Legacy recovery snapshots are detached from interchange originals on upgrade. Explicit Numi/Markdown exports remain separate, and never change the active save destination. Native saves hash the complete physical file for conflict checks; recovery retains source, settings and identity. Changing context does not recreate line IDs. Existing line matching during arbitrary duplicate-line rearrangements remains heuristic; stable serialization is not a promise of semantic identity across every reorder.
+
+## Publisher
+
+Figori is a BeFeast product. Its designated public website is [figori.befeast.com](https://figori.befeast.com), with [GitHub](https://github.com/befeast/figori) intended as a downstream public mirror. [Forgejo](https://git.oklabs.uk/BeFeast/figori) remains the main development repository. Deployment of those public destinations is separate from application branding.

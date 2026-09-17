@@ -1,6 +1,6 @@
 # Figori identity
 
-**Figori — Your numbers, in context.**
+**Figori by BeFeast — Your numbers, in context.**
 
 The folded-worksheet F and Figori name remain the product identity. On 2026-09-17,
 the user requested HedRoom's visual direction: charcoal surfaces, warm off-white
@@ -87,3 +87,9 @@ or complete syntax/numerical compatibility.
 
 My Numi is the historical working name. Palette changes do not change evaluator
 semantics, .numi bytes, settings identities, data paths or compatibility commands.
+
+## Publisher and public destinations
+
+BeFeast is the public product brand/publisher. Use “Figori by BeFeast” in product attribution; keep the existing Figori name, F glyph and HedRoom-derived warm coral palette. Oklabs is not a customer-facing publisher label. Existing compatibility identifiers and storage paths are a separate migration concern, not permission to orphan user data.
+
+The designated website is https://figori.befeast.com and the intended public GitHub mirror is https://github.com/befeast/figori. Forgejo at https://git.oklabs.uk/BeFeast/figori remains the main repository for development, issues, PRs, CI and releases. Keep real Forgejo links accurate; its infrastructure hostname is not product branding. This document assigns destinations without claiming that website or mirror deployment has completed. Retain Numi attribution and all third-party font/license notices.

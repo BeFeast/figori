@@ -24,5 +24,11 @@
     "@tauri-apps/cli": "2.11.4",
     "typescript": "5.9.3",
     "@types/bun": "1.3.14"
+  },
+  "author": "BeFeast",
+  "homepage": "https://figori.befeast.com",
+  "repository": {
+    "type": "git",
+    "url": "https://git.oklabs.uk/BeFeast/figori.git"
   }
 }

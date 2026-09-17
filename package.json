@@ -20,5 +20,11 @@
     "@types/bun": "1.3.14",
     "prettier": "3.6.2",
     "typescript": "5.9.3"
+  },
+  "author": "BeFeast",
+  "homepage": "https://figori.befeast.com",
+  "repository": {
+    "type": "git",
+    "url": "https://git.oklabs.uk/BeFeast/figori.git"
   }
 }
