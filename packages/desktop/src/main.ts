@@ -471,7 +471,10 @@ function applyTypography() {
   );
 }
 applyTypography();
-await document.fonts.load(`${typography.size}px "Figori Nerd Mono"`);
+await Promise.all([
+  document.fonts.load(`${typography.size}px "Figori Nerd Mono"`),
+  document.fonts.load(`${typography.size}px "Figori Currency"`, "₪"),
+]);
 await document.fonts.ready;
 const view = new EditorView({ parent: el("editor"), state: editorState("") });
 document.fonts.addEventListener("loadingdone", () => measureResultGutter());

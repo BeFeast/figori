@@ -22,3 +22,9 @@ test("stored typography validates corrupt preferences and clamps readable metric
   expect(typographyFont("nerd")).toContain('"Figori Nerd Mono"');
   expect(typographyFont("system")).not.toContain('"Figori Nerd Mono"');
 });
+
+test("both editor font choices prioritize the dedicated currency glyph before platform fallback", () => {
+  for (const font of ["nerd", "system"] as const) {
+    expect(typographyFont(font).startsWith('"Figori Currency", ')).toBe(true);
+  }
+});

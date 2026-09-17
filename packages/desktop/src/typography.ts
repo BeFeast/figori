@@ -30,6 +30,7 @@ export function readTypography(raw: string | null): Typography {
 }
 export function typographyFont(font: Typography["font"]): string {
   return (
+    '"Figori Currency", ' +
     (font === "nerd" ? '"Figori Nerd Mono", ' : "") +
     "ui-monospace, SFMono-Regular, monospace, Heebo, sans-serif"
   );

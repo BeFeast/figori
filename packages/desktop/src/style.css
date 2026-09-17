@@ -354,12 +354,12 @@ form > label {
   margin-top: 20px;
 }
 #detail-expression {
-  font-family: ui-monospace, monospace;
+  font-family: var(--editor-font);
   font-size: 13px;
   overflow-wrap: anywhere;
 }
 #detail-result {
-  font-family: ui-monospace, monospace;
+  font-family: var(--editor-font);
   color: var(--result);
   font-size: 19px;
   white-space: pre-wrap;
@@ -454,7 +454,7 @@ body.resizing-columns {
   color: var(--text) !important;
 }
 .cm-completionLabel {
-  font-family: ui-monospace, monospace;
+  font-family: var(--editor-font);
   color: var(--result);
 }
 .cm-completionDetail {
@@ -672,4 +672,14 @@ dialog {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Nerd Font omits the shekel. This face supplies only U+20AA, never digits. */
+@font-face {
+  font-family: "Figori Currency";
+  src: url("fonts/Heebo-Regular.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+20AA;
 }
