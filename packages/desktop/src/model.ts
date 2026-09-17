@@ -169,3 +169,25 @@ export function recoveredState(recovery: Recovery) {
 export function newNativeWorksheet(settings?: WorksheetSettings): Worksheet {
   return importDocument("", { format: "markdown", settings });
 }
+
+/** Display elapsed timestamp intervals, never infer duration semantics from a unit alone. */
+export function elapsedDurationPresentation(value: unknown): { display: string; exact: string } | undefined {
+  const v = value as { kind?: string; amount?: string; unit?: string; interval?: { start: { kind: string }; end: { kind: string } } } | undefined;
+  if (v?.kind !== "quantity" || !v.interval ||
+      (v.interval.start.kind !== "datetime" && v.interval.end.kind !== "datetime") ||
+      typeof v.amount !== "string") return;
+  const factors: Record<string, string> = { weeks: "604800", days: "86400", hours: "3600", minutes: "60", seconds: "1" };
+  const factor = factors[v.unit ?? ""];
+  if (!factor) return; // Calendar months/years do not have a fixed elapsed length.
+  const Exact = Decimal.clone({ precision: Math.max(80, v.amount.length + 20) });
+  const amount = new Exact(v.amount);
+  let remaining = amount.abs().mul(factor).floor();
+  const parts: string[] = [];
+  for (const [unit, seconds] of [["day", 86400], ["hour", 3600], ["minute", 60], ["second", 1]] as const) {
+    const count = remaining.div(seconds).floor();
+    remaining = remaining.mod(seconds);
+    if (!count.isZero()) parts.push(`${count.toFixed(0)} ${unit}${count.eq(1) ? "" : "s"}`);
+  }
+  const text = parts.join(" ") || "0 seconds";
+  return { display: amount.isNegative() && parts.length ? (parts.length > 1 ? `−(${text})` : `-${text}`) : text, exact: `${v.amount} ${v.unit}` };
+}

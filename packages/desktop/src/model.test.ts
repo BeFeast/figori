@@ -1,3 +1,4 @@
+import { elapsedDurationPresentation } from "./model";
 import { test, expect } from "bun:test";
 import { evaluateExpression } from "@my-numi/core";
 import {
@@ -205,4 +206,18 @@ test("invalid native legacy recovery fails without changing the recovery payload
     expect(() => recoveredState(recovery)).toThrow();
     expect(JSON.stringify(recovery)).toBe(before);
   }
+});
+
+test("elapsed timestamp duration presentation shares compact text and exact tooltip data", () => {
+ const interval={start:{kind:"datetime",iso:"2023-10-07T06:00:00Z"},end:{kind:"datetime",iso:"2026-09-17T20:00:00Z"}};
+ const make=(amount:string,unit="days")=>({kind:"quantity",amount,unit,interval});
+ expect(elapsedDurationPresentation(make("1076.62412644"))).toEqual({display:"1076 days 14 hours 58 minutes 44 seconds",exact:"1076.62412644 days"});
+ expect(elapsedDurationPresentation(make("-1.5"))?.display).toBe("−(1 day 12 hours)");
+ expect(elapsedDurationPresentation(make("1.5","hours"))?.display).toBe("1 hour 30 minutes");
+ expect(elapsedDurationPresentation(make("0.9999","seconds"))?.display).toBe("0 seconds");
+ expect(elapsedDurationPresentation(make("9007199254740993","days"))?.display).toBe("9007199254740993 days");
+ expect(elapsedDurationPresentation({...make("1.5"),interval:undefined})).toBeUndefined();
+ expect(elapsedDurationPresentation({...make("1.5"),interval:{start:{kind:"date"},end:{kind:"date"}}})).toBeUndefined();
+ expect(elapsedDurationPresentation(make("1.5","months"))).toBeUndefined();
+ expect(elapsedDurationPresentation({kind:"money",amount:"1.5",currency:"USD"})).toBeUndefined();
 });

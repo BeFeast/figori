@@ -56,6 +56,7 @@ import {
 } from "@my-numi/document";
 import {
   displayResult,
+  elapsedDurationPresentation,
   editorText,
   fromEditor,
   openedWorksheet,
@@ -212,7 +213,12 @@ function details(index: number, anchor?: HTMLElement) {
     ? (line.evaluation.formatted ?? "")
     : (line.evaluation?.diagnostics.map((d) => d.message).join("\n") ??
       line.source);
-  el("detail-result").textContent = resultCopy;
+  const duration = line.evaluation?.ok
+    ? elapsedDurationPresentation(line.evaluation.value) : undefined;
+  if (duration) resultCopy = duration.exact;
+  el("detail-copy-label").textContent = duration ? "Copy exact result" : "Copy result";
+  el("detail-result").textContent = duration?.display ?? resultCopy;
+  el("detail-result").title = duration?.exact ?? resultCopy;
   el("detail-basis").textContent = [
     readableBasis(line.evaluation?.basis),
     line.historicalResult !== undefined
@@ -343,10 +349,11 @@ function evaluate() {
           ? (line.evaluation.formatted ?? "")
           : line.evaluation.diagnostics.map((d) => d.message).join("; ");
         const failed = !line.evaluation.ok;
+        const duration = !failed ? elapsedDurationPresentation(line.evaluation.value) : undefined;
         markers.push(
           new ResultMarker(
-            failed ? full : displayResult(full, precision),
-            full,
+            failed ? full : (duration?.display ?? displayResult(full, precision)),
+            duration?.exact ?? full,
             index,
             failed,
           ).range(position.from),
@@ -992,6 +999,7 @@ async function start() {
           }
         } else baseline = recoverySnapshot(worksheet, path, sourceHash, false);
       }
+      if (path) await invoke("record_recent", { path }).catch(report);
       notice(
         dirty
           ? "Recovered unsaved worksheet. Save a .figori file to keep these changes."
