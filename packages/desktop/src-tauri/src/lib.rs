@@ -2,6 +2,7 @@ mod chrome;
 mod export;
 mod files;
 mod menu;
+mod migration;
 mod rates;
 use files::{Opened, Recovery};
 use serde_json::Value;
@@ -180,6 +181,8 @@ async fn refresh_rates(app: tauri::AppHandle) -> Result<rates::RateState, String
 }
 
 pub fn run() {
+    migration::prepare()
+        .expect("Could not safely migrate Figori state; legacy files were retained");
     let paths = std::env::args()
         .skip(1)
         .filter(|path| !path.starts_with('-') && Path::new(path).is_file())
