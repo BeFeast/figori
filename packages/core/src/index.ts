@@ -3,7 +3,7 @@ import Decimal from "decimal.js";
 const D = Decimal.clone({ precision: 40 });
 export type DateValue = { kind: "date" | "datetime"; iso: string };
 export type Value =
-  | { kind: "number"; amount: string }
+  | { kind: "number"; amount: string; percentage?: true }
   | { kind: "money"; amount: string; currency: string }
   | {
       kind: "quantity";
@@ -421,6 +421,27 @@ function binary(
     y = new D(b.amount);
   if (op === "/" && y.isZero())
     return fail("division_by_zero", "Division by zero.");
+  if (a.kind === "number" && b.kind === "number") {
+    const amount =
+      op === "+"
+        ? x.plus(y)
+        : op === "-"
+          ? x.minus(y)
+          : op === "*"
+            ? x.mul(y)
+            : x.div(y);
+    const percentage =
+      op === "+" || op === "-"
+        ? a.percentage === true && b.percentage === true
+        : op === "*"
+          ? (a.percentage === true) !== (b.percentage === true)
+          : a.percentage === true && b.percentage !== true;
+    return {
+      kind: "number",
+      amount: amount.toString(),
+      ...(percentage ? { percentage: true as const } : {}),
+    };
+  }
   if (op === "+" || op === "-") {
     if (a.kind !== b.kind)
       return fail(
@@ -481,7 +502,7 @@ const fullNames = [
 ];
 class Parser {
   pos = 0;
-  percentages = new WeakSet<object>();
+
   constructor(
     public text: string,
     public ctx: EvaluationContext,
@@ -560,7 +581,11 @@ class Parser {
       const op = this.match(/^[+-]/);
       if (!op) return a;
       let b = this.product();
-      if (this.percentages.has(b)) {
+      if (
+        b.kind === "number" &&
+        b.percentage === true &&
+        !(a.kind === "number" && a.percentage === true)
+      ) {
         this.basis.notes.push(
           "Added/subtracted percentage is relative to the preceding amount.",
         );
@@ -574,7 +599,9 @@ class Parser {
     for (;;) {
       const op =
         this.match(/^[*/]/) ??
-        (this.percentages.has(a) ? this.match(/^of\b/i) : null);
+        (a.kind === "number" && a.percentage === true
+          ? this.match(/^of\b/i)
+          : null);
       if (!op) return a;
       a = binary(
         a,
@@ -583,6 +610,8 @@ class Parser {
         this.ctx,
         this.basis,
       );
+      if (op[0].toLowerCase() === "of" && a.kind === "number")
+        a = num(a.amount);
     }
   }
   unary(): Value {
@@ -601,7 +630,7 @@ class Parser {
           : {}),
         amount: op[0] === "-" ? new D(v.amount).neg().toString() : v.amount,
       };
-      if (this.percentages.has(v)) this.percentages.add(signed);
+
       return signed;
     }
     return this.postfix();
@@ -612,7 +641,7 @@ class Parser {
       if (v.kind !== "number")
         fail("incompatible_types", "Percent requires a number.");
       v = num(new D(v.amount).div(100));
-      this.percentages.add(v);
+      v = { ...v, percentage: true } as Value;
     }
     const saved = this.pos;
     const suffix = this.match(/^(?:[A-Za-z]+\b|[$€₪£])/);

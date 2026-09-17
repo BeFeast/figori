@@ -16,3 +16,22 @@ test("supported natural language calculations remain expressions in both source 
     expect(result.lines[4]?.kind).toBe("heading");
   }
 });
+
+test("cross-line percentage variables retain metadata and relative meaning", () => {
+  const doc = importDocument(
+    "tip_rate = 25%\n55 + tip_rate\n55 + (tip_rate * 2)",
+    { format: "numi" },
+  );
+  const r = evaluateDocument(doc, evaluateExpression, {
+    now: "2026-09-17T12:00:00Z",
+  });
+  expect(r.lines.slice(1).map((l) => l.evaluation?.formatted)).toEqual([
+    "68.75",
+    "82.5",
+  ]);
+  expect(r.variables.tip_rate).toEqual({
+    kind: "number",
+    amount: "0.25",
+    percentage: true,
+  });
+});

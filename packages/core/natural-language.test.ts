@@ -43,11 +43,43 @@ test("annotations never swallow arbitrary words or exact variables", () => {
   );
 });
 
-test("current boundary: stored or multiplied percentages are numeric ratios", () => {
+test("stored and scaled percentages preserve relative arithmetic", () => {
   const percentage = evaluate("25%", ctx).value!;
-  const stored = evaluate("55 + tip_rate", {...ctx,variables:{tip_rate:percentage}});
-  expect(stored.formatted).toBe("55.25");
-  expect(evaluate("55 + (25% * 2)", ctx).formatted).toBe("55.5");
+  const stored = evaluate("55 + tip_rate", {
+    ...ctx,
+    variables: { tip_rate: percentage },
+  });
+  expect(stored.formatted).toBe("68.75");
+  expect(evaluate("55 + (25% * 2)", ctx).formatted).toBe("82.5");
   // Explicit arithmetic preserves intended financial meaning without relying on provenance.
-  expect(evaluate("55 * (1 + tip_rate)", {...ctx,variables:{tip_rate:percentage}}).formatted).toBe("68.75");
+  expect(
+    evaluate("55 * (1 + tip_rate)", {
+      ...ctx,
+      variables: { tip_rate: percentage },
+    }).formatted,
+  ).toBe("68.75");
+});
+
+test("percentage metadata survives JSON and scalar operations, but ratios cancel", () => {
+  const p = evaluate("25%", ctx).value!;
+  const c = { ...ctx, variables: { tip_rate: JSON.parse(JSON.stringify(p)) } };
+  expect(evaluate("55 + tip_rate", c).formatted).toBe("68.75");
+  expect(evaluate("55 + (tip_rate / 2)", c).formatted).toBe("61.875");
+  expect(evaluate("55 + (-tip_rate)", c).formatted).toBe("41.25");
+  expect(evaluate("25% * 20%", ctx).value).toEqual({
+    kind: "number",
+    amount: "0.05",
+  });
+  expect(evaluate("25% / 50%", ctx).value).toEqual({
+    kind: "number",
+    amount: "0.5",
+  });
+  expect(evaluate("100 / 25%", ctx).value).toEqual({
+    kind: "number",
+    amount: "400",
+  });
+  expect(evaluate("15% of 490", ctx).value).toEqual({
+    kind: "number",
+    amount: "73.5",
+  });
 });
