@@ -1135,6 +1135,37 @@ await listen<{ font: string; size: number; spacing: number; theme: string }>(
   },
 );
 function configureFallbackChrome() {
+  if (/Linux/.test(navigator.platform)) {
+    document.body.classList.add("linux-chrome");
+    const actions = document.createElement("div");
+    actions.className = "window-actions";
+    actions.setAttribute("role", "group");
+    actions.setAttribute("aria-label", "Window controls");
+    const windowAction = (action: string) =>
+      invoke("linux_window_action", { action }).catch(report);
+    for (const [action, label, path] of [
+      ["menu", "Application menu", "M5 6h14M5 12h14M5 18h14"],
+      ["minimize", "Minimize window", "M5 16h14"],
+      ["maximize", "Maximize or restore window", "M6 6h12v12H6z"],
+      ["close", "Close window", "M6 6l12 12M18 6L6 18"],
+    ]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "icon-button";
+      button.setAttribute("aria-label", label);
+      button.title = label;
+      button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="' + path + '"/></svg>';
+      button.onclick = () => void windowAction(action);
+      actions.append(button);
+    }
+    const header = document.querySelector("header")!;
+    header.append(actions);
+    header.addEventListener("mousedown", (event) => {
+      if (event.button !== 0 || (event.target as Element).closest("button, select, input")) return;
+      event.preventDefault();
+      void windowAction(event.detail === 2 ? "maximize" : "drag");
+    });
+  }
   document.body.classList.add("fallback-chrome");
   const close = document.createElement("button");
   close.type = "button";

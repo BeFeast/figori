@@ -954,3 +954,13 @@ body.resizing-columns #column-splitter span {
 .fallback-chrome #appearance h2 {
   padding-right: 32px;
 }
+
+/* Linux uses one toolbar; the compositor still owns window placement/tiling. */
+.linux-chrome header { user-select: none; }
+.linux-chrome .window-actions { display: flex; align-items: center; gap: 2px; flex: none; }
+.linux-chrome .window-actions .icon-button { width: 28px; height: 30px; padding: 5px; }
+.linux-chrome header { gap: 10px; }
+.linux-chrome header nav { gap: 2px; }
+@media (max-width: 720px) {
+  .linux-chrome .brand > span { display: none; }
+}

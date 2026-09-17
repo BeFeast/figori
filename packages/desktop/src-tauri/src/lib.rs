@@ -194,6 +194,9 @@ pub fn run() {
         .manage(recent::DocumentState::default())
         .setup(|app| {
             menu::install(app)?;
+            if let Some(window) = app.get_webview_window("main") {
+                chrome::configure_window(&window)?;
+            }
             let _ = recent::refresh(app.handle());
             Ok(())
         })
@@ -238,6 +241,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             chrome::configure_chrome,
+            chrome::linux_window_action,
             recent::record_recent,
             recent::configure_document,
             export::export_document,

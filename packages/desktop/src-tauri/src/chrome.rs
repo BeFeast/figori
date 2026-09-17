@@ -151,3 +151,43 @@ pub fn reveal(app: &tauri::AppHandle, path: &std::path::Path) -> Result<(), Stri
         Ok(())
     }
 }
+
+// Hide GTK chrome without detaching the menu's accelerator group.
+pub fn configure_window(window: &tauri::WebviewWindow) -> tauri::Result<()> {
+    #[cfg(target_os = "linux")]
+    {
+        window.set_decorations(false)?;
+        window.hide_menu()?;
+    }
+    #[cfg(not(target_os = "linux"))]
+    let _ = window;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn linux_window_action(window: tauri::WebviewWindow, action: String) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    {
+        let result = match action.as_str() {
+            "menu" => window.popup_menu(&window.menu().ok_or("Window menu unavailable")?),
+            "drag" => window.start_dragging(),
+            "minimize" => window.minimize(),
+            "maximize" => {
+                if window.is_maximized().map_err(|e| e.to_string())? {
+                    window.unmaximize()
+                } else {
+                    window.maximize()
+                }
+            }
+            // close() emits the same close request used by the dirty-document guard.
+            "close" => window.close(),
+            _ => return Err("Unknown window action".into()),
+        };
+        result.map_err(|e| e.to_string())
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = (window, action);
+        Err("Linux window controls unavailable on this platform".into())
+    }
+}
