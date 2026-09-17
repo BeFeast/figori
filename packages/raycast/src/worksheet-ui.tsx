@@ -256,6 +256,16 @@ export function WorksheetDetail({
       />
     </>
   );
+  // Raycast can retain an existing selected row while its search bar changes.
+  // Every visible row must therefore offer the same draft commit as Enter.
+  const draftAction =
+    input.trim() || editing ? (
+      <Action
+        title={editing ? "Save Edited Line" : "Add Line and Save"}
+        icon={Icon.Checkmark}
+        onAction={commit}
+      />
+    ) : null;
   const draftResult = draft?.line?.evaluation;
   return (
     <List
@@ -367,6 +377,7 @@ export function WorksheetDetail({
               }
               actions={
                 <ActionPanel>
+                  {draftAction}
                   {line.evaluation?.ok && (
                     <Action.CopyToClipboard
                       title="Copy Result"
@@ -402,7 +413,12 @@ export function WorksheetDetail({
             title="Start your worksheet above"
             subtitle="Type a calculation, press Enter, then add another line"
             icon={Icon.Plus}
-            actions={<ActionPanel>{common}</ActionPanel>}
+            actions={
+              <ActionPanel>
+                {draftAction}
+                {common}
+              </ActionPanel>
+            }
           />
         )}
         {evaluation.error && (
@@ -410,7 +426,12 @@ export function WorksheetDetail({
             title="Could Not Calculate Worksheet"
             subtitle={evaluation.error}
             icon={Icon.Warning}
-            actions={<ActionPanel>{common}</ActionPanel>}
+            actions={
+              <ActionPanel>
+                {draftAction}
+                {common}
+              </ActionPanel>
+            }
           />
         )}
       </List.Section>
