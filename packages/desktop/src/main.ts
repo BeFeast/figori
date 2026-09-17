@@ -1,4 +1,9 @@
 import {
+  readTypography,
+  normalizeTypography,
+  typographyFont,
+} from "./typography";
+import {
   autocompletion,
   startCompletion,
   closeCompletion,
@@ -373,6 +378,7 @@ function editorState(doc: string) {
         defaultKeymap: false,
         selectOnOpen: false,
         maxRenderedOptions: 12,
+        icons: false,
       }),
       EditorView.lineWrapping,
       resultField,
@@ -444,6 +450,23 @@ function editorState(doc: string) {
 }
 // WebKit can cache gutter geometry before bundled chrome fonts finish loading.
 // Build the editor after that first layout, then remeasure any later font load.
+let typography = readTypography(localStorage.getItem("typography"));
+function applyTypography() {
+  document.documentElement.style.setProperty(
+    "--editor-font",
+    typographyFont(typography.font),
+  );
+  document.documentElement.style.setProperty(
+    "--editor-size",
+    `${typography.size}px`,
+  );
+  document.documentElement.style.setProperty(
+    "--editor-spacing",
+    String(typography.spacing),
+  );
+}
+applyTypography();
+await document.fonts.load(`${typography.size}px "Figori Nerd Mono"`);
 await document.fonts.ready;
 const view = new EditorView({ parent: el("editor"), state: editorState("") });
 document.fonts.addEventListener("loadingdone", () => measureResultGutter());
@@ -700,6 +723,52 @@ function applyTheme(theme: string) {
   );
 }
 applyTheme(localStorage.getItem("theme") ?? "dark");
+matchMedia("(prefers-color-scheme: light)").addEventListener("change", () =>
+  applyTheme(localStorage.getItem("theme") ?? "dark"),
+);
+el("appearance-button").onclick = () => {
+  el<HTMLSelectElement>("theme").value =
+    localStorage.getItem("theme") ?? "dark";
+  el<HTMLSelectElement>("editor-font").value = typography.font;
+  el<HTMLSelectElement>("editor-size").value = String(typography.size);
+  el<HTMLSelectElement>("editor-spacing").value = String(typography.spacing);
+  previewTypography();
+  el<HTMLDialogElement>("appearance").showModal();
+};
+function selectedTypography() {
+  return normalizeTypography({
+    font: el<HTMLSelectElement>("editor-font").value,
+    size: Number(el<HTMLSelectElement>("editor-size").value),
+    spacing: Number(el<HTMLSelectElement>("editor-spacing").value),
+  });
+}
+function previewTypography() {
+  const value = selectedTypography();
+  Object.assign(el("font-preview").style, {
+    fontFamily: typographyFont(value.font),
+    fontSize: value.size + "px",
+    lineHeight: String(value.spacing),
+  });
+}
+for (const id of ["editor-font", "editor-size", "editor-spacing"])
+  el(id).onchange = previewTypography;
+el("appearance-cancel").onclick = () =>
+  el<HTMLDialogElement>("appearance").close();
+el<HTMLFormElement>("appearance-form").onsubmit = (event) => {
+  event.preventDefault();
+  typography = selectedTypography();
+  localStorage.setItem("typography", JSON.stringify(typography));
+  const theme = el<HTMLSelectElement>("theme").value;
+  localStorage.setItem("theme", theme);
+  applyTheme(theme);
+  applyTypography();
+  el<HTMLDialogElement>("appearance").close();
+  void document.fonts.ready.then(() => {
+    measureResultGutter();
+    positionColumnSplitter();
+  });
+  view.focus();
+};
 el("context-button").onclick = () => {
   const s = worksheet.settings;
   el<HTMLSelectElement>("anchor-mode").value = s.anchor.mode;
@@ -707,8 +776,6 @@ el("context-button").onclick = () => {
     s.anchor.date ?? new Date().toISOString().slice(0, 10);
   el<HTMLInputElement>("timezone").value = s.timezone;
   el<HTMLInputElement>("partial").checked = s.billing === "include-partial";
-  el<HTMLSelectElement>("theme").value =
-    localStorage.getItem("theme") ?? "dark";
   el("date-label").hidden = s.anchor.mode !== "fixed";
   el<HTMLDialogElement>("settings").showModal();
 };
@@ -733,9 +800,6 @@ el<HTMLFormElement>("settings-form").onsubmit = (event) => {
     };
     worksheet = importDocument(worksheet.source, { ...worksheet, settings });
     setDirty();
-    const theme = el<HTMLSelectElement>("theme").value;
-    localStorage.setItem("theme", theme);
-    applyTheme(theme);
     el<HTMLDialogElement>("settings").close();
     notice();
     evaluate();

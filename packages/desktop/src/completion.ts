@@ -129,8 +129,6 @@ export function worksheetCompletions(
       detail: formatted
         ? displayResult(formatted, 2)
         : "Defined above · value unavailable",
-      info:
-        formatted ?? "Fix this variable's definition to calculate its value.",
     });
   }
   if (toTarget)

@@ -15,10 +15,93 @@
         ><span id="save-status" role="status" hidden></span>
       </div>
       <nav aria-label="File actions">
-        <button id="new" title="New worksheet (⌘N)">New</button
-        ><button id="open" title="Open file (⌘O)">Open</button
-        ><button id="save" title="Save (⌘S)">Save</button
-        ><button id="save-as" title="Save as (⌘⇧S)">Save as</button>
+        <button
+          class="icon-button"
+          id="new"
+          aria-label="New worksheet"
+          title="New worksheet (⌘N)"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg></button
+        ><button
+          class="icon-button"
+          id="open"
+          aria-label="Open file"
+          title="Open file (⌘O)"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 7h6l2 2h10l-3 11H3V7zm0 0V4h7l2 3" />
+          </svg></button
+        ><button
+          class="icon-button"
+          id="save"
+          aria-label="Save"
+          title="Save (⌘S)"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 3h12l4 4v14H3V3h2zm2 0v6h10V3M7 21v-8h10v8" />
+          </svg></button
+        ><button
+          class="icon-button"
+          id="save-as"
+          aria-label="Save as"
+          title="Save as (⌘⇧S)"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 14v7h16v-7M12 3v13m-5-5 5 5 5-5" />
+          </svg>
+        </button>
+        <button
+          class="icon-button"
+          id="appearance-button"
+          aria-label="Appearance"
+          title="Appearance"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6m-7 0v6" />
+          </svg>
+        </button>
       </nav>
     </header>
     <div class="context">
@@ -72,15 +155,56 @@
         ><label class="check"
           ><input id="partial" type="checkbox" />Include a trailing partial
           billing month</label
-        ><label
-          >Appearance<select id="theme">
+        >
+        <div class="dialog-actions">
+          <button type="button" id="settings-cancel">Cancel</button
+          ><button type="submit" class="primary">Apply</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="appearance" aria-labelledby="appearance-title">
+      <form id="appearance-form">
+        <h2 id="appearance-title">Appearance</h2>
+        <p class="dialog-caption">Make room for your thoughts.</p>
+        <label
+          >Theme<select id="theme">
             <option value="dark">Dark</option>
             <option value="light">Light</option>
             <option value="system">System</option>
           </select></label
         >
+        <label
+          >Worksheet font<select id="editor-font">
+            <option value="nerd">JetBrains Mono · Nerd Font</option>
+            <option value="system">System Mono</option>
+          </select></label
+        >
+        <div class="appearance-grid">
+          <label
+            >Text size<select id="editor-size">
+              <option value="12">12 px</option>
+              <option value="14">14 px</option>
+              <option value="16">16 px</option>
+              <option value="18">18 px</option>
+              <option value="20">20 px</option>
+              <option value="22">22 px</option>
+              <option value="24">24 px</option>
+            </select></label
+          >
+          <label
+            >Line spacing<select id="editor-spacing">
+              <option value="1.4">1.4×</option>
+              <option value="1.6">1.6×</option>
+              <option value="1.9">1.9×</option>
+              <option value="2.2">2.2×</option>
+            </select></label
+          >
+        </div>
+        <p class="font-preview" id="font-preview">
+          rent × 12 <span>₪12,600</span>
+        </p>
         <div class="dialog-actions">
-          <button type="button" id="settings-cancel">Cancel</button
+          <button type="button" id="appearance-cancel">Cancel</button
           ><button type="submit" class="primary">Apply</button>
         </div>
       </form>
