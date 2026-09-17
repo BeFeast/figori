@@ -1,10 +1,16 @@
 {
   "name": "Figori",
+  "paletteSource": "HedRoom",
   "colors": {
-    "cobalt": "#284BFF",
-    "lime": "#DDFC45",
-    "ink": "#111827",
-    "paper": "#F7F8FC"
+    "bg": "#0b0c0d",
+    "surface": "#141618",
+    "raised": "#1c1f21",
+    "recessed": "#101112",
+    "tint": "#15100f",
+    "ac": "#b8443c",
+    "ac2": "#d9776d",
+    "ac3": "#e59c92",
+    "text": "#e8e6e3"
   },
   "displayFont": "Space Grotesk",
   "numericFont": "IBM Plex Mono",
