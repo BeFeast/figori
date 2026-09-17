@@ -92,7 +92,7 @@ await cp(
 );
 await Bun.write(
   join(raycastStage, "SOURCE.txt"),
-  `Source commit: ${commit}\nFull rebuildable workspace is in my-numi-source-${label}.tar.gz.\nThis is a private build, not a Raycast Store publication.\n`,
+  `Source commit: ${commit}\nFull rebuildable workspace is in my-numi-source-${label}.tar.gz.\nThis is a public developer preview, not a Raycast Store publication.\n`,
 );
 await archive(raycastStage, `my-numi-raycast-${label}`);
 const omarchyStage = join(stage, "omarchy");
