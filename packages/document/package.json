@@ -10,5 +10,8 @@
     "test": "bun test",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "smol-toml": "1.8.0"
+  }
 }

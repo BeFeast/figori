@@ -27,7 +27,7 @@
     },
     "packages/desktop": {
       "name": "@figori/desktop",
-      "version": "0.1.1",
+      "version": "0.2.2",
       "dependencies": {
         "@codemirror/autocomplete": "6.20.3",
         "@codemirror/commands": "6.11.1",
@@ -48,6 +48,9 @@
     "packages/document": {
       "name": "@my-numi/document",
       "version": "0.1.0",
+      "dependencies": {
+        "smol-toml": "1.8.0",
+      },
     },
     "packages/rates": {
       "name": "@my-numi/rates",
@@ -334,6 +337,8 @@
     "semver": ["semver@7.8.5", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA=="],
 
     "signal-exit": ["signal-exit@4.1.0", "", {}, "sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw=="],
+
+    "smol-toml": ["smol-toml@1.8.0", "", {}, "sha512-kCZr2V3ch9i00x8zXRhjUNVcjG9ijES5dDudkXvUVCT5QlJNQWElSJdZqyPemffHoLNUYwOcou0Fy+ojN0uHSQ=="],
 
     "string-width": ["string-width@4.2.3", "", { "dependencies": { "emoji-regex": "^8.0.0", "is-fullwidth-code-point": "^3.0.0", "strip-ansi": "^6.0.1" } }, "sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g=="],
 

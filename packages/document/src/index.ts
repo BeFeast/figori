@@ -248,3 +248,5 @@ export function serializeMarkdown(
   }).join("");
   return {text,warnings};
 }
+
+export {parseFigori, serializeFigori} from "./figori";

@@ -1,7 +1,7 @@
 # Worksheet documents
 
 This package preserves calculator source separately from evaluation and UI state.
-It has no runtime dependencies. The evaluator is injected; no source is executed as
+The evaluator is injected; no source is executed as
 JavaScript or shell code.
 
 ## API
@@ -68,3 +68,34 @@ export in actual Numi is a separate macOS acceptance step.
 Run `bun test packages/document` from the repository root. Fixtures are synthetic.
 
 Saved worksheets are reparsed from their preserved source when loaded. Old imported rows with stale `= result` parsing therefore recover without re-import, source rewriting, or changes to line identities. Historical results remain metadata, never assertions that the current result must match.
+
+## Native .figori files
+
+`serializeFigori(worksheet): string` and `parseFigori(text): Worksheet` use
+version-1 TOML frontmatter followed by exact raw source. The file starts with
+`+++` on its first line; the first subsequent exact `+++` line closes metadata.
+The closing newline belongs to the framing, not the source. Additional delimiter
+lines in the worksheet body are ordinary source. Serialization uses LF for the
+header while preserving every body newline, leading/trailing blank, quote, slash
+and Unicode character.
+
+Metadata stores `format = "figori"`, `schema_version = 1`, `id`,
+`source_format` (`numi` or `markdown`), `line_ids` and `settings`
+(timezone/anchor/billing). Source is present only once as the raw body.
+Results, rates, parsed expressions and global appearance preferences are not saved.
+
+The codec rejects future versions, duplicate/invalid IDs, mismatched line counts,
+invalid settings and unknown fields. Editing body line count outside Figori
+requires updating the IDs as well; an invalid file remains untouched and must not
+be silently rebound to different lines. Metadata formatting and comments are
+normalized on save; arbitrary extensions are rejected rather than discarded.
+
+The pure codec performs no writes. Native callers own destination selection,
+atomic persistence and conflict checks. Plain `.numi` remains an independent
+import/export format and is never renamed to disguise this container.
+
+TOML parsing/metadata serialization uses pinned
+[smol-toml 1.8.0](https://github.com/squirrelchat/smol-toml).
+Raw source bypasses TOML string parsing, avoiding multiline-string newline
+normalization. Round-trip tests cover LF, CRLF, mixed endings, literal delimiters,
+leading blanks, triple quotes, backslashes and Unicode.
