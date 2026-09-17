@@ -161,3 +161,43 @@ test("chained anchored conversions keep source endpoints; altered counts do not 
       .diagnostics[0].code,
   ).toBe("billing_anchor_required");
 });
+
+describe("textual dates with an omitted year", () => {
+  const september = { now: "2026-09-17T12:00:00Z", timezone: "Asia/Jerusalem" };
+  test("both subtraction orders use this anchor year and retain signed exact days", () => {
+    expect(value("(27 dec - today) in days", september)).toBe("101 days");
+    expect(value("(today - 27 dec) in days", september)).toBe("-101 days");
+    expect(evaluate("27 dec - today", september).ok).toBe(true);
+    expect(evaluate("today - 27 dec", september).ok).toBe(true);
+    expect(value("1 jan", september)).toBe("2026-01-01");
+    expect(value("27 DECEMBER", september)).toBe("2026-12-27");
+    expect(evaluate("27 dec", september).basis.notes.join(" ")).toContain(
+      "resolved to 2026 from anchor 2026-09-17",
+    );
+  });
+  test("selected timezone and pinned anchor choose year without changing today", () => {
+    const newYear = {
+      now: "2025-01-01T00:30:00Z",
+      timezone: "America/New_York",
+    };
+    expect(value("27 dec", newYear)).toBe("2024-12-27");
+    expect(value("27 dec", { ...newYear, timezone: "Asia/Jerusalem" })).toBe(
+      "2025-12-27",
+    );
+    const pinned = {
+      ...september,
+      anchor: { mode: "fixed" as const, date: "2024-02-01" },
+    };
+    expect(value("29 feb", pinned)).toBe("2024-02-29");
+    expect(value("today", pinned)).toBe("2026-09-17");
+    expect(value("27 dec 2023", pinned)).toBe("2023-12-27");
+  });
+  test("invalid dates reject rather than constrain or roll to a leap year", () => {
+    expect(evaluate("29 feb", september).ok).toBe(false);
+    expect(evaluate("31 apr", september).ok).toBe(false);
+    expect(evaluate("27 decemberish", september).ok).toBe(false);
+    expect(value("29 feb 12:30", ctx)).toContain("2024-02-29T12:30:00+02:00");
+    expect(value("12 USD", september)).toBe("12.00 USD");
+    expect(value("9 months", september)).toBe("9 months");
+  });
+});

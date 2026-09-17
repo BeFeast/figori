@@ -541,7 +541,11 @@ class Parser {
     }
     const iso = this.match(/^\d{4}-\d{2}-\d{2}(?!\d)/);
     if (iso) return this.withTime(Temporal.PlainDate.from(iso[0]));
-    const english = this.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})\b/);
+    const english =
+      this.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})\b/) ??
+      this.match(
+        /^(\d{1,2})\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i,
+      );
     if (english) {
       const monthName = english[2].toLowerCase();
       const fullNames = [
@@ -561,9 +565,18 @@ class Parser {
       const month =
         Math.max(months.indexOf(monthName), fullNames.indexOf(monthName)) + 1;
       if (!month) fail("invalid_date", "Unknown English month.");
+      const year =
+        english[3] === undefined
+          ? Temporal.PlainDate.from(this.basis.anchorDate).year
+          : +english[3];
+      if (english[3] === undefined) {
+        this.basis.notes.push(
+          `Omitted year in "${english[0]}" resolved to ${year} from anchor ${this.basis.anchorDate}; no future-year rollover.`,
+        );
+      }
       return this.withTime(
         Temporal.PlainDate.from(
-          { year: +english[3], month, day: +english[1] },
+          { year, month, day: +english[1] },
           { overflow: "reject" },
         ),
       );
