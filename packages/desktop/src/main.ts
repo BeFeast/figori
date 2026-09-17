@@ -493,6 +493,9 @@ function editorState(doc: string) {
         "aria-label": "Worksheet source",
         spellcheck: "false",
       }),
+      EditorView.domEventHandlers({
+        focus: () => { refreshVisibleLayout(); return false; },
+      }),
       EditorView.updateListener.of((update) => {
         if (update.geometryChanged) refreshVisibleLayout();
         if (update.docChanged) {
@@ -660,6 +663,9 @@ const operations = new OperationGate((active) => {
   for (const id of ["new", "open", "save", "save-as", "context-button"])
     el<HTMLButtonElement>(id).disabled = active || initializing;
   updateChrome();
+  // Native Open sheets close after the replacement evaluation. Measure again
+  // once the operation releases read-only state and the final DOM is visible.
+  if (!active && !initializing) refreshVisibleLayout();
 });
 function replaceEditor(doc: Worksheet) {
   worksheet = doc;
@@ -668,6 +674,7 @@ function replaceEditor(doc: Worksheet) {
   revision++;
   evaluate();
   view.focus();
+  refreshVisibleLayout();
 }
 async function save(saveAs = false): Promise<boolean> {
   return operations.run(() => saveUnlocked(saveAs), false);
