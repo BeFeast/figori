@@ -13,7 +13,7 @@ A local-first calculator worksheet for **Raycast, the terminal, and Omarchy**. W
 
 Figori is inspired by [Numi](https://numi.app), the thoughtful natural-language calculator created by the [Numi developer](https://github.com/nikolaeu/numi). Numi helped establish the writing-and-calculating experience this project builds on. **Please visit [the official Numi website](https://numi.app) to try Numi and support its original developer.**
 
-Figori is an independent project, not an official Numi extension or an endorsed successor. It supports **UTF-8 plain-text `.numi` import/export** and captured Markdown worksheets, while deliberately choosing its own calendar semantics. File interoperability does not promise every Numi expression or identical numerical results.
+Figori uses an independent calculation engine. It supports **UTF-8 plain-text `.numi` import/export** and captured Markdown worksheets, while deliberately choosing its own calendar semantics. File interoperability does not promise every Numi expression or identical numerical results.
 
 ## What Figori does
 
@@ -24,7 +24,17 @@ Figori is an independent project, not an official Numi extension or an endorsed 
 - **Local worksheets:** preserve headings, Unicode, assignments, unsupported lines and diagnostics. Atomic saves and recovery copies retain your work.
 - **Explicit exchange rates:** refresh the public ECB ILS/USD pair through Frankfurter, then use its cached snapshot offline with visible source/date/status. No worksheet content is sent to the rate provider.
 
-The repository contains the implemented engine, document/rate packages and desktop adapters. Source builds and terminal acceptance are distinct from installation into your live desktop. See [release and installation guidance](docs/releases.md); a release build is not a claim that every desktop was installed or visually accepted.
+## Quickstart
+
+Download the CLI for your platform from [Releases](https://git.oklabs.uk/BeFeast/figori/releases) and follow the [installation guidance](docs/releases.md).
+
+```sh
+figori '13 may 2022 + 9 months'
+figori --anchor 2024-02-01 '1 month in days'
+figori --tui
+```
+
+Preview status and platform notes accompany each release.
 
 ## Numi files and intentional differences
 
@@ -32,7 +42,7 @@ Native assignment syntax such as `price = 12` remains an assignment. Captured Ma
 
 A `.numi` export remains plain UTF-8 text. Figori-only anchor, timezone and monthly-count settings live in a **separate sidecar/application storage**, never a JSON envelope inside the interoperable file. Native Numi does not apply this metadata. Unsupported syntax stays visible with a diagnostic rather than disappearing.
 
-For example, Figori evaluates `13 may 2022 + 9 months` as **13 February 2023**. A month converted to days uses the visible anchor: February 2024 has **29 days**. These choices intentionally differ from Numi's own observed date calculations; they are not claims that Numi is broken. [Compatibility details](docs/compatibility.md) define the supported boundary.
+For example, Figori evaluates `13 may 2022 + 9 months` as **13 February 2023**. A month converted to days uses the visible anchor: February 2024 has **29 days**. These are Figori's calendar rules; native Numi may calculate dates differently. [Compatibility details](docs/compatibility.md) define the supported boundary.
 
 ## Development and CLI
 
@@ -73,4 +83,4 @@ Unsupported syntax produces diagnostics: v0 does not promise arbitrary natural l
 - [Omarchy package](packages/omarchy/README.md)
 - [Canonical Forgejo development](https://git.oklabs.uk/BeFeast/figori)
 
-Forgejo owns issues, PRs, CI and releases. GitHub is downstream only; this work does not create a GitHub publication or synchronization job. Personal worksheets, account data and private planning history do not belong in the repository.
+Forgejo owns issues, PRs, CI and releases. GitHub is a downstream mirror for backup and discovery. Personal worksheets, account data and private planning history do not belong in the repository.
