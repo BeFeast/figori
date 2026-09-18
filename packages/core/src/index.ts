@@ -537,11 +537,18 @@ class Parser {
     );
     let a = this.sum();
     if (question) {
-      if (a.kind !== "date")
+      if (!isDate(a))
         fail(
           "incompatible_types",
-          "Calendar since/until questions require a date-only value; subtract timestamps explicitly for elapsed time.",
+          "Calendar since/until questions require a date value.",
         );
+      if (a.kind === "datetime") {
+        const stamp = Temporal.ZonedDateTime.from(a.iso);
+        this.basis.notes.push(
+          `Timestamp ${a.iso} reduced to its calendar date in ${stamp.timeZoneId}; time of day is ignored.`,
+        );
+        a = date(stamp.toPlainDate().toString());
+      }
       const today = date(this.now.toPlainDate().toString());
       const unit = canonical(question[1]);
       const since = question[2].toLowerCase() === "since";

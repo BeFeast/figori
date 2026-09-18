@@ -41,3 +41,22 @@ test("assigned dates evaluate all since/until units and captured questions witho
   expect(result.lines[9]?.evaluation).toBeUndefined();
   expect(document.source).toBe(source);
 });
+
+test("timestamp variables answer calendar since/until questions in worksheets", () => {
+  const source =
+    "# Hello\nlast_drink = 21 september 2024 21:00\nyears since last_drink\ndays until (last_drink + 3 years)\n";
+  const document = importDocument(source, { format: "numi" });
+  const result = evaluateDocument(document, evaluateExpression, {
+    now: "2026-09-18T09:00:00Z",
+    timezone: "Asia/Jerusalem",
+  });
+  expect(result.lines[1]?.evaluation?.formatted).toBe(
+    "2024-09-21T21:00:00+03:00[Asia/Jerusalem]",
+  );
+  expect(result.lines[2]?.evaluation?.ok).toBe(true);
+  expect(result.lines[2]?.evaluation?.formatted).toBe(
+    "1 year 11 months 28 days",
+  );
+  expect(result.lines[3]?.evaluation?.formatted).toBe("368 days");
+  expect(document.source).toBe(source);
+});

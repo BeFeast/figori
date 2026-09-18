@@ -250,7 +250,6 @@ describe("calendar-day questions", () => {
       "days until 29 feb 2026",
       "days since 10",
       "today to 12 USD",
-      "days until 18 sep 2026 12:00",
       "today to",
       "days since",
     ]) {
@@ -405,11 +404,46 @@ describe("calendar-unit since/until questions", () => {
     for (const expression of [
       "years since",
       "weeks until 3",
-      "months since 18 sep 2026 12:00",
       "years since absent_date",
       "hours since stocks_date",
+      "days since 12 USD",
     ])
       expect(evaluate(expression, today).ok).toBe(false);
+  });
+  test("timestamp operands use their own calendar date and ignore the time of day", () => {
+    const stamped: EvaluationContext = {
+      ...today,
+      variables: {
+        ...today.variables,
+        last_drink: {
+          kind: "datetime",
+          iso: "2024-09-21T21:00:00+03:00[Asia/Jerusalem]",
+        },
+      },
+    };
+    expect(value("years since last_drink", stamped)).toBe(
+      "1 year 11 months 27 days",
+    );
+    expect(value("years since 21 september 2024 21:00", stamped)).toBe(
+      "1 year 11 months 27 days",
+    );
+    expect(value("days until 18 sep 2026 12:00", stamped)).toBe("1 days");
+    expect(value("days until 18 sep 2026 00:00", stamped)).toBe("1 days");
+    expect(value("days until 17 sep 2026 23:59", stamped)).toBe("0 days");
+    expect(value("months since 18 sep 2026 12:00", stamped)).toBe("-1 day");
+    expect(value("days since now", stamped)).toBe("0 days");
+    const notes = evaluate("years since last_drink", stamped).basis.notes.join(
+      " ",
+    );
+    expect(notes).toContain("reduced to its calendar date in Asia/Jerusalem");
+    expect(notes).toContain("years since 2024-09-21");
+    // The timestamp's own zone decides the calendar date, not the worksheet zone.
+    const late = {
+      ...today,
+      now: "2026-09-17T23:30:00Z",
+      timezone: "Asia/Tokyo",
+    };
+    expect(value("days since 17 sep 2026 23:00", late)).toBe("1 days");
   });
 });
 
