@@ -20,3 +20,11 @@ Implement accepted, bounded issues through the project's Maestro workflow. Inspe
 - Never commit raw personal worksheets, private financial calculations, credentials, host inventory, or machine-specific paths. Use sanitized synthetic fixtures.
 - Do not install into live user applications, deploy services, modify host configuration, or restart services as part of a coding issue. Those steps require a separate explicit delivery scope.
 - Report verified results separately from assumptions and unverified UI behavior. Passing tests alone do not establish acceptance in the actual target application.
+
+## macOS delivery entrypoint
+
+Read [docs/macos-signing.md](docs/macos-signing.md) before Mac build/sign/install/publication work. Use the existing Developer ID identity and notary profile; never silently fall back to draft. Packaging signs a staged copy: install only from the final notarized DMG. Main may contain documentation without desktop runtime; use the exact approved source SHA.
+
+## Engineering handover — 2026-09-18
+
+Start with [docs/handover.md](docs/handover.md) for the portable Codex/Claude continuation prompt, subsystem map, release evidence, source/site branch split and remaining acceptance. Refresh later-session0.3.9 state before acting; documentation does not authorize installation or an implementation merge.

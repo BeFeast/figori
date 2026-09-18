@@ -26,7 +26,7 @@ Build a proposal from named values, explore a trip budget in multiple currencies
 
 Try the [consulting](site/examples/consulting-project.figori), [travel](site/examples/trip-budget.figori), and [calendar](site/examples/calendar-plan.figori) worksheets. Example values are illustrative; currency conversions use the dated snapshot shown in the app.
 
-[Download for macOS Apple silicon](https://github.com/BeFeast/figori/releases/download/v0.3.5/Figori-0.3.5-macos-arm64.dmg) · [Product website](https://figori.befeast.com) · [Public source](https://github.com/BeFeast/figori)
+[Download for macOS Apple silicon](https://github.com/BeFeast/figori/releases/download/v0.3.6/Figori-0.3.6-macos-arm64.dmg) · [Product website](https://figori.befeast.com) · [Public source](https://github.com/BeFeast/figori)
 
 ## Inspired by Numi
 
@@ -98,7 +98,8 @@ Unsupported syntax produces diagnostics: v0 does not promise arbitrary natural l
 
 **Figori** is a **BeFeast** product. **My Numi** was its working name. Existing compatibility identifiers, package names, data directories and the `my-numi` command are retained where needed so branding does not orphan saved worksheets or break existing integrations. Do not rename user storage manually.
 
-- [Standalone desktop app and build guide](docs/desktop-build.md)
+- [macOS build, signing, notarization and safe delivery](docs/macos-signing.md)
+- [Standalone desktop source build](docs/desktop-build.md)
 - [Brand assets and usage](docs/branding.md)
 - [Raycast package](packages/raycast/README.md)
 - [Terminal package](packages/tui/README.md)
@@ -106,3 +107,7 @@ Unsupported syntax produces diagnostics: v0 does not promise arbitrary natural l
 - [Canonical Forgejo development](https://git.oklabs.uk/BeFeast/figori)
 
 Forgejo remains the main development repository and owns issues, PRs, CI and releases. The designated public website is [figori.befeast.com](https://figori.befeast.com); [github.com/befeast/figori](https://github.com/befeast/figori) is the intended downstream public mirror for discovery. These are product destinations, not a migration of development to GitHub. Their public deployment is tracked separately; this branding change does not assert they are already live. Personal worksheets, account data and private planning history do not belong in the repository.
+
+## Engineering handover — 2026-09-18
+
+Start with [docs/handover.md](docs/handover.md) for the portable Codex/Claude continuation prompt, subsystem map, release evidence, source/site branch split and remaining acceptance. Refresh later-session0.3.9 state before acting; documentation does not authorize installation or an implementation merge.
