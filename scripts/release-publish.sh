@@ -86,10 +86,8 @@ for file in "$assets"/*; do
     fi
   fi
   status=$(api POST "/releases/$release_id/assets?name=$name" -F "attachment=@$file"); [[ $status == 201 ]] || fail "Uploading $name failed ($status)"
-  asset_id=$(jq -r .id "$body"); size=$(jq -r .size "$body"); url=$(jq -r .browser_download_url "$body")
+  asset_id=$(jq -r .id "$body"); size=$(jq -r .size "$body")
   [[ $size == $(bytes "$file") ]] || fail "Uploaded size mismatch for $name"
-  curl -sS -L -H @"$auth" -o "$work/readback" "$url"
-  [[ $(digest "$work/readback") == $(digest "$file") ]] || { echo "Readback digest mismatch for $name (asset $asset_id); draft retained" >&2; exit 1; }
   echo "Attached $name ($size bytes, asset $asset_id)"
 done
 
@@ -99,4 +97,17 @@ if [[ $was_draft == true ]]; then
 fi
 status=$(api GET "/releases/tags/$tag"); [[ $status == 200 ]] || fail "Reading published release failed ($status)"
 [[ $(jq -r .draft "$body") == false && $(jq -r .target_commitish "$body") == "$tag_commit" ]] || fail "Published release state is not the expected one"
+# Draft attachments are not downloadable with the run token, so the byte-for-byte
+# check happens once the release is public: every uploaded file is fetched
+# anonymously and compared with the local copy. A mismatch fails the job loudly.
+cp "$body" "$work/published.json"
+for file in "$assets"/*; do
+  [[ -f $file ]] || continue
+  name=$(basename "$file")
+  url=$(jq -r --arg n "$name" '.assets[] | select(.name == $n) | .browser_download_url' "$work/published.json")
+  [[ -n $url ]] || fail "Published release lacks asset $name"
+  curl -fsS -L -o "$work/readback" "$url" || fail "Anonymous download of $name failed"
+  [[ $(digest "$work/readback") == $(digest "$file") ]] || fail "Published asset $name differs from the local file"
+  echo "Verified $name after publication"
+done
 echo "Release $tag published at $(jq -r .html_url "$body") with $(jq -r '.assets | length' "$body") assets, target $tag_commit"
