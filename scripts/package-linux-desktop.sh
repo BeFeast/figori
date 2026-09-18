@@ -30,6 +30,7 @@ printf 'version=%s\narchitecture=x86_64\nformat=dynamic-linux-executable\n' "$ve
 (cd "$payload" && sha256sum figori-desktop figori.png install-linux-user.sh example.figori README.md SOURCE_COMMIT BUILD_INFO DEPENDENCIES.txt > SHA256SUMS)
 tar -czf "$out/$name.tar.gz" -C "$out" "$name"
 cp "$payload/SOURCE_COMMIT" "$out/SOURCE_COMMIT"
-printf 'version=%s\narchitecture=x86_64\npackage=dynamic-linux-executable\nrequirements=GTK3,WebKitGTK4.1,libsoup3,glibc2.39+\n' "$version" > "$out/PACKAGING_STATUS"
+floor=$(readelf --version-info "$binary" | grep -o 'GLIBC_[0-9.]*' | sort -Vu | tail -1)
+printf 'version=%s\narchitecture=x86_64\npackage=dynamic-linux-executable\nrequirements=GTK3,WebKitGTK4.1,libsoup3,glibc%s+\n' "$version" "${floor#GLIBC_}" > "$out/PACKAGING_STATUS"
 (cd "$out" && sha256sum "$name.tar.gz" SOURCE_COMMIT PACKAGING_STATUS > SHA256SUMS)
 echo "$out/$name.tar.gz"
