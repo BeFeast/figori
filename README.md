@@ -107,3 +107,7 @@ Unsupported syntax produces diagnostics: v0 does not promise arbitrary natural l
 - [Canonical Forgejo development](https://git.oklabs.uk/BeFeast/figori)
 
 Forgejo remains the main development repository and owns issues, PRs, CI and releases. The designated public website is [figori.befeast.com](https://figori.befeast.com); [github.com/befeast/figori](https://github.com/befeast/figori) is the intended downstream public mirror for discovery. These are product destinations, not a migration of development to GitHub. Their public deployment is tracked separately; this branding change does not assert they are already live. Personal worksheets, account data and private planning history do not belong in the repository.
+
+## Engineering handover — 2026-09-18
+
+Start with [docs/handover.md](docs/handover.md) for the portable Codex/Claude continuation prompt, subsystem map, release evidence, source/site branch split and remaining acceptance. Refresh later-session0.3.9 state before acting; documentation does not authorize installation or an implementation merge.
