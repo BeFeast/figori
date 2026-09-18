@@ -179,7 +179,7 @@ jobs:
           extra=()
           [[ $REPLACE_EXISTING == true ]] && extra+=(--replace)
           bash scripts/release-publish.sh --tag "$RELEASE_TAG" --assets "$RUNNER_TEMP/download/release-assets" \
-            --notes "$RUNNER_TEMP/RELEASE_NOTES.md" --title "Figori ${RELEASE_TAG#v} — Linux desktop preview" "${extra[@]}"
+            --notes "$RUNNER_TEMP/RELEASE_NOTES.md" --title "Figori ${RELEASE_TAG#v} — Linux desktop preview" ${extra[@]+"${extra[@]}"}
 
   macos:
     name: macOS image
@@ -242,9 +242,10 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
+          # ${arr[@]+...} keeps an empty array safe under set -u on the Mac's bash 3.2.
           extra=()
           [[ $REPLACE_EXISTING == true ]] && extra+=(--replace)
-          bash scripts/release-publish.sh --tag "$RELEASE_TAG" --assets "$RUNNER_TEMP/macos-assets" --attach-only "${extra[@]}"
+          bash scripts/release-publish.sh --tag "$RELEASE_TAG" --assets "$RUNNER_TEMP/macos-assets" --attach-only ${extra[@]+"${extra[@]}"}
       - name: Upload macOS assets as run artifact
         if: always()
         uses: https://code.forgejo.org/forgejo/upload-artifact@v4
