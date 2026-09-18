@@ -113,3 +113,7 @@ Forgejo owns issues, PRs, CI and releases. GitHub is a downstream mirror for bac
 ## macOS delivery documentation
 
 For an exact-source build, existing Developer ID identity/profile, app and DMG notarization, safe installation and publication, start with [the macOS delivery runbook](docs/macos-signing.md). Main carries this documentation without the full desktop runtime; use the approved source commit as described there.
+
+## Engineering handover — 2026-09-18
+
+Start with [docs/handover.md](docs/handover.md) for the portable Codex/Claude continuation prompt, subsystem map, release evidence, source/site branch split and remaining acceptance. Refresh later-session0.3.9 state before acting; documentation does not authorize installation or an implementation merge.
