@@ -1,5 +1,7 @@
 # Desktop prerelease publication
 
+> Since 0.3.10 the sequence below is automated by `.forgejo/workflows/release.yml`; see [release-automation.md](release-automation.md). This document remains the manual fallback and the definition of the publication rules the workflow implements.
+
 Desktop releases are separate from the earlier CLI/Raycast/Omarchy release set. A desktop publication must identify its actual platform and tested surface; do not describe a macOS zip as a new Linux build or claim complete Soulver/Numi parity.
 
 ## Immutable release input
