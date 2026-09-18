@@ -1,5 +1,7 @@
 # Desktop prerelease publication
 
+> Since 0.3.10 the sequence below is automated by `.forgejo/workflows/release.yml`; see [release-automation.md](release-automation.md). This document remains the manual fallback and the definition of the publication rules the workflow implements.
+
 Current macOS procedure: [build, Developer ID signing, notarization and safe delivery](macos-signing.md). The v0.3.0 ZIP procedure below is historical only. Current releases use the final signed/notarized/stapled Figori-VERSION-macos-arm64.dmg plus SOURCE_COMMIT, PACKAGING_STATUS and SHA256SUMS. Exclude notary ZIP/JSON diagnostics. Apply the same draft/readback/exact-tag sequence below to this current allowlist on Forgejo and downstream GitHub, then verify anonymous downloads on both hosts.
 
 ## Historical v0.3.0 record

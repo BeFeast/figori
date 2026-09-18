@@ -1,0 +1,288 @@
+# Release — build the desktop packages for a version tag and publish them as a
+# Forgejo prerelease, then mirror to GitHub when a mirror token is configured.
+#
+# Assets
+#   Figori-X.Y.Z-linux-amd64.deb, Figori-X.Y.Z-linux-x86_64.rpm   pinned Ubuntu 22.04
+#     container build (scripts/build-linux-packages.sh) plus the Ubuntu 24.04 /
+#     Fedora 44 container acceptance receipts (ACCEPTANCE_*.txt)
+#   Figori-X.Y.Z-linux-x86_64.tar.gz   per-user Omarchy archive packaged from the
+#     same binary (scripts/package-linux-desktop.sh)
+#   Figori-X.Y.Z-macos-arm64.dmg       attached by the macOS job AFTER the Linux
+#     publication; Developer ID signed and notarized only when the repository
+#     variables FIGORI_SIGNING_IDENTITY and FIGORI_NOTARY_PROFILE name credentials
+#     present on the runner, otherwise a -DRAFT-NOT-NOTARIZED image
+#   SOURCE_COMMIT, PACKAGING_STATUS*, SHA256SUMS*
+#
+# Triggers
+#   push of a stable tag vX.Y.Z by a person (a tag pushed with a run's automatic
+#     token never triggers a workflow on Forgejo). Tags with a suffix such as
+#     v0.4.0-rc.1 are ignored on push and only run through workflow_dispatch.
+#   workflow_dispatch  pick the tag; optionally build without publishing
+#     (publish=false uploads run artifacts only), skip macOS, or overwrite the
+#     assets of an already published release.
+#
+# Guards
+#   the tag must point at the checked-out commit and equal the desktop version in
+#   tauri.conf.json, package.json and Cargo.toml; every Linux asset must exist
+#   before anything is published; a published release is immutable unless
+#   replace_existing is set.
+#
+# Runners
+#   heavy          baldr host with Docker (Linux build, container acceptance)
+#   ubuntu-latest  isolated container on baldr (publication, mirror)
+#   macos          m4-laptop, native Apple silicon. Runs after the Linux
+#                  publication so an offline Mac never blocks the Linux release.
+
+name: Release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build, for example v0.4.0 (or v0.4.0-rc.1 for a rehearsal)
+        required: true
+        type: string
+      publish:
+        description: Publish the Forgejo release (false = build and upload run artifacts only)
+        type: boolean
+        default: true
+      include_macos:
+        description: Build the macOS image on the m4-laptop runner (must be online)
+        type: boolean
+        default: true
+      replace_existing:
+        description: Overwrite notes and assets of an already published release for this tag
+        type: boolean
+        default: false
+concurrency:
+  group: figori-release
+  cancel-in-progress: false
+permissions:
+  contents: write
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+  PUBLISH: ${{ inputs.publish }}
+  REPLACE_EXISTING: ${{ inputs.replace_existing }}
+
+jobs:
+  linux:
+    name: Linux packages
+    # Suffixed tags (rehearsals) never run on push; a person dispatches them.
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.ref_name, '-') }}
+    runs-on: heavy
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate release tag against the desktop version
+        run: bash scripts/release-validate-tag.sh "$RELEASE_TAG"
+      - name: Build DEB and RPM in the pinned Ubuntu 22.04 container
+        run: |
+          set -euo pipefail
+          docker version
+          bash scripts/build-linux-packages.sh "$RUNNER_TEMP/figori-packages"
+      - name: Verify Debian and RPM installation in disposable containers
+        run: |
+          set -euo pipefail
+          ubuntu='ubuntu:24.04@sha256:69cecf4bbf72d2d44a9eef1b71fb98c7fb973d78af11399deccef19beb008ad9'
+          fedora='fedora:44@sha256:43b29f65a41eb9c35e1cd5323e3bdf3b655c2357a9f4f1ff2f9c2798e5045d80'
+          docker pull "$ubuntu"
+          docker pull "$fedora"
+          deb=("$RUNNER_TEMP"/figori-packages/artifacts/*.deb)
+          rpm=("$RUNNER_TEMP"/figori-packages/artifacts/*.rpm)
+          bash scripts/test-linux-packages.sh "$ubuntu" "${deb[0]}" 2>&1 | tee "$RUNNER_TEMP/figori-packages/artifacts/ACCEPTANCE_UBUNTU24.txt"
+          bash scripts/test-linux-packages.sh "$fedora" "${rpm[0]}" 2>&1 | tee "$RUNNER_TEMP/figori-packages/artifacts/ACCEPTANCE_FEDORA44.txt"
+      - name: Package the Omarchy user archive from the same binary
+        run: |
+          set -euo pipefail
+          image=$(cat "$RUNNER_TEMP/figori-packages/artifacts/BUILDER_IMAGE")
+          mkdir -p "$RUNNER_TEMP/figori-omarchy"
+          # The packaging script needs git, file and readelf: all present in the
+          # builder image, none assumed on the runner host.
+          docker run --rm --name "figori-omarchy-$$" \
+            -v "$PWD:/repo" -v "$RUNNER_TEMP/figori-packages/artifacts:/input:ro" -v "$RUNNER_TEMP/figori-omarchy:/omarchy" \
+            "$image" bash -c 'git config --global --add safe.directory /repo && bash /repo/scripts/package-linux-desktop.sh /input/figori-desktop /omarchy/package'
+          docker run --rm -v "$RUNNER_TEMP/figori-omarchy:/omarchy" "$image" chown -R "$(id -u):$(id -g)" /omarchy
+          ls -la "$RUNNER_TEMP/figori-omarchy/package"
+      - name: Assemble release assets
+        run: |
+          set -euo pipefail
+          version=${RELEASE_TAG#v}; version=${version%%-*}
+          src="$RUNNER_TEMP/figori-packages/artifacts"
+          out="$RUNNER_TEMP/release-assets"
+          mkdir -p "$out"
+          cp "$src/Figori-$version-linux-amd64.deb" "$src/Figori-$version-linux-x86_64.rpm" "$src/SOURCE_COMMIT" "$src/PACKAGING_STATUS" \
+             "$src/ACCEPTANCE_UBUNTU24.txt" "$src/ACCEPTANCE_FEDORA44.txt" "$out/"
+          cp "$RUNNER_TEMP/figori-omarchy/package/Figori-$version-linux-x86_64.tar.gz" "$out/"
+          cp "$RUNNER_TEMP/figori-omarchy/package/PACKAGING_STATUS" "$out/PACKAGING_STATUS_OMARCHY"
+          cmp "$src/SOURCE_COMMIT" "$RUNNER_TEMP/figori-omarchy/package/SOURCE_COMMIT"
+          test "$(cat "$out/SOURCE_COMMIT")" = "$(git rev-parse HEAD)"
+          grep -q '^FAIL' "$out"/ACCEPTANCE_*.txt && { echo 'Container acceptance recorded a failure' >&2; exit 1; }
+          (cd "$out" && sha256sum Figori-* SOURCE_COMMIT PACKAGING_STATUS PACKAGING_STATUS_OMARCHY ACCEPTANCE_UBUNTU24.txt ACCEPTANCE_FEDORA44.txt > SHA256SUMS && cat SHA256SUMS)
+      - name: Upload release assets and build logs
+        if: always()
+        uses: https://code.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: figori-release-linux-${{ inputs.tag || github.ref_name }}
+          path: |
+            ${{ runner.temp }}/release-assets/
+            ${{ runner.temp }}/figori-packages/build.log
+            ${{ runner.temp }}/figori-packages/builder.log
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    name: Publish Forgejo release
+    needs: linux
+    if: ${{ inputs.publish != false && inputs.publish != 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: https://code.forgejo.org/forgejo/download-artifact@v4
+        with:
+          name: figori-release-linux-${{ inputs.tag || github.ref_name }}
+          path: ${{ runner.temp }}/download
+      - name: Verify the asset set
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/download/release-assets"
+          version=${RELEASE_TAG#v}; version=${version%%-*}
+          for f in "Figori-$version-linux-amd64.deb" "Figori-$version-linux-x86_64.rpm" "Figori-$version-linux-x86_64.tar.gz" SOURCE_COMMIT PACKAGING_STATUS PACKAGING_STATUS_OMARCHY ACCEPTANCE_UBUNTU24.txt ACCEPTANCE_FEDORA44.txt SHA256SUMS; do
+            test -s "$f" || { echo "missing release asset: $f" >&2; exit 1; }
+          done
+          sha256sum -c SHA256SUMS
+          test "$(cat SOURCE_COMMIT)" = "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)"
+      - name: Write release notes
+        run: |
+          set -euo pipefail
+          bash scripts/release-notes.sh "$RELEASE_TAG" "$RUNNER_TEMP/download/release-assets" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_NUMBER" > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          cat "$RUNNER_TEMP/RELEASE_NOTES.md"
+      - name: Create and publish the release
+        env:
+          FORGEJO_TOKEN: ${{ github.token }}
+          FORGEJO_API: ${{ github.server_url }}/api/v1
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          extra=()
+          [[ $REPLACE_EXISTING == true ]] && extra+=(--replace)
+          bash scripts/release-publish.sh --tag "$RELEASE_TAG" --assets "$RUNNER_TEMP/download/release-assets" \
+            --notes "$RUNNER_TEMP/RELEASE_NOTES.md" --title "Figori ${RELEASE_TAG#v} — Linux desktop preview" ${extra[@]+"${extra[@]}"}
+
+  macos:
+    name: macOS image
+    needs: [linux, publish]
+    if: ${{ !cancelled() && needs.linux.result == 'success' && (needs.publish.result == 'success' || needs.publish.result == 'skipped') && inputs.include_macos != false && inputs.include_macos != 'false' }}
+    runs-on: macos
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    env:
+      FIGORI_SIGNING_IDENTITY: ${{ vars.FIGORI_SIGNING_IDENTITY }}
+      FIGORI_NOTARY_PROFILE: ${{ vars.FIGORI_NOTARY_PROFILE }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify existing host toolchain
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.local/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$PATH"
+          printf '%s\n' "$HOME/.local/bin" "$HOME/.bun/bin" "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          test "$(uname -s)" = Darwin
+          test "$(uname -m)" = arm64
+          xcodebuild -version
+          bun --version
+          cargo --version
+          jq --version
+          bash scripts/release-validate-tag.sh "$RELEASE_TAG"
+      - name: Build application
+        run: |
+          set -euo pipefail
+          bun install --frozen-lockfile
+          bun run --cwd packages/desktop typecheck
+          bun run --cwd packages/desktop test
+          bun run --cwd packages/desktop tauri build --bundles app
+          test -d packages/desktop/src-tauri/target/release/bundle/macos/Figori.app
+      - name: Package disk image
+        run: |
+          set -euo pipefail
+          mode=draft
+          if [[ -n $FIGORI_SIGNING_IDENTITY && -n $FIGORI_NOTARY_PROFILE ]]; then
+            security find-identity -v -p codesigning | grep -Fq "$FIGORI_SIGNING_IDENTITY" || { echo 'Configured signing identity is not available to this runner session' >&2; exit 1; }
+            mode=release
+          else
+            echo 'No signing identity/notary profile configured (repository variables FIGORI_SIGNING_IDENTITY, FIGORI_NOTARY_PROFILE): producing a DRAFT image'
+          fi
+          bash scripts/package-macos-dmg.sh "$mode" "$PWD/packages/desktop/src-tauri/target/release/bundle/macos/Figori.app" "$RUNNER_TEMP/dmg" "$(git rev-parse HEAD)"
+          out="$RUNNER_TEMP/macos-assets"; mkdir -p "$out"
+          cp "$RUNNER_TEMP"/dmg/Figori-*.dmg "$out/"
+          cp "$RUNNER_TEMP/dmg/PACKAGING_STATUS" "$out/PACKAGING_STATUS_MACOS"
+          (cd "$out" && shasum -a 256 Figori-*.dmg PACKAGING_STATUS_MACOS > SHA256SUMS-macos-arm64.txt && cat SHA256SUMS-macos-arm64.txt)
+      - name: Attach to the published release
+        if: ${{ needs.publish.result == 'success' }}
+        env:
+          FORGEJO_TOKEN: ${{ github.token }}
+          FORGEJO_API: ${{ github.server_url }}/api/v1
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # ${arr[@]+...} keeps an empty array safe under set -u on the Mac's bash 3.2.
+          extra=()
+          [[ $REPLACE_EXISTING == true ]] && extra+=(--replace)
+          bash scripts/release-publish.sh --tag "$RELEASE_TAG" --assets "$RUNNER_TEMP/macos-assets" --attach-only ${extra[@]+"${extra[@]}"}
+      - name: Upload macOS assets as run artifact
+        if: always()
+        uses: https://code.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: figori-release-macos-${{ inputs.tag || github.ref_name }}
+          path: ${{ runner.temp }}/macos-assets/
+          if-no-files-found: error
+          retention-days: 30
+
+  mirror:
+    name: Mirror to GitHub
+    needs: [publish, macos]
+    # Runs after macOS finished or was skipped, so the mirror carries every asset
+    # the Forgejo release has at that moment. Without a mirror token it only reports.
+    if: ${{ !cancelled() && needs.publish.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Mirror the Forgejo release
+        env:
+          GITHUB_MIRROR_TOKEN: ${{ secrets.GITHUB_MIRROR_TOKEN }}
+          FORGEJO_API: ${{ github.server_url }}/api/v1
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [[ -z ${GITHUB_MIRROR_TOKEN:-} ]]; then
+            echo 'Secret GITHUB_MIRROR_TOKEN is not configured; the GitHub mirror release must be created manually.'
+            exit 0
+          fi
+          release=$(curl -fsS "$FORGEJO_API/repos/$REPO/releases/tags/$RELEASE_TAG")
+          dir="$RUNNER_TEMP/mirror"; mkdir -p "$dir"
+          printf '%s' "$release" | jq -r '.assets[] | "\(.browser_download_url) \(.name)"' | while read -r url name; do curl -fsSL -o "$dir/$name" "$url"; done
+          (cd "$dir" && sha256sum -c SHA256SUMS && { [[ ! -f SHA256SUMS-macos-arm64.txt ]] || sha256sum -c SHA256SUMS-macos-arm64.txt; })
+          printf '%s' "$release" | jq -r .body > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          bash scripts/release-mirror-github.sh --tag "$RELEASE_TAG" --assets "$dir" --notes "$RUNNER_TEMP/RELEASE_NOTES.md" --title "$(printf '%s' "$release" | jq -r .name)"
