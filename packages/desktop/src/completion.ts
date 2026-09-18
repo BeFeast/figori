@@ -131,7 +131,14 @@ export function worksheetCompletions(
   const variables: Completion[] = [];
   for (const name of names) {
     const value = evaluated.variables[name];
-    if (dateOperand && value && value.kind !== "date") continue;
+    // Core reduces a timestamp to its calendar date for since/until questions.
+    if (
+      dateOperand &&
+      value &&
+      value.kind !== "date" &&
+      value.kind !== "datetime"
+    )
+      continue;
     const formatted = value ? formatValue(value) : undefined;
     variables.push({
       label: name,

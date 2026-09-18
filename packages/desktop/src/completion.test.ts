@@ -41,6 +41,14 @@ test("conversion and date-question contexts restrict suggestions to relevant val
   expect(dates).not.toContain("price");
   expect(dates).not.toContain("ln");
 });
+test("timestamp variables stay completable after since/until anywhere on the line", () => {
+  const doc =
+    "no_buhlo = 21 september 2024 21:00\ndays since no_buhlo\nmonths since no";
+  const labels = complete(doc)!.options.map((o) => o.label);
+  expect(labels).toContain("no_buhlo");
+  expect(labels).toContain("now");
+  expect(labels).not.toContain("ln");
+});
 test("comments and definition names stay ordinary typing; CtrlSpace can open an empty expression", () => {
   expect(complete("// notes pr")).toBeNull();
   expect(complete("# Heading")).toBeNull();
@@ -86,12 +94,24 @@ test("Markdown code fences do not offer calculator completions", () => {
 });
 
 test("Numi-origin native documents keep fenced declarations and completions inert", () => {
- for(const format of ["numi", "markdown"] as const){
-  const doc="visible = 12\n~~~\nhidden = 99\npri\n~~~\nvi";
-  const inside=doc.indexOf("pri")+3;
-  expect(worksheetCompletions(new CompletionContext(EditorState.create({doc}),inside,true),{},format)).toBeNull();
-  const result=worksheetCompletions(new CompletionContext(EditorState.create({doc}),doc.length,true),{},format)!;
-  expect(result.options.some(o=>o.label==="hidden")).toBe(false);
-  expect(result.options.find(o=>o.label==="visible")?.detail).toBe("12");
- }
+  for (const format of ["numi", "markdown"] as const) {
+    const doc = "visible = 12\n~~~\nhidden = 99\npri\n~~~\nvi";
+    const inside = doc.indexOf("pri") + 3;
+    expect(
+      worksheetCompletions(
+        new CompletionContext(EditorState.create({ doc }), inside, true),
+        {},
+        format,
+      ),
+    ).toBeNull();
+    const result = worksheetCompletions(
+      new CompletionContext(EditorState.create({ doc }), doc.length, true),
+      {},
+      format,
+    )!;
+    expect(result.options.some((o) => o.label === "hidden")).toBe(false);
+    expect(result.options.find((o) => o.label === "visible")?.detail).toBe(
+      "12",
+    );
+  }
 });
