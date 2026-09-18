@@ -109,3 +109,7 @@ Unsupported syntax produces diagnostics: v0 does not promise arbitrary natural l
 - [Canonical Forgejo development](https://git.oklabs.uk/BeFeast/figori)
 
 Forgejo owns issues, PRs, CI and releases. GitHub is a downstream mirror for backup and discovery. Personal worksheets, account data and private planning history do not belong in the repository.
+
+## macOS delivery documentation
+
+For an exact-source build, existing Developer ID identity/profile, app and DMG notarization, safe installation and publication, start with [the macOS delivery runbook](docs/macos-signing.md). Main carries this documentation without the full desktop runtime; use the approved source commit as described there.
