@@ -1,6 +1,6 @@
 # Figori Linux DEB and RPM previews
 
-Version 0.3.8 supplies Linux x86_64 packages only. AppImage is deferred. The macOS 0.3.6 DMG and Omarchy 0.3.7 user archive remain separate previews.
+Version 0.3.9 supplies Linux x86_64 packages only. It fixes calendar `since`/`until` questions on timestamp values. AppImage is deferred. The macOS 0.3.6 DMG and Omarchy 0.3.7 user archive remain separate previews.
 
 ## Requirements and build baseline
 
@@ -15,13 +15,13 @@ Download the package and SHA256SUMS from the same release and verify the checksu
 On Ubuntu:
 
 ```sh
-sudo apt install ./Figori-0.3.8-linux-amd64.deb
+sudo apt install ./Figori-0.3.9-linux-amd64.deb
 ```
 
 On Fedora:
 
 ```sh
-sudo dnf install ./Figori-0.3.8-linux-x86_64.rpm
+sudo dnf install ./Figori-0.3.9-linux-x86_64.rpm
 ```
 
 The package name and executable are `figori-desktop`; the visible app name is Figori. Launch it from the desktop launcher or run `/usr/bin/figori-desktop`. Do not use force-install options to bypass failed dependencies.
