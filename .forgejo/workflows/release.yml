@@ -271,13 +271,15 @@ jobs:
           persist-credentials: false
       - name: Mirror the Forgejo release
         env:
-          GITHUB_MIRROR_TOKEN: ${{ secrets.GITHUB_MIRROR_TOKEN }}
+          # Forgejo rejects secret names that start with GITHUB_, so the secret is
+          # MIRROR_GITHUB_TOKEN; the script keeps reading GITHUB_MIRROR_TOKEN.
+          GITHUB_MIRROR_TOKEN: ${{ secrets.MIRROR_GITHUB_TOKEN }}
           FORGEJO_API: ${{ github.server_url }}/api/v1
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           if [[ -z ${GITHUB_MIRROR_TOKEN:-} ]]; then
-            echo 'Secret GITHUB_MIRROR_TOKEN is not configured; the GitHub mirror release must be created manually.'
+            echo 'Secret MIRROR_GITHUB_TOKEN is not configured; the GitHub mirror release must be created manually.'
             exit 0
           fi
           release=$(curl -fsS "$FORGEJO_API/repos/$REPO/releases/tags/$RELEASE_TAG")

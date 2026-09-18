@@ -17,7 +17,7 @@ The macOS job signs and notarizes only when the repository variables `FIGORI_SIG
 
 ## GitHub mirror
 
-When the repository secret `GITHUB_MIRROR_TOKEN` (fine-grained token with contents write on `BeFeast/figori`) exists, the mirror job pushes the tag to GitHub and republishes the Forgejo release there with the same notes and assets. Without it the job reports and exits; the GitHub release is then a manual step.
+When the repository secret `MIRROR_GITHUB_TOKEN` (fine-grained token with contents write on `BeFeast/figori`) exists, the mirror job pushes the tag to GitHub and republishes the Forgejo release there with the same notes and assets. Without it the job reports and exits; the GitHub release is then a manual step.
 
 ## Scripts
 
