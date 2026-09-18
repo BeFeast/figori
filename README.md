@@ -26,7 +26,7 @@ Build a proposal from named values, explore a trip budget in multiple currencies
 
 Try the [consulting](site/examples/consulting-project.figori), [travel](site/examples/trip-budget.figori), and [calendar](site/examples/calendar-plan.figori) worksheets. Example values are illustrative; currency conversions use the dated snapshot shown in the app.
 
-[Download for macOS Apple silicon](https://github.com/BeFeast/figori/releases/download/v0.3.5/Figori-0.3.5-macos-arm64.dmg) · [Product website](https://figori.befeast.com) · [Public source](https://github.com/BeFeast/figori)
+[Download for macOS Apple silicon](https://github.com/BeFeast/figori/releases/download/v0.3.6/Figori-0.3.6-macos-arm64.dmg) · [Product website](https://figori.befeast.com) · [Public source](https://github.com/BeFeast/figori)
 
 ## Inspired by Numi
 
@@ -98,7 +98,8 @@ Unsupported syntax produces diagnostics: v0 does not promise arbitrary natural l
 
 **Figori** is a **BeFeast** product. **My Numi** was its working name. Existing compatibility identifiers, package names, data directories and the `my-numi` command are retained where needed so branding does not orphan saved worksheets or break existing integrations. Do not rename user storage manually.
 
-- [Standalone desktop app and build guide](docs/desktop-build.md)
+- [macOS build, signing, notarization and safe delivery](docs/macos-signing.md)
+- [Standalone desktop source build](docs/desktop-build.md)
 - [Brand assets and usage](docs/branding.md)
 - [Raycast package](packages/raycast/README.md)
 - [Terminal package](packages/tui/README.md)

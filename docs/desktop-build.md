@@ -1,7 +1,7 @@
 # Desktop source build
 
 The standalone Figori app uses a Tauri shell and the shared TypeScript evaluator.
-This is an unsigned local application build, not a notarized distribution.
+This page covers the unsigned source stage only. For current build, signing and safe installation, use [the macOS delivery runbook](macos-signing.md). Packaging signs a staged copy; install only from the final DMG.
 Raycast and Omarchy remain separate adapters.
 
 ## macOS requirements
@@ -65,5 +65,4 @@ saved copy matched the original bytes. Captured historical results stayed hidden
 while current results were evaluated. Explicit rate refresh cached the ECB
 2026-09-16 snapshot and evaluated 100 ILS as 32.99 USD.
 
-These checks cover the macOS source build. Linux standalone UI, idunn installation,
-signing/notarization and a manual Forgejo desktop workflow run remain unverified.
+These are historical source-build checks, not current release status. Later signed/notarized macOS delivery is documented in [macos-signing.md](macos-signing.md); Linux acceptance lives in its platform release receipts. The manual desktop workflow is an unsigned build lane.
