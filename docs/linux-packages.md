@@ -1,6 +1,6 @@
 # Figori Linux DEB and RPM previews
 
-Version 0.3.9 supplies Linux x86_64 packages only. It fixes calendar `since`/`until` questions on timestamp values. AppImage is deferred. The macOS 0.3.6 DMG and Omarchy 0.3.7 user archive remain separate previews.
+Version 0.3.10 supplies Linux x86_64 packages. It converts every currency ECB publishes against ILS (PLN, CHF, JPY and others) and keeps timestamp variables completable after `since`/`until`. AppImage is deferred. The same release carries the Omarchy archive and, when the macOS runner is online, the signed DMG.
 
 ## Requirements and build baseline
 
@@ -15,13 +15,13 @@ Download the package and SHA256SUMS from the same release and verify the checksu
 On Ubuntu:
 
 ```sh
-sudo apt install ./Figori-0.3.9-linux-amd64.deb
+sudo apt install ./Figori-0.3.10-linux-amd64.deb
 ```
 
 On Fedora:
 
 ```sh
-sudo dnf install ./Figori-0.3.9-linux-x86_64.rpm
+sudo dnf install ./Figori-0.3.10-linux-x86_64.rpm
 ```
 
 The package name and executable are `figori-desktop`; the visible app name is Figori. Launch it from the desktop launcher or run `/usr/bin/figori-desktop`. Do not use force-install options to bypass failed dependencies.
