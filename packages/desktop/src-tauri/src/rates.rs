@@ -3,8 +3,18 @@ use chrono::{NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, path::Path};
 
-const ENDPOINT: &str =
-    "https://api.frankfurter.dev/v2/providers/ecb/rates?base=ils&quotes=usd,eur,gbp";
+// Every quote ECB publishes against ILS; keep in sync with `currencyCodes` in packages/core.
+const QUOTES: [&str; 29] = [
+    "AUD", "BRL", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD", "HUF", "IDR", "INR",
+    "ISK", "JPY", "KRW", "MXN", "MYR", "NOK", "NZD", "PHP", "PLN", "RON", "SEK", "SGD", "THB",
+    "TRY", "USD", "ZAR",
+];
+fn endpoint() -> String {
+    format!(
+        "https://api.frankfurter.dev/v2/providers/ecb/rates?base=ils&quotes={}",
+        QUOTES.join(",").to_lowercase()
+    )
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
@@ -32,7 +42,7 @@ fn qualify(snapshot: Snapshot, today: NaiveDate) -> Result<RateState, String> {
             .parse::<f64>()
             .is_ok_and(|rate| rate.is_finite() && rate > 0.0)
     });
-    let incomplete = ["USD", "EUR", "GBP"]
+    let incomplete = QUOTES
         .iter()
         .any(|code| !snapshot.rates.contains_key(*code));
     if snapshot.base != "ILS"
@@ -86,14 +96,17 @@ fn parse_provider(text: &str, today: NaiveDate) -> Result<RateState, String> {
     for row in response {
         let quote = row.quote.to_uppercase();
         if row.base.to_uppercase() != "ILS"
-            || !["USD", "EUR", "GBP"].contains(&quote.as_str())
+            || !QUOTES.contains(&quote.as_str())
             || row.date != date
             || rates.insert(quote, row.rate.to_string()).is_some()
         {
             return Err("Unexpected, duplicate, or inconsistent exchange-rate pair".into());
         }
     }
-    if rates.len() != 3 {
+    if ["USD", "EUR", "GBP"]
+        .iter()
+        .any(|code| !rates.contains_key(*code))
+    {
         return Err("Incomplete exchange-rate response".into());
     }
     qualify(
@@ -114,7 +127,7 @@ pub async fn refresh(data: &Path) -> RateState {
             .timeout(std::time::Duration::from_secs(12))
             .build()
             .map_err(|e| e.to_string())?
-            .get(ENDPOINT)
+            .get(endpoint())
             .send()
             .await
             .map_err(|e| e.to_string())?
@@ -163,8 +176,29 @@ pub async fn refresh(data: &Path) -> RateState {
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn row(quote: &str, rate: &str) -> String {
+        format!(r#"{{"date":"2026-09-16","base":"ILS","quote":"{quote}","rate":{rate}}}"#)
+    }
+    fn legacy_fixture() -> String {
+        format!(
+            "[{},{},{}]",
+            row("USD", "0.3299"),
+            row("EUR", "0.287"),
+            row("GBP", "0.247")
+        )
+    }
     fn fixture() -> String {
-        r#"[{"date":"2026-09-16","base":"ILS","quote":"USD","rate":0.3299},{"date":"2026-09-16","base":"ILS","quote":"EUR","rate":0.287},{"date":"2026-09-16","base":"ILS","quote":"GBP","rate":0.247}]"#.into()
+        let rows: Vec<String> = QUOTES
+            .iter()
+            .map(|quote| match *quote {
+                "USD" => row(quote, "0.3299"),
+                "EUR" => row(quote, "0.287"),
+                "GBP" => row(quote, "0.247"),
+                "PLN" => row(quote, "1.2085"),
+                _ => row(quote, "2.5"),
+            })
+            .collect();
+        format!("[{}]", rows.join(","))
     }
     #[test]
     fn provider_batch_validates_amounts_pairs_and_one_publication_date() {
@@ -175,6 +209,8 @@ mod tests {
         assert_eq!(snapshot.rates["USD"], "0.3299");
         assert_eq!(snapshot.rates["EUR"], "0.287");
         assert_eq!(snapshot.rates["GBP"], "0.247");
+        assert_eq!(snapshot.rates["PLN"], "1.2085");
+        assert_eq!(snapshot.rates.len(), QUOTES.len());
         for text in [
             fixture().replace("2026-09-16", "2026-09-18"),
             fixture().replacen("2026-09-16", "2026-09-15", 1),
@@ -193,6 +229,21 @@ mod tests {
                 .status,
             "stale"
         );
+    }
+    #[test]
+    fn response_without_newer_currencies_is_usable_but_stale_with_refresh_hint() {
+        let today = NaiveDate::from_ymd_opt(2026, 9, 17).unwrap();
+        let state = parse_provider(&legacy_fixture(), today).unwrap();
+        assert_eq!(state.status, "stale");
+        assert!(state.error.unwrap().contains("Refresh"));
+        assert!(!state.snapshot.unwrap().rates.contains_key("PLN"));
+    }
+    #[test]
+    fn endpoint_requests_every_supported_quote() {
+        let url = endpoint();
+        assert!(url.contains("base=ils&"));
+        assert!(url.contains("pln") && url.contains("chf") && url.contains("usd"));
+        assert!(!url.contains("quotes=ils") && !url.contains(",ils"));
     }
     #[test]
     fn legacy_usd_cache_is_retained_with_refresh_hint_and_added_rates_are_validated() {

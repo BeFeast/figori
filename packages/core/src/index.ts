@@ -93,20 +93,26 @@ const units = new Set([
   "kg",
   "g",
 ]);
+// ILS plus every quote ECB publishes against it through Frankfurter.
+export const currencyCodes = [
+  "AUD", "BRL", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP", "HKD",
+  "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KRW", "MXN", "MYR", "NOK",
+  "NZD", "PHP", "PLN", "RON", "SEK", "SGD", "THB", "TRY", "USD", "ZAR",
+] as const;
 const currencyAliases: Record<string, string> = {
-  USD: "USD",
+  ...Object.fromEntries(currencyCodes.map((code) => [code, code])),
   $: "USD",
-  EUR: "EUR",
   "€": "EUR",
-  ILS: "ILS",
   NIS: "ILS",
   "₪": "ILS",
-  GBP: "GBP",
   "£": "GBP",
 };
 const currency = (s: string) =>
   currencyAliases[s.toUpperCase()] ?? s.toUpperCase();
-const currencyToken = /^(?:USD\b|EUR\b|ILS\b|NIS\b|GBP\b|[$€₪£])/i;
+const currencyToken = new RegExp(
+  `^(?:(?:${[...currencyCodes, "NIS"].join("|")})\\b|[$€₪£])`,
+  "i",
+);
 const isCurrency = (s: string) =>
   Object.hasOwn(currencyAliases, s.toUpperCase());
 const canonical = (s: string) =>

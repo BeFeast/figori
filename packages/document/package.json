@@ -12,6 +12,7 @@
   },
   "private": true,
   "dependencies": {
+    "@my-numi/core": "workspace:*",
     "smol-toml": "1.8.0"
   }
 }
