@@ -1,3 +1,10 @@
+import { currencyCodes } from "@my-numi/core";
+
+// "try" is an ordinary word in headings ("Ideas to try"); only uppercase TRY names the lira here.
+const currencyWords = [...currencyCodes.filter((code) => code !== "TRY"), "NIS"].join("|");
+const mentionsCurrency = (text: string, before: string, after: string) =>
+  new RegExp(`${before}(?:${currencyWords})${after}`, "i").test(text)
+  || new RegExp(`${before}TRY${after}`).test(text);
 export type SourceFormat = "numi" | "markdown";
 export interface WorksheetSettings {
   timezone: string;
@@ -92,11 +99,12 @@ function parseLine(raw: string, ending: string, format: SourceFormat): DocumentL
   // call, date, known relative date, assignment or captured result is still math.
   const plainHeading = /^[\p{L}][\p{L}\p{N}\s/()'’"—–#\-]*$/u.test(text.replace(/\?$/, ""))
     && !/^(?:years?|months?|weeks?|days?)\s+(?:since|until)\b/i.test(text)
-    && !/\bto\s+(?:USD|EUR|ILS|NIS|GBP|[$€₪£])(?:\s|$)/i.test(text)
+    && !/\bto\s+[$€₪£](?:\s|$)/.test(text)
+    && !mentionsCurrency(text, "\\bto\\s+", "(?:\\s|$)")
     && !/^[A-Za-z][A-Za-z ]*?\s+was\s+(?:[$€₪£]|[+\-(\d])/i.test(text)
     && !/\p{L}\(/u.test(text)
     && !/\b(?:today|now|previous|in)\b/i.test(text)
-    && !(/\d/.test(text) && /\b(?:years?|months?|weeks?|days?|hours?|minutes?|seconds?|nis|ils|usd|eur|gbp)\b/i.test(text));
+    && !(/\d/.test(text) && (/\b(?:years?|months?|weeks?|days?|hours?|minutes?|seconds?)\b/i.test(text) || mentionsCurrency(text, "\\b", "\\b")));
   if (!line.assignment && !line.label && !line.historicalResult && (plainHeading || /:$/.test(text))) {
     line.kind = "heading";
   }

@@ -50,7 +50,7 @@ Calendar rules:
 Currency and parser work:
 - USD/usd/$ and EUR/eur/€ aliases share typed ISO identity; ILS/NIS/nis/₪ display ₪. Canonical USD/EUR results use $/€; negatives retain conventional sign placement.
 - Currency annotations and in/to conversion work consistently through document classification. A dimensionless amount converted to money must not silently assume ILS.
-- Native ECB/Frankfurter refresh/cache supplies dated ILS-base USD/EUR/GBP values; errors and source/as-of remain visible. A legacy USD-only cache is not equivalent to a full refreshed snapshot. Provider refresh is explicit; no worksheet text is transmitted.
+- Native ECB/Frankfurter refresh/cache supplies dated ILS-base values for every ECB quote (29 currencies, list shared by `currencyCodes` in core and `QUOTES` in `rates.rs`); a cache missing any of them is stale with a refresh hint; errors and source/as-of remain visible. A legacy USD-only cache is not equivalent to a full refreshed snapshot. Provider refresh is explicit; no worksheet text is transmitted.
 - English thousands grouping was fixed for inputs such as $2,659.57 to NIS. Malformed grouping and function commas require distinct grammar handling.
 - Percentage metadata survives variables, unary operations, scalar arithmetic and serialized values. Covered cases include 15% of 490 = 73.5, 55 + tip_rate where tip_rate=25% = 68.75, and 55 + (25% * 2) = 82.5.
 - Natural-language annotations are deliberately bounded; examples such as $3k earnings divided by 5 people and lunch was $55 + 25% tip do not establish arbitrary prose understanding. Misspelled variables must remain errors.

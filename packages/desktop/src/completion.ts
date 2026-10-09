@@ -7,6 +7,7 @@ import {
 } from "@codemirror/autocomplete";
 import { evaluateDocument, importDocument } from "@my-numi/document";
 import {
+  currencyCodes,
   evaluateExpression,
   formatValue,
   type EvaluationContext,
@@ -26,7 +27,7 @@ const units = [
   "kg",
   "g",
 ].map((label) => ({ label, type: "unit", detail: "Unit conversion" }));
-const currencies = ["USD", "ILS", "NIS", "EUR", "GBP"].map((label) => ({
+const currencies = [...currencyCodes, "NIS"].map((label) => ({
   label,
   type: "unit",
   detail: "Currency · conversion needs matching rates",
