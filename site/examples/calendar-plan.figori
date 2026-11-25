@@ -1,0 +1,32 @@
++++
+format = "figori"
+schema_version = 1
+id = "fa8e6c29-613b-4737-a9b4-69687268e6df"
+source_format = "markdown"
+line_ids = [ "b06dec91-fb4a-4405-8789-c349eec7e244", "7f6a1411-c86d-4ef6-9c74-5d8bb8644ca0", "7a4d253f-e497-4c9d-bb35-ffc3922b8aea", "e12b1246-c025-4046-963e-587f21863735", "f3ab4d5f-cd82-4c78-b3ac-43b73a0eb5fb", "e91679e7-b2c4-4954-8007-32942d6fe595", "42380d34-6d58-48e5-b946-c49f7a3afa91", "834c869c-0a74-480f-9ee7-37955e1bce34", "4b31d470-0fc3-4f56-b36e-bc2f00695c35", "2f2cd738-e54c-4257-b759-48a5bae70431", "f8787520-d21d-4a6b-9194-35b81d1e64a4", "e40e2bf8-1450-4f93-a7ab-e8a170117e2e", "bae5f7d2-c721-41c1-9690-6973722b415c", "b8bc28f7-1b4c-49eb-82d8-f6b0bc08caf8", "b710a380-cc2a-44a0-87c8-c725bc7bb61e", "b32844f8-b7c2-439c-8f1b-24bbb6491051", "3ca5a32a-bf00-4120-b301-006217045c14" ]
+
+[settings]
+timezone = "UTC"
+billing = "completed"
+
+[settings.anchor]
+mode = "fixed"
+date = "2027-01-15"
++++
+# A launch with dates attached
+kickoff = 15 jan 2027
+launch = kickoff + 3 months
+review = launch - 14 days
+
+## Time for the work
+(launch - kickoff) in weeks
+(launch - kickoff) in days
+(review - kickoff) in days
+
+### Make recurring costs explicit
+monthly = $1,800
+((launch - kickoff) in months) * monthly
+
+#### A second phase
+phase_two = launch + 6 weeks
+(phase_two - kickoff) in weeks

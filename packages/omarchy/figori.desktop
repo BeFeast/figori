@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Figori
+Comment=Local calendar-aware calculator worksheets
+Exec=figori --tui
+Terminal=true
+Categories=Utility;Office;
+Icon=figori
+Keywords=calculator;calendar;worksheet;figori;numi;

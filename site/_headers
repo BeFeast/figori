@@ -1,0 +1,4 @@
+/examples/*.figori
+  Content-Type: text/plain; charset=utf-8
+  Content-Disposition: attachment
+  X-Content-Type-Options: nosniff

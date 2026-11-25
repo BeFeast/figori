@@ -1,0 +1,56 @@
+name: Linux DEB and RPM (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Full mirrored source commit to build
+        required: true
+        type: string
+concurrency:
+  group: figori-linux-packages
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  packages:
+    runs-on: heavy
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Validate immutable source input
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: '[[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]'
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - name: Build in pinned Ubuntu 22.04 container
+        run: |
+          set -euo pipefail
+          docker version
+          bash scripts/build-linux-packages.sh "$RUNNER_TEMP/figori-packages"
+      - name: Verify Debian and RPM installation in disposable containers
+        run: |
+          set -euo pipefail
+          ubuntu='ubuntu:24.04@sha256:69cecf4bbf72d2d44a9eef1b71fb98c7fb973d78af11399deccef19beb008ad9'
+          fedora='fedora:44@sha256:43b29f65a41eb9c35e1cd5323e3bdf3b655c2357a9f4f1ff2f9c2798e5045d80'
+          docker pull "$ubuntu"
+          docker pull "$fedora"
+          deb=("$RUNNER_TEMP"/figori-packages/artifacts/*.deb)
+          rpm=("$RUNNER_TEMP"/figori-packages/artifacts/*.rpm)
+          bash scripts/test-linux-packages.sh "$ubuntu" "${deb[0]}" 2>&1 | tee "$RUNNER_TEMP/figori-packages/artifacts/ACCEPTANCE_UBUNTU24.txt"
+          bash scripts/test-linux-packages.sh "$fedora" "${rpm[0]}" 2>&1 | tee "$RUNNER_TEMP/figori-packages/artifacts/ACCEPTANCE_FEDORA44.txt"
+      - name: Upload packages and provenance
+        if: always()
+        uses: https://code.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: figori-linux-packages-${{ inputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/figori-packages/artifacts/
+            ${{ runner.temp }}/figori-packages/build.log
+            ${{ runner.temp }}/figori-packages/builder.log
+          if-no-files-found: error
+          retention-days: 14
